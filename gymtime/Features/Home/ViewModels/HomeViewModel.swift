@@ -29,20 +29,6 @@ class HomeViewModel: ObservableObject {
         // Initialize state
         loadWorkouts()
         
-        // Add sample workout for development
-        #if DEBUG
-        self.workouts.append(
-            WorkoutEntry(
-                id: UUID(),
-                exercise: "Bench Press",
-                weight: 185.0,
-                sets: 3,
-                reps: 5,
-                notes: "Feeling strong today! This is a longer note to test the expansion feature."
-            )
-        )
-        #endif
-        
         // Set up audio level observation
         audioRecordingService.$audioLevel
             .assign(to: &$audioLevel)

@@ -71,7 +71,7 @@ struct WorkoutTableView: View {
                                 }
                             }
                         }
-                        .padding(.bottom, 80)
+                        .padding(.bottom, 80) // Reduced padding, still enough for button + nav bar
                     }
                 }
                 .background(Color.gymtimeBackground)
@@ -140,7 +140,7 @@ struct WorkoutTableView: View {
                     }
                     .disabled(viewModel.isProcessing)
                 }
-                .padding(.bottom, 65)
+                .padding(.bottom, 25)
                 .zIndex(1)
             }
             

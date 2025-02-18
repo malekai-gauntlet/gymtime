@@ -39,7 +39,7 @@ struct BottomNavBarView: View {
         .padding(.bottom, 4)
         .background(
             Color.black.opacity(0.95)
-                .ignoresSafeArea()
+                .edgesIgnoringSafeArea(.bottom)
         )
         .overlay(
             Divider()
@@ -47,6 +47,5 @@ struct BottomNavBarView: View {
                 .frame(maxWidth: .infinity)
             , alignment: .top
         )
-        .ignoresSafeArea(.keyboard, edges: .bottom)
     }
 } 
