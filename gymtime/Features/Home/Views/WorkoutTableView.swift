@@ -69,12 +69,16 @@ struct WorkoutTableView: View {
                                 .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                                     Button(role: .destructive) {
                                         print("🔴 Delete button tapped for workout: \(workout.id)")
-                                        viewModel.deleteWorkout(id: workout.id)
+                                        withAnimation(.easeOut(duration: 0.3)) {
+                                            viewModel.deleteWorkout(id: workout.id)
+                                        }
                                     } label: {
                                         Label("Delete", systemImage: "minus.circle")
                                     }
+                                    .tint(.red)
                                 }
                             }
+                            .transition(.opacity.combined(with: .move(edge: .trailing)))
                         }
                     }
                     .listStyle(.plain)

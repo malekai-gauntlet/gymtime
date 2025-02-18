@@ -118,7 +118,9 @@ class HomeViewModel: ObservableObject {
         if let index = workouts.firstIndex(where: { $0.id == id }) {
             print("📍 Found workout at index: \(index)")
             print("📝 Workout details before deletion: \(workouts[index])")
-            workouts.remove(at: index)
+            withAnimation {
+                workouts.remove(at: index)
+            }
             print("✅ Workout successfully removed from array")
         } else {
             print("❌ No workout found with id: \(id)")
