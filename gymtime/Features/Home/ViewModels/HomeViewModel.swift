@@ -53,6 +53,34 @@ class HomeViewModel: ObservableObject {
         // TODO: Implement persistence
     }
     
+    func updateWorkout(id: UUID, field: String, value: String) {
+        // Update local state immediately for responsive UI
+        if let index = workouts.firstIndex(where: { $0.id == id }) {
+            var workout = workouts[index]
+            
+            // Update the appropriate field
+            switch field {
+            case "exercise":
+                workout.exercise = value
+            case "weight":
+                workout.weight = Double(value)
+            case "sets":
+                workout.sets = Int(value)
+            case "reps":
+                workout.reps = Int(value)
+            case "notes":
+                workout.notes = value
+            default:
+                break
+            }
+            
+            // Update in array
+            workouts[index] = workout
+            
+            // TODO: Implement persistence update
+        }
+    }
+    
     func toggleRecording() {
         if isRecording {
             stopRecording()

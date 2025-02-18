@@ -2,13 +2,13 @@
 
 import Foundation
 
-struct WorkoutEntry: Codable, Identifiable {
+struct WorkoutEntry: Identifiable {
     let id: UUID
-    let exercise: String
-    let weight: Double?
-    let sets: Int?
-    let reps: Int?
-    let notes: String?
+    var exercise: String
+    var weight: Double?
+    var sets: Int?
+    var reps: Int?
+    var notes: String?
     
     init(id: UUID = UUID(), exercise: String, weight: Double? = nil, sets: Int? = nil, reps: Int? = nil, notes: String? = nil) {
         self.id = id

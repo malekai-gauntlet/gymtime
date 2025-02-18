@@ -54,21 +54,13 @@ struct WorkoutTableView: View {
                             } else {
                                 ForEach(workouts) { workout in
                                     WorkoutRow(
-                                        exercise: workout.exercise,
-                                        weight: workout.weight.map { 
-                                            let weightValue = $0
-                                            return weightValue.truncatingRemainder(dividingBy: 1) == 0 
-                                                ? String(format: "%.0f", weightValue) 
-                                                : String(weightValue)
-                                        } ?? "-",
-                                        sets: workout.sets.map { "\($0)" } ?? "-",
-                                        reps: workout.reps.map { "\($0)" } ?? "-",
-                                        notes: workout.notes ?? "",
+                                        workout: workout,
                                         exerciseWidth: exerciseWidth,
                                         weightWidth: weightWidth,
                                         setsWidth: setsWidth,
                                         repsWidth: repsWidth,
-                                        notesWidth: notesWidth
+                                        notesWidth: notesWidth,
+                                        viewModel: viewModel
                                     )
                                     
                                     if workout.id != workouts.last?.id {
@@ -168,12 +160,53 @@ struct WorkoutTableView: View {
     }
 }
 
+struct EditableCell: View {
+    let value: String
+    let onChange: (String) -> Void
+    let alignment: TextAlignment
+    let isNumeric: Bool
+    
+    @State private var isEditing = false
+    @State private var editValue: String
+    @FocusState private var isFocused: Bool
+    
+    init(value: String, onChange: @escaping (String) -> Void, alignment: TextAlignment = .leading, isNumeric: Bool = false) {
+        self.value = value
+        self.onChange = onChange
+        self.alignment = alignment
+        self.isNumeric = isNumeric
+        self._editValue = State(initialValue: value)
+    }
+    
+    var body: some View {
+        if isEditing {
+            TextField("", text: $editValue)
+                .multilineTextAlignment(alignment)
+                .keyboardType(isNumeric ? .numberPad : .default)
+                .font(.system(.subheadline, design: isNumeric ? .monospaced : .default))
+                .focused($isFocused)
+                .onChange(of: isFocused) { focused in
+                    if !focused {
+                        isEditing = false
+                        if editValue != value {
+                            onChange(editValue)
+                        }
+                    }
+                }
+                .onTapGesture {}  // Prevents tap from dismissing keyboard
+        } else {
+            Text(value)
+                .onTapGesture {
+                    editValue = value
+                    isEditing = true
+                    isFocused = true
+                }
+        }
+    }
+}
+
 struct WorkoutRow: View {
-    let exercise: String
-    let weight: String
-    let sets: String
-    let reps: String
-    let notes: String
+    let workout: WorkoutEntry
     
     let exerciseWidth: CGFloat
     let weightWidth: CGFloat
@@ -181,6 +214,7 @@ struct WorkoutRow: View {
     let repsWidth: CGFloat
     let notesWidth: CGFloat
     
+    @ObservedObject var viewModel: HomeViewModel
     @State private var isExpanded = false
     private let notesThreshold = 8
     
@@ -188,32 +222,59 @@ struct WorkoutRow: View {
         VStack(spacing: 0) {
             // Main row content
             HStack(spacing: 0) {
-                Text(exercise)
-                    .frame(width: UIScreen.main.bounds.width * exerciseWidth, alignment: .leading)
-                    .font(.subheadline.weight(.medium))
-                Text(weight)
-                    .frame(width: UIScreen.main.bounds.width * weightWidth, alignment: .center)
-                    .font(.system(.subheadline, design: .monospaced))
-                    .foregroundColor(weight == "-" ? .gymtimeTextSecondary : .gymtimeText)
-                Text(sets)
-                    .frame(width: UIScreen.main.bounds.width * setsWidth, alignment: .center)
-                    .font(.system(.subheadline, design: .monospaced))
-                    .foregroundColor(sets == "-" ? .gymtimeTextSecondary : .gymtimeText)
-                Text(reps)
-                    .frame(width: UIScreen.main.bounds.width * repsWidth, alignment: .center)
-                    .font(.system(.subheadline, design: .monospaced))
-                    .foregroundColor(reps == "-" ? .gymtimeTextSecondary : .gymtimeText)
+                EditableCell(
+                    value: workout.exercise,
+                    onChange: { viewModel.updateWorkout(id: workout.id, field: "exercise", value: $0) }
+                )
+                .frame(width: UIScreen.main.bounds.width * exerciseWidth, alignment: .leading)
+                .font(.subheadline.weight(.medium))
+                
+                EditableCell(
+                    value: workout.weight.map { 
+                        let weightValue = $0
+                        return weightValue.truncatingRemainder(dividingBy: 1) == 0 
+                            ? String(format: "%.0f", weightValue) 
+                            : String(weightValue)
+                    } ?? "-",
+                    onChange: { viewModel.updateWorkout(id: workout.id, field: "weight", value: $0) },
+                    alignment: .center,
+                    isNumeric: true
+                )
+                .frame(width: UIScreen.main.bounds.width * weightWidth, alignment: .center)
+                .foregroundColor(workout.weight == nil ? .gymtimeTextSecondary : .gymtimeText)
+                
+                EditableCell(
+                    value: workout.sets.map { "\($0)" } ?? "-",
+                    onChange: { viewModel.updateWorkout(id: workout.id, field: "sets", value: $0) },
+                    alignment: .center,
+                    isNumeric: true
+                )
+                .frame(width: UIScreen.main.bounds.width * setsWidth, alignment: .center)
+                .foregroundColor(workout.sets == nil ? .gymtimeTextSecondary : .gymtimeText)
+                
+                EditableCell(
+                    value: workout.reps.map { "\($0)" } ?? "-",
+                    onChange: { viewModel.updateWorkout(id: workout.id, field: "reps", value: $0) },
+                    alignment: .center,
+                    isNumeric: true
+                )
+                .frame(width: UIScreen.main.bounds.width * repsWidth, alignment: .center)
+                .foregroundColor(workout.reps == nil ? .gymtimeTextSecondary : .gymtimeText)
                 
                 // Notes column with expansion
                 HStack(spacing: 4) {
+                    let notes = workout.notes ?? ""
                     if notes.count > notesThreshold {
                         Text("\(notes.prefix(notesThreshold))...")
                             .lineLimit(1)
                         Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                             .font(.system(size: 12))
                     } else {
-                        Text(notes)
-                            .lineLimit(1)
+                        EditableCell(
+                            value: notes,
+                            onChange: { viewModel.updateWorkout(id: workout.id, field: "notes", value: $0) }
+                        )
+                        .lineLimit(1)
                     }
                 }
                 .frame(width: UIScreen.main.bounds.width * notesWidth, alignment: .leading)
@@ -221,26 +282,29 @@ struct WorkoutRow: View {
                 .foregroundColor(.gymtimeTextSecondary)
             }
             .padding(.horizontal, 24)
-            .contentShape(Rectangle())  // Make entire row tappable
+            .contentShape(Rectangle())
             .onTapGesture {
-                if notes.count > notesThreshold {
+                if (workout.notes?.count ?? 0) > notesThreshold {
                     withAnimation(.easeInOut(duration: 0.2)) {
                         isExpanded.toggle()
                     }
                 }
             }
-            .padding(.bottom, isExpanded && notes.count > notesThreshold ? 14 : 0) // Add space only when expanded
+            .padding(.bottom, isExpanded && (workout.notes?.count ?? 0) > notesThreshold ? 14 : 0)
             
             // Expanded notes view
-            if isExpanded && notes.count > notesThreshold {
-                Text(notes)
-                    .font(.subheadline)
-                    .foregroundColor(.gymtimeTextSecondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 8)
-                    .background(Color.black.opacity(0.2))
-                    .transition(.move(edge: .top).combined(with: .opacity))
+            if isExpanded && (workout.notes?.count ?? 0) > notesThreshold {
+                EditableCell(
+                    value: workout.notes ?? "",
+                    onChange: { viewModel.updateWorkout(id: workout.id, field: "notes", value: $0) }
+                )
+                .font(.subheadline)
+                .foregroundColor(.gymtimeTextSecondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 8)
+                .background(Color.black.opacity(0.2))
+                .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
         .foregroundColor(.gymtimeText)
