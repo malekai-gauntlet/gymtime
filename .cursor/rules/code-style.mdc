@@ -1,0 +1,99 @@
+---
+description: Gymtime SwiftUI Code Style Guide
+globs: "*.swift"
+version: 0.1.0
+priority: high
+---
+# Code Style
+
+<rule>
+name: gymtime_swift_style
+description: Core Swift and SwiftUI patterns for Gymtime
+filters:
+  - type: file_extension
+    pattern: ".swift"
+  - type: path
+    pattern: "Features/**/*.swift"
+actions:
+  - type: style_check
+    patterns:
+      - "@StateObject over @ObservedObject for view-owned state"
+      - "MVVM architecture adherence"
+      - "SwiftUI view modularization"
+examples:
+  - input: "monolithic view code"
+    output: "modularized view components"
+metadata:
+  priority: high
+  version: 0.1.0
+</rule>
+
+You are an expert in Swift, SwiftUI, and Supabase, with a deep understanding of best practices and performance optimization techniques in these technologies.
+
+Code Style and Structure
+	•	Write concise, maintainable, and technically accurate Swift code with relevant examples.
+	•	Use functional and declarative programming patterns in SwiftUI; avoid overly complex class hierarchies when possible.
+	•	Adhere to DRY principles and avoid code duplication.
+	•	Use descriptive variable names that convey intent (e.g., isLoading, hasError).
+	•	Organize files systematically: each file should contain only related content, such as SwiftUI views, subviews, helpers, static content, or types.
+	•	Use the Swift and SwiftUI style guides for consistency.
+	•	Prefer SwiftUI's built-in state management (e.g., @State, @Binding, @ObservedObject, @EnvironmentObject) before adding complex external patterns.
+	•	When using async functions (e.g., Swift Concurrency with async/await), avoid blocking unless necessary; if blocking is necessary, use structured concurrency (e.g., await) to manage tasks.
+	•	Favor modular code: large view files or logic blocks should be broken into smaller, reusable components.
+
+// Example snippet of a modular approach:
+struct WorkoutView: View {
+  @ObservedObject var viewModel: WorkoutViewModel
+
+  var body: some View {
+    VStack {
+      WorkoutHeader(viewModel: viewModel)
+      WorkoutList(exercises: viewModel.exercises)
+    }
+  }
+}
+
+Naming Conventions
+	•	Use lowerCamelCase for function names, computed properties, and variables in Swift.
+	•	Use PascalCase (capitalized) for SwiftUI View structs and class names (e.g., WorkoutView, UserProfile).
+	•	Use descriptive protocol and model names (e.g., WorkoutDataSource, HealthMetricModel).
+	•	Favor named initializers for clarity when passing parameters to SwiftUI Views or data models.
+
+Swift Usage
+	•	Use Swift's built-in concurrency (async/await) to handle asynchronous calls, especially when fetching data from Supabase.
+	•	Use property wrappers like @State, @ObservedObject, and @EnvironmentObject to manage state in SwiftUI.
+	•	Use protocols or structs for your data models (e.g., struct Workout), and keep them decoupled from UI logic.
+	•	Leverage SwiftUI's @ViewBuilder to structure composable UI blocks.
+	•	Prefer Swift structs over classes unless reference semantics or inheritance is strictly necessary.
+
+Syntax and Formatting
+	•	Prefer Swift's trailing closure syntax where appropriate.
+	•	Use small, focused View structs to keep the UI declarative and readable.
+	•	Write pure utility functions in separate helper files if they don't depend on the View's state.
+	•	Use Swift's extension pattern to group utility methods or conformances to protocols.
+
+// Example: Pure utility function outside the main view
+func formatDate(_ date: Date) -> String {
+  let formatter = DateFormatter()
+  formatter.dateStyle = .medium
+  return formatter.string(from: date)
+}
+
+## File Documentation
+<rule>
+name: file_documentation
+description: Guidelines for file-level documentation
+patterns:
+  - comment: "// 📄*"
+
+standards:
+  - Every new file MUST start with a single-line comment explaining its purpose
+  - Comment must be first line of file (after license headers if present)
+  - Format: "// 📄 {purpose of this file in one line}"
+  - Keep descriptions concise (max 120 characters)
+  - Use emojis sparingly and only when they add clarity
+
+examples:
+  good: "// 📄 Handles user authentication state and login/signup logic"
+  bad: "// This file is responsible for managing the authentication state and handles the login and signup process for users in the application"
+</rule>
