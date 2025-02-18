@@ -16,41 +16,47 @@ Implement voice-based workout logging directly in the HomeView, allowing users t
    - ~~Implement real-time transcription~~ ✅
    - ~~Handle continuous recognition mode~~ ✅
 
-3. **UI Components** 🔄
+3. **UI Components** ✅
    - ~~Add recording button to HomeView with animation states:~~ ✅
      - ~~Idle state (microphone icon)~~ ✅
      - ~~Recording state (pulsing animation)~~ ✅
-     - Processing state (loading spinner)
+     - ~~Processing state (loading spinner)~~ ✅
    - ~~Implement screen dimming overlay with tap-to-stop~~ ✅
    - ~~Create animated waveform visualization using audio levels~~ ✅
    - ~~Add live transcription display~~ ✅
-   - Add processing indicator
+   - ~~Add processing indicator~~ ✅
    - ~~Implement haptic feedback for state changes~~ ✅
 
-4. **Data Processing** ⏳
-   - Parse transcribed text into workout data using OpenAI
-   - Extract structured fields:
-     - Exercise name
-     - Weight
-     - Sets
-     - Reps
-     - Notes
-   - Handle natural language variations
-   - Format data for storage
-   - Implement data cleaning helpers:
-     - Capitalize exercise names
-     - Convert word numbers to digits
-     - Handle units consistently
+4. **Data Processing** 🔄
+   - ~~Parse transcribed text into workout data using OpenAI~~ ✅
+   - ~~Extract structured fields:~~ ✅
+     - ~~Exercise name~~ ✅
+     - ~~Weight~~ ✅
+     - ~~Sets~~ ✅
+     - ~~Reps~~ ✅
+     - ~~Notes~~ ✅
+   - ~~Handle natural language variations~~ ✅
+   - ~~Format data for storage~~ ✅
+   - ~~Implement data cleaning helpers:~~ ✅
+     - ~~Capitalize exercise names~~ ✅
+     - ~~Convert word numbers to digits~~ ✅
+     - ~~Handle units consistently~~ ✅
+   - Enhance parsing for:
+     - Time-based workouts
+     - Multiple exercises
+     - EMOM/circuit workouts
+     - Supersets
+     - Rehab/mobility work
 
-5. **State Management** 🔄
+5. **State Management** ✅
    - ~~Track recording states:~~ ✅
      - ~~Idle~~ ✅
      - ~~Recording~~ ✅
-     - Processing
-     - Error
+     - ~~Processing~~ ✅
+     - ~~Error~~ ✅
    - ~~Manage audio session state~~ ✅
    - ~~Handle transcription state~~ ✅
-   - Update workout list
+   - ~~Update workout list~~ ✅
    - Handle background/foreground transitions
 
 ## Implementation Steps
@@ -144,19 +150,25 @@ struct WorkoutEntry {
 - Implement proper error messages for each failure case
 - Add data validation before storage
 
----
-
 ## Next Steps (Priority Order):
-1. ~~Add waveform visualization for audio levels~~ ✅
-2. ~~Implement Speech Recognition to convert audio to text~~ ✅
-3. ~~Add screen dimming overlay with tap-to-stop functionality~~ ✅
-4. Set up OpenAI integration for parsing the transcribed text ⏳
+1. Enhance workout parsing for different workout styles:
+   - Time-based workouts (e.g., "10 minutes of abs")
+   - Multiple exercises in one recording
+   - EMOM-style workouts
+   - Circuit-style workouts
+   - Supersets
+   - Rehab/mobility work
 
-Now that we have a polished recording UI, the next major step is to implement the OpenAI integration to parse the transcribed text into structured workout data. This will involve:
+2. Add data persistence:
+   - Implement local storage for workouts
+   - Add data migration support
+   - Handle offline capabilities
 
-1. Setting up OpenAI API integration
-2. Creating a parser for the workout text
-3. Implementing the data cleaning helpers
-4. Adding the workout to the table
+3. Polish and Testing:
+   - Add comprehensive error handling
+   - Implement retry mechanisms for failed API calls
+   - Add loading states and transitions
+   - Improve accessibility support
+   - Add unit tests for parsing logic
 
-Would you like to proceed with the OpenAI integration? 
+Would you like to start with enhancing the workout parsing or move on to data persistence? 

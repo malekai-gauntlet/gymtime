@@ -43,7 +43,7 @@ class OpenAIService {
         
         // Prepare the request body
         let body: [String: Any] = [
-            "model": "gpt-4",
+            "model": "gpt-3.5-turbo",
             "messages": [
                 ["role": "system", "content": """
                 You are a fitness tracking assistant. Parse the workout description into one or more exercises.
@@ -56,7 +56,7 @@ class OpenAIService {
                 - notes: any additional details or context
 
                 Return as a JSON array even for single exercises. Examples:
-                "10 minutes of abs" → [{"exercise": "Ab Workout", "duration": "10 minutes"}]
+                "10 minutes of abs" → [{"exercise": "Ab Workout", "duration": "10 mins"}]
                 "Bench press 185lbs 3x5" → [{"exercise": "Bench Press", "weight": "185", "sets": 3, "reps": 5}]
                 """],
                 ["role": "user", "content": prompt]

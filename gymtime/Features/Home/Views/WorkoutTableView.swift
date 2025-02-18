@@ -7,11 +7,11 @@ struct WorkoutTableView: View {
     @ObservedObject var viewModel: HomeViewModel
     
     // Column widths (proportional)
-    private let exerciseWidth: CGFloat = 0.35  // Increased for longer exercise names
+    private let exerciseWidth: CGFloat = 0.26  // Increased for longer exercise names
     private let weightWidth: CGFloat = 0.15
-    private let setsWidth: CGFloat = 0.12      // Slightly increased for better spacing
-    private let repsWidth: CGFloat = 0.12      // Slightly increased for better spacing
-    private let notesWidth: CGFloat = 0.26     // Reduced to accommodate other columns
+    private let setsWidth: CGFloat = 0.13      // Slightly increased for better spacing
+    private let repsWidth: CGFloat = 0.13      // Slightly increased for better spacing
+    private let notesWidth: CGFloat = 0.27     // Reduced to accommodate other columns
     
     var body: some View {
         ZStack {
@@ -23,18 +23,18 @@ struct WorkoutTableView: View {
                         Text("EXERCISE")
                             .frame(width: UIScreen.main.bounds.width * exerciseWidth, alignment: .leading)
                         Text("WEIGHT")
-                            .frame(width: UIScreen.main.bounds.width * weightWidth)
+                            .frame(width: UIScreen.main.bounds.width * weightWidth, alignment: .center)
                         Text("SETS")
-                            .frame(width: UIScreen.main.bounds.width * setsWidth)
+                            .frame(width: UIScreen.main.bounds.width * setsWidth, alignment: .center)
                         Text("REPS")
-                            .frame(width: UIScreen.main.bounds.width * repsWidth)
+                            .frame(width: UIScreen.main.bounds.width * repsWidth, alignment: .center)
                         Text("NOTES")
                             .frame(width: UIScreen.main.bounds.width * notesWidth, alignment: .leading)
                     }
                     .font(.system(size: 13, weight: .semibold))  // Slightly larger header text
                     .foregroundColor(.gymtimeTextSecondary)
                     .padding(.vertical, 14)                       // Increased vertical padding
-                    .padding(.horizontal, 16)                     // Reduced horizontal padding
+                    .padding(.horizontal, 24)                     // Increased horizontal padding
                     .background(Color.black.opacity(0.3))
                     
                     // Table Content
@@ -55,7 +55,12 @@ struct WorkoutTableView: View {
                                 ForEach(workouts) { workout in
                                     WorkoutRow(
                                         exercise: workout.exercise,
-                                        weight: workout.weight.map { "\($0) lb" } ?? "-",
+                                        weight: workout.weight.map { 
+                                            let weightValue = $0
+                                            return weightValue.truncatingRemainder(dividingBy: 1) == 0 
+                                                ? String(format: "%.0f", weightValue) 
+                                                : String(weightValue)
+                                        } ?? "-",
                                         sets: workout.sets.map { "\($0)" } ?? "-",
                                         reps: workout.reps.map { "\($0)" } ?? "-",
                                         notes: workout.notes ?? "",
@@ -69,7 +74,7 @@ struct WorkoutTableView: View {
                                     if workout.id != workouts.last?.id {
                                         Divider()
                                             .background(Color.gymtimeTextSecondary.opacity(0.2))
-                                            .padding(.horizontal, 16)
+                                            .padding(.horizontal, 24)
                                     }
                                 }
                             }
@@ -176,30 +181,69 @@ struct WorkoutRow: View {
     let repsWidth: CGFloat
     let notesWidth: CGFloat
     
+    @State private var isExpanded = false
+    private let notesThreshold = 8
+    
     var body: some View {
-        HStack(spacing: 0) {
-            Text(exercise)
-                .frame(width: UIScreen.main.bounds.width * exerciseWidth, alignment: .leading)
-                .font(.subheadline.weight(.medium))
-            Text(weight)
-                .frame(width: UIScreen.main.bounds.width * weightWidth)
-                .font(.system(.subheadline, design: .monospaced))
-                .foregroundColor(weight == "-" ? .gymtimeTextSecondary : .gymtimeText)
-            Text(sets)
-                .frame(width: UIScreen.main.bounds.width * setsWidth)
-                .font(.system(.subheadline, design: .monospaced))
-                .foregroundColor(sets == "-" ? .gymtimeTextSecondary : .gymtimeText)
-            Text(reps)
-                .frame(width: UIScreen.main.bounds.width * repsWidth)
-                .font(.system(.subheadline, design: .monospaced))
-                .foregroundColor(reps == "-" ? .gymtimeTextSecondary : .gymtimeText)
-            Text(notes)
+        VStack(spacing: 0) {
+            // Main row content
+            HStack(spacing: 0) {
+                Text(exercise)
+                    .frame(width: UIScreen.main.bounds.width * exerciseWidth, alignment: .leading)
+                    .font(.subheadline.weight(.medium))
+                Text(weight)
+                    .frame(width: UIScreen.main.bounds.width * weightWidth, alignment: .center)
+                    .font(.system(.subheadline, design: .monospaced))
+                    .foregroundColor(weight == "-" ? .gymtimeTextSecondary : .gymtimeText)
+                Text(sets)
+                    .frame(width: UIScreen.main.bounds.width * setsWidth, alignment: .center)
+                    .font(.system(.subheadline, design: .monospaced))
+                    .foregroundColor(sets == "-" ? .gymtimeTextSecondary : .gymtimeText)
+                Text(reps)
+                    .frame(width: UIScreen.main.bounds.width * repsWidth, alignment: .center)
+                    .font(.system(.subheadline, design: .monospaced))
+                    .foregroundColor(reps == "-" ? .gymtimeTextSecondary : .gymtimeText)
+                
+                // Notes column with expansion
+                HStack(spacing: 4) {
+                    if notes.count > notesThreshold {
+                        Text(isExpanded ? "" : "\(notes.prefix(notesThreshold))...")
+                            .lineLimit(1)
+                        Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                            .font(.system(size: 12))
+                    } else {
+                        Text(notes)
+                            .lineLimit(1)
+                    }
+                }
                 .frame(width: UIScreen.main.bounds.width * notesWidth, alignment: .leading)
                 .font(.subheadline)
                 .foregroundColor(.gymtimeTextSecondary)
+            }
+            .padding(.horizontal, 24)
+            .contentShape(Rectangle())  // Make entire row tappable
+            .onTapGesture {
+                if notes.count > notesThreshold {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        isExpanded.toggle()
+                    }
+                }
+            }
+            .padding(.bottom, isExpanded && notes.count > notesThreshold ? 14 : 0) // Add space only when expanded
+            
+            // Expanded notes view
+            if isExpanded && notes.count > notesThreshold {
+                Text(notes)
+                    .font(.subheadline)
+                    .foregroundColor(.gymtimeTextSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 8)
+                    .background(Color.black.opacity(0.2))
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
         }
         .foregroundColor(.gymtimeText)
         .padding(.vertical, 14)
-        .padding(.horizontal, 16)
     }
 } 

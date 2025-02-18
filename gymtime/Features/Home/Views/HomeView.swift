@@ -65,15 +65,11 @@ struct HomeView: View {
                             .fontWeight(.semibold)
                             .foregroundColor(.gymtimeText)
                         
-                        Button(action: {}) {
-                            Image(systemName: "info.circle")
-                                .foregroundColor(.gymtimeTextSecondary)
-                        }
-                        
                         Spacer()
                     }
                 }
-                .padding()
+                .padding(.horizontal, 24)
+                .padding(.vertical)
                 .background(Color.gymtimeBackground)
                 
                 // Workout Table
