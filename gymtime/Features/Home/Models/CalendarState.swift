@@ -20,6 +20,14 @@ struct CalendarState {
         displayedWeek = date // Move displayed week when selecting a date
     }
     
+    mutating func moveToNextWeek() {
+        displayedWeek = Calendar.current.date(byAdding: .weekOfYear, value: 1, to: displayedWeek) ?? displayedWeek
+    }
+    
+    mutating func moveToPreviousWeek() {
+        displayedWeek = Calendar.current.date(byAdding: .weekOfYear, value: -1, to: displayedWeek) ?? displayedWeek
+    }
+    
     mutating func moveToNextMonth() {
         if let newDate = Calendar.current.date(byAdding: .month, value: 1, to: displayedWeek) {
             // Keep the same week position in the new month

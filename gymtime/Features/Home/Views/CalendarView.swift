@@ -4,8 +4,11 @@ import SwiftUI
 
 struct CalendarView: View {
     @ObservedObject var viewModel: HomeViewModel
+    @State private var dragOffset: CGFloat = 0
+    @State private var isDragging = false
     
     private let weekDays = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"]
+    private let dragThreshold: CGFloat = 50 // Minimum drag distance to trigger week change
     
     var body: some View {
         VStack(spacing: 16) {
@@ -31,7 +34,7 @@ struct CalendarView: View {
             }
             .padding(.horizontal)
             
-            // Week View
+            // Week View with Horizontal Swipe
             HStack(spacing: 0) {
                 ForEach(Array(zip(weekDays, viewModel.calendarState.daysInWeek())), id: \.0) { weekDay, date in
                     VStack(spacing: 8) {
@@ -57,6 +60,30 @@ struct CalendarView: View {
                     .frame(maxWidth: .infinity)
                 }
             }
+            .offset(x: dragOffset)
+            .gesture(
+                DragGesture()
+                    .onChanged { gesture in
+                        isDragging = true
+                        dragOffset = gesture.translation.width
+                    }
+                    .onEnded { [viewModel] gesture in
+                        isDragging = false
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            dragOffset = 0
+                        }
+                        
+                        // Determine if we should change weeks
+                        if abs(gesture.translation.width) > dragThreshold {
+                            if gesture.translation.width > 0 {
+                                viewModel.moveToPreviousWeek()
+                            } else {
+                                viewModel.moveToNextWeek()
+                            }
+                        }
+                    }
+            )
+            .animation(isDragging ? nil : .easeOut(duration: 0.2), value: dragOffset)
         }
         .padding(.vertical)
         .background(Color.gymtimeBackground)

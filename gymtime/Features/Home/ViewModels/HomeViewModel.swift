@@ -54,6 +54,14 @@ class HomeViewModel: ObservableObject {
         // TODO: Filter workouts for selected date once persistence is implemented
     }
     
+    func moveToNextWeek() {
+        calendarState.moveToNextWeek()
+    }
+    
+    func moveToPreviousWeek() {
+        calendarState.moveToPreviousWeek()
+    }
+    
     func moveToNextMonth() {
         calendarState.moveToNextMonth()
     }
