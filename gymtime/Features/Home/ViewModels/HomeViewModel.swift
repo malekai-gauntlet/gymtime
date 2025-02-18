@@ -7,7 +7,7 @@ import SwiftUI
 @MainActor
 class HomeViewModel: ObservableObject {
     @Published var workouts: [WorkoutEntry] = []
-    @Published var selectedDate: Date = Date()
+    @Published var calendarState: CalendarState
     
     // Services
     private let audioRecordingService = AudioRecordingService()
@@ -22,6 +22,9 @@ class HomeViewModel: ObservableObject {
     @Published var error: String?
     
     init() {
+        // Initialize calendar state
+        self.calendarState = CalendarState()
+        
         // Initialize services
         let openAIService = OpenAIService(apiKey: Config.openAIApiKey)
         self.workoutParser = WorkoutParser(openAIService: openAIService)
@@ -43,6 +46,23 @@ class HomeViewModel: ObservableObject {
         speechRecognitionService.$error
             .assign(to: &$error)
     }
+    
+    // MARK: - Calendar Management
+    
+    func selectDate(_ date: Date) {
+        calendarState.selectDate(date)
+        // TODO: Filter workouts for selected date once persistence is implemented
+    }
+    
+    func moveToNextMonth() {
+        calendarState.moveToNextMonth()
+    }
+    
+    func moveToPreviousMonth() {
+        calendarState.moveToPreviousMonth()
+    }
+    
+    // MARK: - Workout Management
     
     func loadWorkouts() {
         // TODO: Implement workout loading from persistence
