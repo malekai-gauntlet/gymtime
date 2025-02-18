@@ -38,41 +38,47 @@ struct WorkoutTableView: View {
                     .background(Color.black.opacity(0.3))
                     
                     // Table Content
-                    ScrollView {
-                        VStack(spacing: 0) {
-                            if workouts.isEmpty {
-                                VStack(spacing: 8) {
-                                    Image(systemName: "dumbbell.fill")
-                                        .font(.system(size: 24))
-                                        .foregroundColor(.gymtimeTextSecondary)
-                                    Text("No workouts recorded yet")
-                                        .font(.headline)
-                                        .foregroundColor(.gymtimeTextSecondary)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .padding(.top, 60)
-                            } else {
-                                ForEach(workouts) { workout in
-                                    WorkoutRow(
-                                        workout: workout,
-                                        exerciseWidth: exerciseWidth,
-                                        weightWidth: weightWidth,
-                                        setsWidth: setsWidth,
-                                        repsWidth: repsWidth,
-                                        notesWidth: notesWidth,
-                                        viewModel: viewModel
-                                    )
-                                    
-                                    if workout.id != workouts.last?.id {
-                                        Divider()
-                                            .background(Color.gymtimeTextSecondary.opacity(0.2))
-                                            .padding(.horizontal, 24)
+                    List {
+                        if workouts.isEmpty {
+                            VStack(spacing: 8) {
+                                Image(systemName: "dumbbell.fill")
+                                    .font(.system(size: 24))
+                                    .foregroundColor(.gymtimeTextSecondary)
+                                Text("No workouts recorded yet")
+                                    .font(.headline)
+                                    .foregroundColor(.gymtimeTextSecondary)
+                            }
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .padding(.top, 60)
+                            .listRowBackground(Color.gymtimeBackground)
+                            .listRowSeparator(.hidden)
+                            .listRowInsets(EdgeInsets())
+                        } else {
+                            ForEach(workouts) { workout in
+                                WorkoutRow(
+                                    workout: workout,
+                                    exerciseWidth: exerciseWidth,
+                                    weightWidth: weightWidth,
+                                    setsWidth: setsWidth,
+                                    repsWidth: repsWidth,
+                                    notesWidth: notesWidth,
+                                    viewModel: viewModel
+                                )
+                                .listRowInsets(EdgeInsets())
+                                .listRowBackground(Color.gymtimeBackground)
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        print("🔴 Delete button tapped for workout: \(workout.id)")
+                                        viewModel.deleteWorkout(id: workout.id)
+                                    } label: {
+                                        Label("Delete", systemImage: "minus.circle")
                                     }
                                 }
                             }
                         }
-                        .padding(.bottom, 80) // Reduced padding, still enough for button + nav bar
                     }
+                    .listStyle(.plain)
+                    .background(Color.gymtimeBackground)
                 }
                 .background(Color.gymtimeBackground)
                 
@@ -284,9 +290,12 @@ struct WorkoutRow: View {
             .padding(.horizontal, 24)
             .contentShape(Rectangle())
             .onTapGesture {
+                print("👆 Tap detected on workout row: \(workout.id)")
                 if (workout.notes?.count ?? 0) > notesThreshold {
+                    print("📝 Notes expansion triggered")
                     withAnimation(.easeInOut(duration: 0.2)) {
                         isExpanded.toggle()
+                        print("📖 Notes expanded state: \(isExpanded)")
                     }
                 }
             }
@@ -309,5 +318,18 @@ struct WorkoutRow: View {
         }
         .foregroundColor(.gymtimeText)
         .padding(.vertical, 14)
+        .contentShape(Rectangle()) // Ensure the entire row is interactive
+        .onAppear {
+            print("🎯 WorkoutRow appeared for workout: \(workout.id)")
+            print("📊 Initial layout - Width parameters:")
+            print("  Exercise: \(exerciseWidth)")
+            print("  Weight: \(weightWidth)")
+            print("  Sets: \(setsWidth)")
+            print("  Reps: \(repsWidth)")
+            print("  Notes: \(notesWidth)")
+        }
+        .onChange(of: isExpanded) { oldValue, newValue in
+            print("🔄 Expansion state changed for workout \(workout.id): \(oldValue) -> \(newValue)")
+        }
     }
 } 

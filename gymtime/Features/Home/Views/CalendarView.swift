@@ -83,9 +83,7 @@ struct CalendarView: View {
                 .scrollTargetLayout()
                 .scrollClipDisabled()
                 .onChange(of: viewModel.calendarState.selectedDate) { _, newDate in
-                    withAnimation(smoothScroll) {
-                        proxy.scrollTo(newDate, anchor: .center)
-                    }
+                    proxy.scrollTo(newDate, anchor: .center)
                 }
             }
         }

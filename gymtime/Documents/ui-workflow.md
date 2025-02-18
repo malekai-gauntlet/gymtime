@@ -1,7 +1,0 @@
-- Use MVVM-C architecture
-- Use SwiftUI for UI
-- Add comments to each file to explain what it does at the top
-- Put new files into the proper folder
-- Use proper naming conventions
-- Use proper SwiftUI syntax
-- Use proper MVVM-C architecture syntax

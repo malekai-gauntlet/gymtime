@@ -10,11 +10,9 @@ Each feature has its own folder with the following structure:
 Please follow the following guidelines:
 
 - Use SwiftUI for UI
-- Use MVVM-C architecture
 - Use proper SwiftUI syntax
 - Use proper MVVM-C architecture syntax
-- Use proper SwiftUI syntax
-- Use proper MVVM-C architecture syntax
+- Put new files into the proper folder
 
 Styling:
 
@@ -23,3 +21,11 @@ Styling:
 - Use the gymtime fonts
 - Use the gymtime images
 - Use the gymtime icons
+
+Comments:
+
+- Add comments to each file to explain what it does at the top
+- Add detail comments to each function or code blockto explain what it does
+- Use proper naming conventions
+
+
