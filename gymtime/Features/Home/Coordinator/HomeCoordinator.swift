@@ -4,25 +4,27 @@ import SwiftUI
 
 struct HomeCoordinator: View {
     @StateObject private var viewModel = HomeViewModel()
-    @State private var selectedTab = 0
+    @State private var selectedTab: Int = 0
     
     var body: some View {
         ZStack(alignment: .bottom) {
-            TabView(selection: $selectedTab) {
-                HomeView(viewModel: viewModel)
-                    .tag(0)
-                
-                PTView()
-                    .tag(1)
-                
-                Color.gymtimeBackground  // Placeholder for Feed
-                    .tag(2)
-                
-                Color.gymtimeBackground  // Placeholder for Profile
-                    .tag(3)
+            // Main Content
+            Group {
+                switch selectedTab {
+                case 0:
+                    HomeView(viewModel: viewModel)
+                case 1:
+                    PTView()
+                case 2:
+                    Color.gymtimeBackground  // Placeholder for Feed
+                case 3:
+                    Color.gymtimeBackground  // Placeholder for Profile
+                default:
+                    HomeView(viewModel: viewModel)
+                }
             }
-            .tabViewStyle(.automatic)
             
+            // Custom Bottom Navigation
             BottomNavBarView(selectedTab: $selectedTab)
         }
     }
