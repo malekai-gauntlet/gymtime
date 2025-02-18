@@ -11,25 +11,26 @@ actor WorkoutParser {
     
     struct ParsedWorkout: Codable {
         var exercise: String
+        var duration: String?
         var weight: String?
         var sets: Int?
         var reps: Int?
         var notes: String?
     }
     
-    func parse(text: String) async throws -> WorkoutEntry {
+    func parse(text: String) async throws -> [WorkoutEntry] {
         // Get JSON response from OpenAI
         let jsonString = try await openAIService.generateCompletion(prompt: text)
         
-        // Parse JSON into our struct
+        // Parse JSON into our struct array
         guard let jsonData = jsonString.data(using: .utf8) else {
             throw ParserError.invalidData
         }
         
-        let parsedWorkout = try JSONDecoder().decode(ParsedWorkout.self, from: jsonData)
+        let parsedWorkouts = try JSONDecoder().decode([ParsedWorkout].self, from: jsonData)
         
-        // Clean and validate the data
-        return try cleanAndValidate(parsedWorkout)
+        // Clean and validate each workout
+        return try parsedWorkouts.map { try cleanAndValidate($0) }
     }
     
     private func cleanAndValidate(_ parsed: ParsedWorkout) throws -> WorkoutEntry {
@@ -42,13 +43,26 @@ actor WorkoutParser {
         // Clean weight (if present)
         let weight = parsed.weight.flatMap { cleanWeight($0) }
         
+        // Clean duration (if present)
+        let duration = parsed.duration?.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Combine any notes with duration for context
+        var notes = parsed.notes?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if let duration = duration {
+            if !notes.isEmpty {
+                notes = "\(duration) - \(notes)"
+            } else {
+                notes = duration
+            }
+        }
+        
         return WorkoutEntry(
             id: UUID(),
             exercise: exercise,
             weight: weight,
             sets: parsed.sets,
             reps: parsed.reps,
-            notes: parsed.notes?.trimmingCharacters(in: .whitespacesAndNewlines)
+            notes: notes.isEmpty ? nil : notes
         )
     }
     

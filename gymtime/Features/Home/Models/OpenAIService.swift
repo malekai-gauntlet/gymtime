@@ -45,7 +45,20 @@ class OpenAIService {
         let body: [String: Any] = [
             "model": "gpt-4",
             "messages": [
-                ["role": "system", "content": "You are a fitness tracking assistant. Parse the following workout description and return JSON with fields: exercise, weight, sets, reps, notes. Use null for any missing fields. Return ONLY the JSON object."],
+                ["role": "system", "content": """
+                You are a fitness tracking assistant. Parse the workout description into one or more exercises.
+                Return a JSON array where each exercise contains:
+                - exercise: (required) name of the exercise
+                - duration: time spent (e.g. '10 minutes', '30 seconds')
+                - weight: any weight/resistance used
+                - sets: number of sets
+                - reps: reps per set
+                - notes: any additional details or context
+
+                Return as a JSON array even for single exercises. Examples:
+                "10 minutes of abs" → [{"exercise": "Ab Workout", "duration": "10 minutes"}]
+                "Bench press 185lbs 3x5" → [{"exercise": "Bench Press", "weight": "185", "sets": 3, "reps": 5}]
+                """],
                 ["role": "user", "content": prompt]
             ],
             "temperature": 0.7

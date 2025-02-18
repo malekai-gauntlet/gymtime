@@ -7,11 +7,11 @@ struct WorkoutTableView: View {
     @ObservedObject var viewModel: HomeViewModel
     
     // Column widths (proportional)
-    private let exerciseWidth: CGFloat = 0.3  // Increased since we removed date
+    private let exerciseWidth: CGFloat = 0.35  // Increased for longer exercise names
     private let weightWidth: CGFloat = 0.15
-    private let setsWidth: CGFloat = 0.1
-    private let repsWidth: CGFloat = 0.1
-    private let notesWidth: CGFloat = 0.35    // Increased for better note visibility
+    private let setsWidth: CGFloat = 0.12      // Slightly increased for better spacing
+    private let repsWidth: CGFloat = 0.12      // Slightly increased for better spacing
+    private let notesWidth: CGFloat = 0.26     // Reduced to accommodate other columns
     
     var body: some View {
         ZStack {
@@ -31,19 +31,26 @@ struct WorkoutTableView: View {
                         Text("NOTES")
                             .frame(width: UIScreen.main.bounds.width * notesWidth, alignment: .leading)
                     }
-                    .font(.system(size: 12, weight: .semibold))
+                    .font(.system(size: 13, weight: .semibold))  // Slightly larger header text
                     .foregroundColor(.gymtimeTextSecondary)
-                    .padding(.vertical, 12)
-                    .padding(.horizontal, 20)
+                    .padding(.vertical, 14)                       // Increased vertical padding
+                    .padding(.horizontal, 16)                     // Reduced horizontal padding
                     .background(Color.black.opacity(0.3))
                     
                     // Table Content
                     ScrollView {
                         VStack(spacing: 0) {
                             if workouts.isEmpty {
-                                Text("No workouts recorded yet")
-                                    .foregroundColor(.gymtimeTextSecondary)
-                                    .padding(.top, 40)
+                                VStack(spacing: 8) {
+                                    Image(systemName: "dumbbell.fill")
+                                        .font(.system(size: 24))
+                                        .foregroundColor(.gymtimeTextSecondary)
+                                    Text("No workouts recorded yet")
+                                        .font(.headline)
+                                        .foregroundColor(.gymtimeTextSecondary)
+                                }
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, 60)
                             } else {
                                 ForEach(workouts) { workout in
                                     WorkoutRow(
@@ -62,12 +69,12 @@ struct WorkoutTableView: View {
                                     if workout.id != workouts.last?.id {
                                         Divider()
                                             .background(Color.gymtimeTextSecondary.opacity(0.2))
-                                            .padding(.horizontal, 20)
+                                            .padding(.horizontal, 16)
                                     }
                                 }
                             }
                         }
-                        .padding(.bottom, 100) // Increased padding to account for button + nav bar
+                        .padding(.bottom, 80) // Reduced padding, still enough for button + nav bar
                     }
                 }
                 .background(Color.gymtimeBackground)
@@ -173,20 +180,26 @@ struct WorkoutRow: View {
         HStack(spacing: 0) {
             Text(exercise)
                 .frame(width: UIScreen.main.bounds.width * exerciseWidth, alignment: .leading)
+                .font(.subheadline.weight(.medium))
             Text(weight)
                 .frame(width: UIScreen.main.bounds.width * weightWidth)
                 .font(.system(.subheadline, design: .monospaced))
+                .foregroundColor(weight == "-" ? .gymtimeTextSecondary : .gymtimeText)
             Text(sets)
                 .frame(width: UIScreen.main.bounds.width * setsWidth)
                 .font(.system(.subheadline, design: .monospaced))
+                .foregroundColor(sets == "-" ? .gymtimeTextSecondary : .gymtimeText)
             Text(reps)
                 .frame(width: UIScreen.main.bounds.width * repsWidth)
                 .font(.system(.subheadline, design: .monospaced))
+                .foregroundColor(reps == "-" ? .gymtimeTextSecondary : .gymtimeText)
             Text(notes)
                 .frame(width: UIScreen.main.bounds.width * notesWidth, alignment: .leading)
+                .font(.subheadline)
+                .foregroundColor(.gymtimeTextSecondary)
         }
         .foregroundColor(.gymtimeText)
-        .padding(.vertical, 12)
-        .padding(.horizontal, 20)  // Updated to match header padding
+        .padding(.vertical, 14)
+        .padding(.horizontal, 16)
     }
 } 

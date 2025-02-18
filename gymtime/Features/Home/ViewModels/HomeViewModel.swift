@@ -78,8 +78,11 @@ class HomeViewModel: ObservableObject {
         Task {
             isProcessing = true
             do {
-                let workout = try await workoutParser.parse(text: transcript)
-                addWorkout(workout)
+                let workouts = try await workoutParser.parse(text: transcript)
+                // Add workouts in reverse order so they appear in the order they were spoken
+                for workout in workouts.reversed() {
+                    addWorkout(workout)
+                }
             } catch {
                 self.error = "Failed to process workout: \(error.localizedDescription)"
             }
