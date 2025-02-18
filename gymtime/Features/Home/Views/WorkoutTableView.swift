@@ -148,7 +148,7 @@ struct WorkoutTableView: View {
                     }
                     .disabled(viewModel.isProcessing)
                 }
-                .padding(.bottom, 65)
+                .padding(.bottom, 25)
                 .zIndex(1)
             }
             
@@ -207,7 +207,7 @@ struct WorkoutRow: View {
                 // Notes column with expansion
                 HStack(spacing: 4) {
                     if notes.count > notesThreshold {
-                        Text(isExpanded ? "" : "\(notes.prefix(notesThreshold))...")
+                        Text("\(notes.prefix(notesThreshold))...")
                             .lineLimit(1)
                         Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                             .font(.system(size: 12))
