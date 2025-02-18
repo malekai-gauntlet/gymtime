@@ -77,7 +77,7 @@ struct HomeView: View {
                 .background(Color.gymtimeBackground)
                 
                 // Workout Table
-                WorkoutTableView(workouts: $viewModel.workouts)
+                WorkoutTableView(workouts: $viewModel.workouts, viewModel: viewModel)
             }
             .background(Color.gymtimeBackground)
             .sheet(isPresented: $showingVoiceLogger) {

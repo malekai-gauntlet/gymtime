@@ -58,5 +58,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Yooo we'll want to access your mic to record your gains.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Fancy speech recognition to convert your voice into workout entries.</string>
 </dict>
 </plist>
