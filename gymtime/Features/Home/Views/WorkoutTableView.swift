@@ -3,6 +3,8 @@
 import SwiftUI
 
 struct WorkoutTableView: View {
+    @Binding var workouts: [WorkoutEntry]
+    
     // Column widths (proportional)
     private let exerciseWidth: CGFloat = 0.3  // Increased since we removed date
     private let weightWidth: CGFloat = 0.15
@@ -35,23 +37,30 @@ struct WorkoutTableView: View {
                 // Table Content
                 ScrollView {
                     VStack(spacing: 0) {
-                        ForEach(0..<4) { index in
-                            WorkoutRow(
-                                exercise: "Shoulder Press",
-                                weight: "35 lb",
-                                sets: "3",
-                                reps: "5",
-                                notes: "Felt strong.",
-                                exerciseWidth: exerciseWidth,
-                                weightWidth: weightWidth,
-                                setsWidth: setsWidth,
-                                repsWidth: repsWidth,
-                                notesWidth: notesWidth
-                            )
-                            if index < 3 {
-                                Divider()
-                                    .background(Color.gymtimeTextSecondary.opacity(0.2))
-                                    .padding(.horizontal, 20)
+                        if workouts.isEmpty {
+                            Text("No workouts recorded yet")
+                                .foregroundColor(.gymtimeTextSecondary)
+                                .padding(.top, 40)
+                        } else {
+                            ForEach(workouts) { workout in
+                                WorkoutRow(
+                                    exercise: workout.exercise,
+                                    weight: workout.weight.map { "\($0) lb" } ?? "-",
+                                    sets: workout.sets.map { "\($0)" } ?? "-",
+                                    reps: workout.reps.map { "\($0)" } ?? "-",
+                                    notes: workout.notes ?? "",
+                                    exerciseWidth: exerciseWidth,
+                                    weightWidth: weightWidth,
+                                    setsWidth: setsWidth,
+                                    repsWidth: repsWidth,
+                                    notesWidth: notesWidth
+                                )
+                                
+                                if workout.id != workouts.last?.id {
+                                    Divider()
+                                        .background(Color.gymtimeTextSecondary.opacity(0.2))
+                                        .padding(.horizontal, 20)
+                                }
                             }
                         }
                     }
@@ -72,7 +81,7 @@ struct WorkoutTableView: View {
                     .background(Color.gymtimeAccent)
                     .cornerRadius(12)
             }
-            .padding(.bottom) // Adjusted to sit above nav bar
+            .padding(.bottom, 65) // Adjusted to sit above nav bar
             .zIndex(1) // Ensure button stays above content
         }
     }

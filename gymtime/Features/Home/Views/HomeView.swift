@@ -5,6 +5,7 @@ import SwiftUI
 struct HomeView: View {
     @ObservedObject var viewModel: HomeViewModel
     @State private var selectedTab: Int = 0  // Add state for selected tab
+    @State private var showingVoiceLogger = false
     
     var body: some View {
         NavigationView {
@@ -76,12 +77,19 @@ struct HomeView: View {
                 .background(Color.gymtimeBackground)
                 
                 // Workout Table
-                WorkoutTableView()
+                WorkoutTableView(workouts: $viewModel.workouts)
             }
             .background(Color.gymtimeBackground)
+            .sheet(isPresented: $showingVoiceLogger) {
+                // Temporarily comment out VoiceWorkoutLogger until we create it
+                // VoiceWorkoutLogger { workout in
+                //     viewModel.addWorkout(workout)
+                // }
+                Text("Voice Logger Coming Soon")
+            }
         }
     }
-} 
+}
 
 #Preview {
     HomeCoordinator()
