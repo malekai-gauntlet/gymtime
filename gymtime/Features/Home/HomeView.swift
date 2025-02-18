@@ -4,6 +4,7 @@ import SwiftUI
 
 struct HomeView: View {
     @ObservedObject var viewModel: HomeViewModel
+    @State private var selectedTab: Int = 0  // Add state for selected tab
     
     var body: some View {
         NavigationView {
@@ -69,12 +70,6 @@ struct HomeView: View {
                         }
                         
                         Spacer()
-                        
-                        Button(action: {}) {
-                            Image(systemName: "mic.circle.fill")
-                                .font(.title2)
-                                .foregroundColor(.gymtimeAccent)
-                        }
                     }
                 }
                 .padding()
@@ -89,5 +84,5 @@ struct HomeView: View {
 } 
 
 #Preview {
-    HomeView(viewModel: HomeViewModel())  // Use the actual view struct name
+    HomeCoordinator()
 }

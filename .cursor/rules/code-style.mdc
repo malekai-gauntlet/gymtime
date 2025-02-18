@@ -1,83 +1,71 @@
 ---
-description: Gymtime SwiftUI Code Style Guide
-globs: "*.swift"
-version: 0.1.0
-priority: high
+description: This rule is helpful for code style and structure
+globs: 
 ---
-# Code Style
+---
+description: Core Swift and SwiftUI coding standards for Gymtime
+applies_to: ["*.swift"]
+version: 0.1.0
+---
 
+# Gymtime Code Style Guide
+
+## View Structure
 <rule>
-name: gymtime_swift_style
-description: Core Swift and SwiftUI patterns for Gymtime
-filters:
-  - type: file_extension
-    pattern: ".swift"
-  - type: path
-    pattern: "Features/**/*.swift"
-actions:
-  - type: style_check
-    patterns:
-      - "@StateObject over @ObservedObject for view-owned state"
-      - "MVVM architecture adherence"
-      - "SwiftUI view modularization"
+name: view_structure
+description: Guidelines for SwiftUI view organization
+patterns:
+  - struct: "*View.swift"
+  - protocol: "*ViewProtocol.swift"
+
+standards:
+  - Prefer small, focused views (under 100 lines)
+  - Use MVVM architecture
+  - Keep view logic separate from business logic
+
 examples:
-  - input: "monolithic view code"
-    output: "modularized view components"
-metadata:
-  priority: high
-  version: 0.1.0
+  good: "Modular view with clear responsibility"
+  bad: "Monolithic view with mixed concerns"
 </rule>
 
-You are an expert in Swift, SwiftUI, and Supabase, with a deep understanding of best practices and performance optimization techniques in these technologies.
 
-Code Style and Structure
-	•	Write concise, maintainable, and technically accurate Swift code with relevant examples.
-	•	Use functional and declarative programming patterns in SwiftUI; avoid overly complex class hierarchies when possible.
-	•	Adhere to DRY principles and avoid code duplication.
-	•	Use descriptive variable names that convey intent (e.g., isLoading, hasError).
-	•	Organize files systematically: each file should contain only related content, such as SwiftUI views, subviews, helpers, static content, or types.
-	•	Use the Swift and SwiftUI style guides for consistency.
-	•	Prefer SwiftUI's built-in state management (e.g., @State, @Binding, @ObservedObject, @EnvironmentObject) before adding complex external patterns.
-	•	When using async functions (e.g., Swift Concurrency with async/await), avoid blocking unless necessary; if blocking is necessary, use structured concurrency (e.g., await) to manage tasks.
-	•	Favor modular code: large view files or logic blocks should be broken into smaller, reusable components.
+## State Management
+<rule>
+name: state_management
+description: Guidelines for SwiftUI state handling
+patterns:
+  - property_wrapper: "@State, @StateObject, @Published"
 
-// Example snippet of a modular approach:
-struct WorkoutView: View {
-  @ObservedObject var viewModel: WorkoutViewModel
+standards:
+  - Use @StateObject for view-owned ViewModels
+  - Use @State for simple view-local state
+  - Use @Published in ObservableObject classes
+  - Minimize global state (@EnvironmentObject)
 
-  var body: some View {
-    VStack {
-      WorkoutHeader(viewModel: viewModel)
-      WorkoutList(exercises: viewModel.exercises)
-    }
-  }
-}
+examples:
+  good: "Clear state ownership with proper property wrappers"
+  bad: "Mixed state management with unclear ownership"
+</rule>
 
-Naming Conventions
-	•	Use lowerCamelCase for function names, computed properties, and variables in Swift.
-	•	Use PascalCase (capitalized) for SwiftUI View structs and class names (e.g., WorkoutView, UserProfile).
-	•	Use descriptive protocol and model names (e.g., WorkoutDataSource, HealthMetricModel).
-	•	Favor named initializers for clarity when passing parameters to SwiftUI Views or data models.
 
-Swift Usage
-	•	Use Swift's built-in concurrency (async/await) to handle asynchronous calls, especially when fetching data from Supabase.
-	•	Use property wrappers like @State, @ObservedObject, and @EnvironmentObject to manage state in SwiftUI.
-	•	Use protocols or structs for your data models (e.g., struct Workout), and keep them decoupled from UI logic.
-	•	Leverage SwiftUI's @ViewBuilder to structure composable UI blocks.
-	•	Prefer Swift structs over classes unless reference semantics or inheritance is strictly necessary.
+## Async Operations
+<rule>
+name: async_operations
+description: Guidelines for handling asynchronous operations
+patterns:
+  - async_await: "async, await, Task"
 
-Syntax and Formatting
-	•	Prefer Swift's trailing closure syntax where appropriate.
-	•	Use small, focused View structs to keep the UI declarative and readable.
-	•	Write pure utility functions in separate helper files if they don't depend on the View's state.
-	•	Use Swift's extension pattern to group utility methods or conformances to protocols.
+standards:
+  - Use Swift concurrency (async/await) over completion handlers
+  - Handle loading and error states explicitly
+  - Perform data fetching in ViewModels, not Views
+  - Use @MainActor for UI updates
 
-// Example: Pure utility function outside the main view
-func formatDate(_ date: Date) -> String {
-  let formatter = DateFormatter()
-  formatter.dateStyle = .medium
-  return formatter.string(from: date)
-}
+examples:
+  good: "Clean async/await pattern with proper error handling"
+  bad: "Nested completion handlers with unclear error states"
+</rule>
+
 
 ## File Documentation
 <rule>
@@ -97,3 +85,18 @@ examples:
   good: "// 📄 Handles user authentication state and login/signup logic"
   bad: "// This file is responsible for managing the authentication state and handles the login and signup process for users in the application"
 </rule>
+
+
+learned_fixes:
+  - error: "Git resource deadlock and mmap failures when using multiple Git clients"
+    solution: "Disable Xcode's Git integration and use Cursor exclusively"
+    example: |
+      // Error messages seen:
+      - "fatal: cannot update the ref 'refs/heads/main'"
+      - "mmap failed: Operation timed out"
+      
+      // Solution steps:
+      1. Disable Xcode Git integration
+      2. Clean up Git state
+      3. Use Cursor exclusively
+    context: "Multiple Git clients (Xcode, Cursor) trying to manage the same repository causes resource conflicts and lock files"
