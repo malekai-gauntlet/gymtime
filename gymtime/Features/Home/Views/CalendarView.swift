@@ -4,11 +4,13 @@ import SwiftUI
 
 struct CalendarView: View {
     @ObservedObject var viewModel: HomeViewModel
-    @State private var dragOffset: CGFloat = 0
-    @State private var isDragging = false
+    @State private var scrollOffset: CGFloat = 0
     
-    private let weekDays = ["SU", "MO", "TU", "WE", "TH", "FR", "SA"]
-    private let dragThreshold: CGFloat = 50 // Minimum drag distance to trigger week change
+    private let dayWidth: CGFloat = 50 // Width of each day column
+    @Namespace private var scrollSpace
+    
+    // Custom animation for smooth scrolling
+    private let smoothScroll = Animation.linear(duration: 0.50)
     
     var body: some View {
         VStack(spacing: 16) {
@@ -17,6 +19,7 @@ struct CalendarView: View {
                 Button(action: { viewModel.moveToPreviousMonth() }) {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.gymtimeText)
+                        .imageScale(.large)
                 }
                 
                 Spacer()
@@ -30,60 +33,61 @@ struct CalendarView: View {
                 Button(action: { viewModel.moveToNextMonth() }) {
                     Image(systemName: "chevron.right")
                         .foregroundColor(.gymtimeText)
+                        .imageScale(.large)
                 }
             }
-            .padding(.horizontal)
+            .padding(.horizontal, 24)
             
-            // Week View with Horizontal Swipe
-            HStack(spacing: 0) {
-                ForEach(Array(zip(weekDays, viewModel.calendarState.daysInWeek())), id: \.0) { weekDay, date in
-                    VStack(spacing: 8) {
-                        Text(weekDay)
-                            .font(.caption)
-                            .foregroundColor(.gymtimeTextSecondary)
+            // Scrollable Calendar
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 0) {
+                        // Add padding at start for centering
+                        Spacer()
+                            .frame(width: (UIScreen.main.bounds.width - dayWidth) / 2)
                         
-                        Text("\(Calendar.current.component(.day, from: date))")
-                            .foregroundColor(textColor(for: date))
-                            .frame(width: 36, height: 36)
-                            .background(
-                                Circle()
-                                    .fill(backgroundColor(for: date))
-                                    .overlay(
+                        ForEach(viewModel.calendarState.visibleDates(), id: \.date) { item in
+                            VStack(spacing: 8) {
+                                Text(item.weekday)
+                                    .font(.caption)
+                                    .foregroundColor(.gymtimeTextSecondary)
+                                
+                                Text("\(Calendar.current.component(.day, from: item.date))")
+                                    .foregroundColor(textColor(for: item.date))
+                                    .frame(width: 36, height: 36)
+                                    .background(
                                         Circle()
-                                            .stroke(viewModel.calendarState.isDateToday(date) ? Color.gymtimeAccent : Color.clear, lineWidth: 2)
+                                            .fill(backgroundColor(for: item.date))
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(viewModel.calendarState.isDateToday(item.date) ? Color.gymtimeAccent : Color.clear, lineWidth: 2)
+                                            )
                                     )
-                            )
-                            .onTapGesture {
-                                viewModel.selectDate(date)
+                                    .onTapGesture {
+                                        withAnimation(smoothScroll) {
+                                            viewModel.selectDate(item.date)
+                                            proxy.scrollTo(item.date, anchor: .center)
+                                        }
+                                    }
                             }
+                            .frame(width: dayWidth)
+                            .id(item.date)
+                        }
+                        
+                        // Add padding at end for centering
+                        Spacer()
+                            .frame(width: (UIScreen.main.bounds.width - dayWidth) / 2)
                     }
-                    .frame(maxWidth: .infinity)
+                }
+                .scrollTargetBehavior(.viewAligned)
+                .scrollTargetLayout()
+                .scrollClipDisabled()
+                .onChange(of: viewModel.calendarState.selectedDate) { _, newDate in
+                    withAnimation(smoothScroll) {
+                        proxy.scrollTo(newDate, anchor: .center)
+                    }
                 }
             }
-            .offset(x: dragOffset)
-            .gesture(
-                DragGesture()
-                    .onChanged { gesture in
-                        isDragging = true
-                        dragOffset = gesture.translation.width
-                    }
-                    .onEnded { [viewModel] gesture in
-                        isDragging = false
-                        withAnimation(.easeOut(duration: 0.2)) {
-                            dragOffset = 0
-                        }
-                        
-                        // Determine if we should change weeks
-                        if abs(gesture.translation.width) > dragThreshold {
-                            if gesture.translation.width > 0 {
-                                viewModel.moveToPreviousWeek()
-                            } else {
-                                viewModel.moveToNextWeek()
-                            }
-                        }
-                    }
-            )
-            .animation(isDragging ? nil : .easeOut(duration: 0.2), value: dragOffset)
         }
         .padding(.vertical)
         .background(Color.gymtimeBackground)

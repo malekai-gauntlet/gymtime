@@ -6,6 +6,7 @@ struct CalendarState {
     // Current date being viewed
     private(set) var selectedDate: Date
     private(set) var displayedWeek: Date
+    private let calendar = Calendar.current
     
     // Initialize with current date
     init(initialDate: Date = Date()) {
@@ -17,59 +18,64 @@ struct CalendarState {
     
     mutating func selectDate(_ date: Date) {
         selectedDate = date
-        displayedWeek = date // Move displayed week when selecting a date
+        displayedWeek = date
     }
     
+    mutating func moveToDate(_ date: Date) {
+        displayedWeek = date
+    }
+    
+    // Week Navigation
     mutating func moveToNextWeek() {
-        displayedWeek = Calendar.current.date(byAdding: .weekOfYear, value: 1, to: displayedWeek) ?? displayedWeek
+        if let newDate = calendar.date(byAdding: .weekOfYear, value: 1, to: displayedWeek) {
+            moveToDate(newDate)
+        }
     }
     
     mutating func moveToPreviousWeek() {
-        displayedWeek = Calendar.current.date(byAdding: .weekOfYear, value: -1, to: displayedWeek) ?? displayedWeek
+        if let newDate = calendar.date(byAdding: .weekOfYear, value: -1, to: displayedWeek) {
+            moveToDate(newDate)
+        }
     }
     
+    // Month Navigation
     mutating func moveToNextMonth() {
-        if let newDate = Calendar.current.date(byAdding: .month, value: 1, to: displayedWeek) {
-            // Keep the same week position in the new month
-            let weekOfMonth = Calendar.current.component(.weekOfMonth, from: displayedWeek)
-            let newDateWeekOfMonth = Calendar.current.component(.weekOfMonth, from: newDate)
-            
-            // Adjust to maintain similar week position
-            let weekDiff = weekOfMonth - newDateWeekOfMonth
-            displayedWeek = Calendar.current.date(byAdding: .weekOfMonth, value: weekDiff, to: newDate) ?? newDate
+        if let newDate = calendar.date(byAdding: .month, value: 1, to: displayedWeek) {
+            moveToDate(newDate)
         }
     }
     
     mutating func moveToPreviousMonth() {
-        if let newDate = Calendar.current.date(byAdding: .month, value: -1, to: displayedWeek) {
-            // Keep the same week position in the new month
-            let weekOfMonth = Calendar.current.component(.weekOfMonth, from: displayedWeek)
-            let newDateWeekOfMonth = Calendar.current.component(.weekOfMonth, from: newDate)
-            
-            // Adjust to maintain similar week position
-            let weekDiff = weekOfMonth - newDateWeekOfMonth
-            displayedWeek = Calendar.current.date(byAdding: .weekOfMonth, value: weekDiff, to: newDate) ?? newDate
+        if let newDate = calendar.date(byAdding: .month, value: -1, to: displayedWeek) {
+            moveToDate(newDate)
         }
     }
     
     // MARK: - Calendar Helpers
     
-    func daysInWeek() -> [Date] {
-        let calendar = Calendar.current
-        
-        // Get start of the week containing the displayed date
-        guard let weekInterval = calendar.dateInterval(of: .weekOfYear, for: displayedWeek) else {
+    func dateForOffset(_ offset: CGFloat, dayWidth: CGFloat) -> Date {
+        let dayOffset = Int(round(offset / dayWidth))
+        return calendar.date(byAdding: .day, value: -dayOffset, to: displayedWeek) ?? displayedWeek
+    }
+    
+    func visibleDates(totalDays: Int = 21) -> [(weekday: String, date: Date)] {
+        // Get the start date (going back 10 days from displayed week)
+        guard let startDate = calendar.date(byAdding: .day, value: -(totalDays/2), to: displayedWeek) else {
             return []
         }
         
-        // Create array of dates for the week
-        var dates: [Date] = []
-        var date = weekInterval.start
+        // Create array of dates with their weekday labels
+        var dates: [(weekday: String, date: Date)] = []
+        var currentDate = startDate
         
-        // Add each day of the week
-        while date < weekInterval.end {
-            dates.append(date)
-            date = calendar.date(byAdding: .day, value: 1, to: date) ?? date
+        let weekdayFormatter = DateFormatter()
+        weekdayFormatter.dateFormat = "EE"
+        
+        // Add dates for the total range
+        for _ in 0..<totalDays {
+            let weekday = weekdayFormatter.string(from: currentDate).uppercased()
+            dates.append((weekday: weekday, date: currentDate))
+            currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate) ?? currentDate
         }
         
         return dates
@@ -82,10 +88,10 @@ struct CalendarState {
     }
     
     func isDateSelected(_ date: Date) -> Bool {
-        Calendar.current.isDate(date, equalTo: selectedDate, toGranularity: .day)
+        calendar.isDate(date, equalTo: selectedDate, toGranularity: .day)
     }
     
     func isDateToday(_ date: Date) -> Bool {
-        Calendar.current.isDateInToday(date)
+        calendar.isDateInToday(date)
     }
 } 
