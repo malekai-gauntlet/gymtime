@@ -100,3 +100,25 @@ learned_fixes:
       2. Clean up Git state
       3. Use Cursor exclusively
     context: "Multiple Git clients (Xcode, Cursor) trying to manage the same repository causes resource conflicts and lock files"
+
+
+  - error: "Cannot find 'Config' in scope when accessing configuration values"
+    solution: "Move Config.swift file into the Features directory to make it part of the module's source files"
+    example: |
+      // Before (error):
+      // File structure:
+      gymtime/
+        ├── Config.swift           // In root - not accessible
+        └── Features/
+            └── Home/
+                └── ViewModels/
+                    └── HomeViewModel.swift
+      
+      // After (fixed):
+      gymtime/
+        └── Features/
+            ├── Config.swift       // Moved to Features - accessible
+            └── Home/
+                └── ViewModels/
+                    └── HomeViewModel.swift
+    context: "In Swift modules, source files must be in the correct module directory to be accessible. Files in the project root are not part of the module's source files and cannot be imported or accessed by other files in the module."

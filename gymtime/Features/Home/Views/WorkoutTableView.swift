@@ -74,22 +74,36 @@ struct WorkoutTableView: View {
                 
                 // Record Workout Button and Recording UI
                 VStack(spacing: 16) {
-                    if viewModel.isRecording {
+                    if viewModel.isRecording || viewModel.isProcessing {
                         // Recording UI Container
                         VStack(spacing: 12) {
-                            // Transcript area with minimum height
-                            Text(viewModel.transcript)
-                                .font(.subheadline)
-                                .foregroundColor(.gymtimeText)
-                                .frame(maxWidth: .infinity, minHeight: 50, alignment: .center)
-                                .multilineTextAlignment(.center)
-                                .padding(.horizontal)
-                                .opacity(viewModel.transcript.isEmpty ? 0 : 1)
-                                .animation(.easeIn(duration: 0.1), value: viewModel.transcript)
-                            
-                            // Waveform
-                            WaveformView(audioLevel: viewModel.audioLevel)
-                                .padding(.horizontal)
+                            if viewModel.isProcessing {
+                                // Processing indicator
+                                VStack(spacing: 8) {
+                                    ProgressView()
+                                        .scaleEffect(1.2)
+                                        .accentColor(.gymtimeAccent)
+                                    Text("Processing workout...")
+                                        .font(.subheadline)
+                                        .foregroundColor(.gymtimeText)
+                                }
+                                .frame(maxWidth: .infinity, minHeight: 50)
+                                .padding(.vertical)
+                            } else {
+                                // Transcript area with minimum height
+                                Text(viewModel.transcript)
+                                    .font(.subheadline)
+                                    .foregroundColor(.gymtimeText)
+                                    .frame(maxWidth: .infinity, minHeight: 50, alignment: .center)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal)
+                                    .opacity(viewModel.transcript.isEmpty ? 0 : 1)
+                                    .animation(.easeIn(duration: 0.1), value: viewModel.transcript)
+                                
+                                // Waveform
+                                WaveformView(audioLevel: viewModel.audioLevel)
+                                    .padding(.horizontal)
+                            }
                         }
                         .padding(.vertical)
                         .background(Color.black.opacity(0.3))
@@ -120,6 +134,7 @@ struct WorkoutTableView: View {
                         .background(viewModel.isRecording ? Color.red : Color.gymtimeAccent)
                         .cornerRadius(12)
                     }
+                    .disabled(viewModel.isProcessing)
                 }
                 .padding(.bottom, 65)
                 .zIndex(1)

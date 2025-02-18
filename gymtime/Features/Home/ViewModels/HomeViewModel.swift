@@ -3,22 +3,30 @@
 import Foundation
 import SwiftUI
 
+
 @MainActor
 class HomeViewModel: ObservableObject {
     @Published var workouts: [WorkoutEntry] = []
     @Published var selectedDate: Date = Date()
     
-    // Audio recording service
+    // Services
     private let audioRecordingService = AudioRecordingService()
     private let speechRecognitionService = SpeechRecognitionService()
+    private let workoutParser: WorkoutParser
     
+    // UI State
     @Published var isRecording: Bool = false
+    @Published var isProcessing: Bool = false
     @Published var audioLevel: Float = 0.0
     @Published var transcript: String = ""
     @Published var error: String?
     
     init() {
-        // Initialize any required state
+        // Initialize services
+        let openAIService = OpenAIService(apiKey: Config.openAIApiKey)
+        self.workoutParser = WorkoutParser(openAIService: openAIService)
+        
+        // Initialize state
         loadWorkouts()
         
         // Set up audio level observation
@@ -47,11 +55,35 @@ class HomeViewModel: ObservableObject {
     
     func toggleRecording() {
         if isRecording {
-            audioRecordingService.stopRecording()
-            speechRecognitionService.stopRecording()
+            stopRecording()
         } else {
-            audioRecordingService.startRecording()
-            speechRecognitionService.startRecording()
+            startRecording()
+        }
+    }
+    
+    private func startRecording() {
+        transcript = ""
+        error = nil
+        audioRecordingService.startRecording()
+        speechRecognitionService.startRecording()
+    }
+    
+    private func stopRecording() {
+        audioRecordingService.stopRecording()
+        speechRecognitionService.stopRecording()
+        
+        // Only process if we have a transcript
+        guard !transcript.isEmpty else { return }
+        
+        Task {
+            isProcessing = true
+            do {
+                let workout = try await workoutParser.parse(text: transcript)
+                addWorkout(workout)
+            } catch {
+                self.error = "Failed to process workout: \(error.localizedDescription)"
+            }
+            isProcessing = false
         }
     }
 } 

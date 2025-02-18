@@ -108,6 +108,8 @@ class SpeechRecognitionService: ObservableObject {
         audioEngine.inputNode.removeTap(onBus: 0)
         recognitionTask?.cancel()
         recognitionTask = nil
+        // Clear any error when stopping normally
+        error = nil
     }
     
     deinit {

@@ -21,7 +21,7 @@ Implement voice-based workout logging directly in the HomeView, allowing users t
      - ~~Idle state (microphone icon)~~ ✅
      - ~~Recording state (pulsing animation)~~ ✅
      - Processing state (loading spinner)
-   - Implement screen dimming overlay with tap-to-stop
+   - ~~Implement screen dimming overlay with tap-to-stop~~ ✅
    - ~~Create animated waveform visualization using audio levels~~ ✅
    - ~~Add live transcription display~~ ✅
    - Add processing indicator
@@ -71,7 +71,7 @@ Implement voice-based workout logging directly in the HomeView, allowing users t
 5. Implement OpenAI parsing integration ⏳
 
 ### Phase 3: UI Enhancement 🔄
-1. Implement screen dimming overlay with tap-to-stop ⏳
+1. ~~Implement screen dimming overlay with tap-to-stop~~ ✅
 2. ~~Create waveform visualization using audio levels~~ ✅
 3. ~~Add recording button animations:~~ ✅
    - ~~Idle microphone icon~~ ✅
@@ -149,12 +149,14 @@ struct WorkoutEntry {
 ## Next Steps (Priority Order):
 1. ~~Add waveform visualization for audio levels~~ ✅
 2. ~~Implement Speech Recognition to convert audio to text~~ ✅
-3. Add screen dimming overlay with tap-to-stop functionality ⏳
-4. Set up OpenAI integration for parsing the transcribed text
+3. ~~Add screen dimming overlay with tap-to-stop functionality~~ ✅
+4. Set up OpenAI integration for parsing the transcribed text ⏳
 
-Looking at our progress, we have two main paths forward:
+Now that we have a polished recording UI, the next major step is to implement the OpenAI integration to parse the transcribed text into structured workout data. This will involve:
 
-1. **UI Polish**: Add the screen dimming overlay with tap-to-stop functionality
-2. **Core Functionality**: Set up OpenAI integration to parse the transcribed text into structured workout data
+1. Setting up OpenAI API integration
+2. Creating a parser for the workout text
+3. Implementing the data cleaning helpers
+4. Adding the workout to the table
 
-Which path would you like to tackle next? 
+Would you like to proceed with the OpenAI integration? 
