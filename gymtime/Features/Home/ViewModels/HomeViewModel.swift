@@ -50,6 +50,7 @@ class HomeViewModel: ObservableObject {
     // MARK: - Calendar Management
     
     func selectDate(_ date: Date) {
+        print("🗓️ User selected new date: \(date)")
         calendarState.selectDate(date)
         loadWorkouts()  // Reload and filter workouts for the new date
     }
@@ -86,6 +87,8 @@ class HomeViewModel: ObservableObject {
                     return
                 }
                 
+                print("📅 Loading workouts for selected date: \(calendarState.selectedDate)")
+                
                 let response: [WorkoutEntry] = try await supabase.database
                     .from("workouts")
                     .select()
@@ -94,8 +97,17 @@ class HomeViewModel: ObservableObject {
                     .execute()
                     .value
                 
+                print("📊 Fetched \(response.count) total workouts from Supabase")
+                print("🔍 Workout dates from Supabase:")
+                response.forEach { workout in
+                    print("   • Workout ID: \(workout.id)")
+                    print("     Exercise: \(workout.exercise)")
+                    print("     Date in DB: \(workout.date)")
+                }
+                
                 DispatchQueue.main.async {
                     self.workouts = response
+                    print("🔄 About to filter workouts for date: \(self.calendarState.selectedDate)")
                     self.filterWorkoutsForSelectedDate()
                 }
             } catch {
@@ -108,10 +120,18 @@ class HomeViewModel: ObservableObject {
     private func filterWorkoutsForSelectedDate() {
         let calendar = Calendar.current
         let selectedDate = calendarState.selectedDate
+        print("\n📆 Filtering workouts for selected date: \(selectedDate)")
+        print("Before filtering: \(workouts.count) workouts")
         
         workouts = workouts.filter { workout in
-            calendar.isDate(workout.date, equalTo: selectedDate, toGranularity: .day)
+            let isMatch = calendar.isDate(workout.date, equalTo: selectedDate, toGranularity: .day)
+            print("   • Workout: \(workout.exercise)")
+            print("     Date: \(workout.date)")
+            print("     Matches selected date? \(isMatch)")
+            return isMatch
         }
+        
+        print("After filtering: \(workouts.count) workouts remain\n")
     }
     
     func addWorkout(_ workout: WorkoutEntry) {

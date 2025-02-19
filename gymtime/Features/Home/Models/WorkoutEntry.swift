@@ -47,15 +47,25 @@ struct WorkoutEntry: Identifiable, Codable {
         
         // Decode date with timezone information
         let dateString = try container.decode(String.self, forKey: .date)
-        let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withInternetDateTime] // Include timezone info
+        print("\n📅 Decoding date for workout: \(exercise)")
+        print("   Raw date string from Supabase: \(dateString)")
+        
+        // Create a date formatter for date-only format
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.timeZone = TimeZone.current
         
         if let parsedDate = formatter.date(from: dateString) {
-            // Convert UTC to local time zone's start of day
-            let localDate = Calendar.current.date(byAdding: .second, value: TimeZone.current.secondsFromGMT(), to: parsedDate) ?? parsedDate
-            date = Calendar.current.startOfDay(for: localDate)
+            print("   Parsed date: \(parsedDate)")
+            // Set to start of day in local timezone
+            date = Calendar.current.startOfDay(for: parsedDate)
+            print("   Final date (start of day): \(date)\n")
         } else {
-            date = Calendar.current.startOfDay(for: Date())
+            print("   ⚠️ Failed to parse date string: \(dateString)")
+            throw DecodingError.dataCorrupted(DecodingError.Context(
+                codingPath: container.codingPath,
+                debugDescription: "Date string does not match expected format: \(dateString)"
+            ))
         }
     }
     
