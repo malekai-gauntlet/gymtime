@@ -51,7 +51,7 @@ class HomeViewModel: ObservableObject {
     
     func selectDate(_ date: Date) {
         calendarState.selectDate(date)
-        // TODO: Filter workouts for selected date once persistence is implemented
+        loadWorkouts()  // Reload and filter workouts for the new date
     }
     
     func moveToDate(_ date: Date) {
@@ -88,11 +88,21 @@ class HomeViewModel: ObservableObject {
                 
                 DispatchQueue.main.async {
                     self.workouts = response
+                    self.filterWorkoutsForSelectedDate()
                 }
             } catch {
                 print("Error loading workouts: \(error)")
                 self.error = "Failed to load workouts"
             }
+        }
+    }
+    
+    private func filterWorkoutsForSelectedDate() {
+        let calendar = Calendar.current
+        let selectedDate = calendarState.selectedDate
+        
+        workouts = workouts.filter { workout in
+            calendar.isDate(workout.date, equalTo: selectedDate, toGranularity: .day)
         }
     }
     

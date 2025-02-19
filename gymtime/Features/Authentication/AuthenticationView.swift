@@ -9,7 +9,7 @@ struct AuthenticationView: View {
         NavigationView {
             VStack(spacing: 20) {
                 // App logo/title area
-                Text("gymtime")
+                Text("gymhead")
                     .font(.largeTitle)
                     .fontWeight(.bold)
                 
