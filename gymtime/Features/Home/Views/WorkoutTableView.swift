@@ -124,6 +124,30 @@ struct WorkoutTableView: View {
                         .cornerRadius(16)
                     }
                     
+                    // Plus Button
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            // TODO: Add new workout action
+                            print("Plus button tapped")
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color(.systemGray6))
+                                    .frame(width: 52, height: 52)
+                                    .overlay(
+                                        Circle()
+                                            .strokeBorder(Color.gymtimeAccent.opacity(0.3), lineWidth: 2)
+                                    )
+                                Image(systemName: "plus")
+                                    .font(.system(size: 26, weight: .semibold))
+                                    .foregroundColor(.gymtimeAccent)
+                            }
+                            .shadow(radius: 3, x: 0, y: 1)
+                        }
+                        .padding(.trailing, 31)
+                    }
+                    
                     if let error = viewModel.error {
                         Text(error)
                             .font(.caption)
