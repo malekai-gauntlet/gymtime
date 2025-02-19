@@ -14,7 +14,7 @@ struct CalendarState {
         let now = Date()
         
         // Ensure we're working with the start of the day
-        if let startOfDay = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: now) {
+        if let startOfDay = calendar.date(bySettingHour: 0, minute: 0, second: 0, of: now) {
             self.selectedDate = startOfDay
             self.displayedWeek = startOfDay
         } else {
@@ -27,7 +27,7 @@ struct CalendarState {
     
     mutating func selectDate(_ date: Date) {
         // Ensure we're working with the start of the day
-        if let startOfDay = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: date) {
+        if let startOfDay = calendar.date(bySettingHour: 0, minute: 0, second: 0, of: date) {
             selectedDate = startOfDay
             displayedWeek = startOfDay
         } else {
@@ -38,7 +38,7 @@ struct CalendarState {
     
     mutating func moveToDate(_ date: Date) {
         // Ensure we're working with the start of the day
-        if let startOfDay = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: date) {
+        if let startOfDay = calendar.date(bySettingHour: 0, minute: 0, second: 0, of: date) {
             displayedWeek = startOfDay
         } else {
             displayedWeek = date

@@ -45,12 +45,15 @@ struct WorkoutEntry: Identifiable, Codable {
         reps = try container.decodeIfPresent(Int.self, forKey: .reps)
         notes = try container.decodeIfPresent(String.self, forKey: .notes)
         
-        // Decode date and ensure it's start of day
+        // Decode date with timezone information
         let dateString = try container.decode(String.self, forKey: .date)
         let formatter = ISO8601DateFormatter()
-        formatter.formatOptions = [.withFullDate]
+        formatter.formatOptions = [.withInternetDateTime] // Include timezone info
+        
         if let parsedDate = formatter.date(from: dateString) {
-            date = Calendar.current.startOfDay(for: parsedDate)
+            // Convert UTC to local time zone's start of day
+            let localDate = Calendar.current.date(byAdding: .second, value: TimeZone.current.secondsFromGMT(), to: parsedDate) ?? parsedDate
+            date = Calendar.current.startOfDay(for: localDate)
         } else {
             date = Calendar.current.startOfDay(for: Date())
         }
