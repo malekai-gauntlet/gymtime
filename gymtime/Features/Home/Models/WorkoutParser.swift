@@ -1,12 +1,15 @@
 // 📄 Service for parsing workout text into structured data
 
 import Foundation
+import Supabase
 
 actor WorkoutParser {
     private let openAIService: OpenAIService
+    private let supabase: SupabaseClient
     
-    init(openAIService: OpenAIService) {
+    init(openAIService: OpenAIService, supabase: SupabaseClient) {
         self.openAIService = openAIService
+        self.supabase = supabase
     }
     
     struct ParsedWorkout: Codable {
@@ -29,11 +32,16 @@ actor WorkoutParser {
         
         let parsedWorkouts = try JSONDecoder().decode([ParsedWorkout].self, from: jsonData)
         
+        // Get current user ID
+        guard let userId = try? await supabase.auth.session.user.id else {
+            throw ParserError.noUserId
+        }
+        
         // Clean and validate each workout
-        return try parsedWorkouts.map { try cleanAndValidate($0) }
+        return try parsedWorkouts.map { try cleanAndValidate($0, userId: userId) }
     }
     
-    private func cleanAndValidate(_ parsed: ParsedWorkout) throws -> WorkoutEntry {
+    private func cleanAndValidate(_ parsed: ParsedWorkout, userId: UUID) throws -> WorkoutEntry {
         // Clean exercise name
         let exercise = cleanExerciseName(parsed.exercise)
         guard !exercise.isEmpty else {
@@ -57,7 +65,7 @@ actor WorkoutParser {
         }
         
         return WorkoutEntry(
-            id: UUID(),
+            userId: userId,
             exercise: exercise,
             weight: weight,
             sets: parsed.sets,
@@ -87,5 +95,6 @@ actor WorkoutParser {
         case invalidData
         case missingExercise
         case invalidFormat
+        case noUserId
     }
 } 

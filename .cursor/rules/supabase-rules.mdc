@@ -1,0 +1,176 @@
+---
+description: This rule is helpful for when making any changes with supabase, creating tables, managing data, or auth.
+globs: 
+---
+ ---
+description: Supabase integration guidelines
+applies_to: ["*.swift", "*.sql"]
+version: 0.1.0
+---
+
+# Supabase MVP Development Rules
+
+## Database Design
+<rule>
+name: database_design
+description: Guidelines for Supabase database schema and table design
+patterns:
+  - tables: "*.sql"
+  - models: "*Model.swift"
+
+standards:
+  - Use UUID as primary keys
+  - Add created_at and updated_at timestamps
+  - Keep tables simple and flat
+  - Use nullable columns for new fields
+  - Default to TEXT for string fields
+  - Skip complex relations for MVP
+
+examples:
+  good: |
+    create table workouts (
+      id uuid primary key default gen_random_uuid(),
+      user_id uuid references auth.users,
+      exercise text not null,
+      weight numeric,
+      sets integer,
+      reps integer,
+      notes text,
+      created_at timestamp with time zone default now(),
+      updated_at timestamp with time zone default now()
+    );
+  bad: |
+    create table workouts (
+      id serial primary key,
+      exercise_data jsonb,
+      complex_metadata jsonb,
+      foreign_keys integer[]
+    );
+</rule>
+
+## Security
+<rule>
+name: security_mvp
+description: Simplified security approach for MVP phase
+patterns:
+  - rls: "*.sql"
+  - auth: "*Auth*.swift"
+
+standards:
+  - Disable RLS for rapid development
+  - Use simple public policies if RLS needed
+  - Keep authentication enabled but minimal
+  - Store credentials in environment variables
+
+examples:
+  good: |
+    // Simple RLS if needed
+    alter table workouts enable row level security;
+    create policy "Public access"
+      on workouts
+      for all
+      to authenticated
+      using (true);
+  bad: |
+    // Overly complex for MVP
+    create policy "Complex multi-role access"
+      on workouts
+      for select
+      to authenticated
+      using (
+        auth.uid() = user_id
+        or exists (
+          select 1 from user_roles
+          where role = 'admin'
+        )
+      );
+</rule>
+
+## API Usage
+<rule>
+name: api_usage
+description: Guidelines for Supabase API integration in Swift
+patterns:
+  - api: "*Service.swift"
+  - queries: "*Repository.swift"
+
+standards:
+  - Use single-table operations
+  - Keep queries simple (avoid joins)
+  - Handle errors gracefully but simply
+  - Use async/await for all operations
+  - Skip complex caching for MVP
+
+examples:
+  good: |
+    // Simple, direct queries
+    try await supabase.database
+        .from("workouts")
+        .select()
+        .eq("user_id", userId)
+        .execute()
+
+    // Basic error handling
+    do {
+        try await supabase.database
+            .from("workouts")
+            .insert(workout)
+            .execute()
+    } catch {
+        print("Database error: \(error)")
+    }
+  bad: |
+    // Overly complex for MVP
+    let result = try await supabase.database
+        .from("workouts")
+        .select("""
+            *,
+            user:user_id(name),
+            exercise_details:exercise_id(*)
+        """)
+        .range(0, 49)
+        .order("created_at", ascending: false)
+        .execute()
+</rule>
+
+## Storage
+<rule>
+name: storage_usage
+description: Guidelines for Supabase storage usage
+patterns:
+  - storage: "*Storage*.swift"
+
+standards:
+  - Use public buckets
+  - Keep file paths simple
+  - Skip complex folder structures
+  - Use direct file references
+
+examples:
+  good: |
+    // Simple storage path
+    let path = "\(userId)/\(filename)"
+    try await supabase.storage
+        .from("public")
+        .upload(path: path, file: data)
+  bad: |
+    // Overly complex structure
+    let path = "\(year)/\(month)/\(userId)/\(category)/\(subcategory)/\(filename)"
+</rule>
+
+learned_fixes:
+
+  - error: "RLS policies blocking access in development"
+    solution: "Disable RLS for rapid development"
+    example: |
+      // Before (error):
+      -- Complex RLS causing issues
+      create policy "Restricted access"
+        on workouts for all
+        to authenticated
+        using (auth.uid() = user_id);
+      
+      // After (fixed):
+      -- Disable RLS for development
+      alter table workouts disable row level security;
+    context: "During MVP development, RLS can slow down development. It's better to add proper security policies after core functionality is working."

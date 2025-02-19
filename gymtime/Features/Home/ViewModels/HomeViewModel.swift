@@ -2,7 +2,7 @@
 
 import Foundation
 import SwiftUI
-
+import Supabase
 
 @MainActor
 class HomeViewModel: ObservableObject {
@@ -27,7 +27,7 @@ class HomeViewModel: ObservableObject {
         
         // Initialize services
         let openAIService = OpenAIService(apiKey: Config.openAIApiKey)
-        self.workoutParser = WorkoutParser(openAIService: openAIService)
+        self.workoutParser = WorkoutParser(openAIService: openAIService, supabase: supabase)
         
         // Initialize state
         loadWorkouts()
@@ -77,12 +77,42 @@ class HomeViewModel: ObservableObject {
     // MARK: - Workout Management
     
     func loadWorkouts() {
-        // TODO: Implement workout loading from persistence
+        Task {
+            do {
+                let response: [WorkoutEntry] = try await supabase.database
+                    .from("workouts")
+                    .select()
+                    .order("created_at", ascending: false)
+                    .execute()
+                    .value
+                
+                DispatchQueue.main.async {
+                    self.workouts = response
+                }
+            } catch {
+                print("Error loading workouts: \(error)")
+                self.error = "Failed to load workouts"
+            }
+        }
     }
     
     func addWorkout(_ workout: WorkoutEntry) {
-        workouts.insert(workout, at: 0)
-        // TODO: Implement persistence
+        Task {
+            do {
+                try await supabase.database
+                    .from("workouts")
+                    .insert(workout)
+                    .execute()
+                
+                // Add to local state after successful save
+                DispatchQueue.main.async {
+                    self.workouts.insert(workout, at: 0)
+                }
+            } catch {
+                print("Error saving workout: \(error)")
+                self.error = "Failed to save workout"
+            }
+        }
     }
     
     func updateWorkout(id: UUID, field: String, value: String) {
