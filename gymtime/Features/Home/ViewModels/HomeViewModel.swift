@@ -79,9 +79,17 @@ class HomeViewModel: ObservableObject {
     func loadWorkouts() {
         Task {
             do {
+                // Get current user ID
+                guard let userId = try? await supabase.auth.session.user.id else {
+                    print("Error: No user ID found")
+                    self.error = "Please log in to view workouts"
+                    return
+                }
+                
                 let response: [WorkoutEntry] = try await supabase.database
                     .from("workouts")
                     .select()
+                    .eq("user_id", value: userId)  // Filter by user_id
                     .order("created_at", ascending: false)
                     .execute()
                     .value
