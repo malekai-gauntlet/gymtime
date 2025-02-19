@@ -1,46 +1,83 @@
 /*
  * 🧠 What is this file for?
  * -------------------------
- * This is like the brain behind the Profile screen.
- * It handles all the logic, data processing, and user interactions for the profile.
- * Think of it as a personal trainer who knows all the rules and manages your profile information.
+ * This is the view model that manages the user's profile data and statistics.
+ * It handles loading and calculating workout progress, milestones, and achievements.
  */
 
-
-import Foundation
+import SwiftUI
 import Combine
 
 class ProfileViewModel: ObservableObject {
-    @Published var user: User?
-    
+    // User Info
     @Published var username: String?
     @Published var displayName: String?
-    @Published var bio: String?
-    @Published var publicReposText: String?
-    @Published var publicGistsText: String?
-    @Published var followersText: String?
-    @Published var followingText: String?
     
-    var networkClient: GithubNetworkProvider = GithubNetworkClient()
+    // Stats
+    @Published var totalWorkouts: Int = 0
+    @Published var workoutsThisWeek: Int = 0
+    @Published var weeklyGoal: Int = 3
+    @Published var currentStreak: Int = 0
+    @Published var personalRecords: Int = 0
+    
+    // Milestones and Progress
+    @Published var milestones: [Milestone] = []
+    @Published var progressData: [ProgressPoint] = []
+    
+    private var cancellables = Set<AnyCancellable>()
     
     init() {
-        bind()
+        loadUserProfile()
+        setupMockData() // TODO: Replace with actual data loading
     }
     
-    private func bind() {
-        $user.map({ $0?.login }).assign(to: &$username)
-        $user.map({ $0?.name }).assign(to: &$displayName)
-        $user.map({ $0?.bio }).assign(to: &$bio)
-        $user.map({ "Public repos: \($0?.publicRepos ?? 0)" }).assign(to: &$publicReposText)
-        $user.map({ "Public gists: \($0?.publicGists ?? 0)" }).assign(to: &$publicGistsText)
-        $user.map({ "Followers: \($0?.followers ?? 0)" }).assign(to: &$followersText)
-        $user.map({ "Following: \($0?.following ?? 0)" }).assign(to: &$followingText)
+    private func loadUserProfile() {
+        // TODO: Load from UserDefaults or API
+        username = "malekai"
+        displayName = "Malekai M"
     }
     
-    func getUser(username: String) {
-        networkClient.getUser(username: username)
-            .optionalize()
-            .replaceError(with: nil)
-            .assign(to: &$user)
+    private func setupMockData() {
+        // Mock stats
+        totalWorkouts = 42
+        workoutsThisWeek = 2
+        weeklyGoal = 3
+        currentStreak = 4
+        personalRecords = 12
+        
+        // Mock milestones
+        milestones = [
+            Milestone(id: 1, title: "First Workout", iconName: "figure.walk", color: .green),
+            Milestone(id: 2, title: "10 Workouts", iconName: "flame.fill", color: .orange),
+            Milestone(id: 3, title: "1 Month Streak", iconName: "star.fill", color: .yellow),
+            Milestone(id: 4, title: "100kg Squat", iconName: "bolt.fill", color: .purple),
+            Milestone(id: 5, title: "Marathon Ready", iconName: "figure.run", color: .blue)
+        ]
+        
+        // Mock progress data (last 7 days)
+        progressData = [
+            ProgressPoint(date: Date().addingTimeInterval(-6 * 86400), value: 65),
+            ProgressPoint(date: Date().addingTimeInterval(-5 * 86400), value: 70),
+            ProgressPoint(date: Date().addingTimeInterval(-4 * 86400), value: 68),
+            ProgressPoint(date: Date().addingTimeInterval(-3 * 86400), value: 75),
+            ProgressPoint(date: Date().addingTimeInterval(-2 * 86400), value: 72),
+            ProgressPoint(date: Date().addingTimeInterval(-1 * 86400), value: 80),
+            ProgressPoint(date: Date(), value: 78)
+        ]
     }
+}
+
+// MARK: - Models
+
+struct Milestone: Identifiable {
+    let id: Int
+    let title: String
+    let iconName: String
+    let color: Color
+}
+
+struct ProgressPoint: Identifiable {
+    let id = UUID()
+    let date: Date
+    let value: Double // Percentage or actual value
 }

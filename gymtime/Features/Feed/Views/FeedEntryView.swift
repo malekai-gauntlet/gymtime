@@ -55,15 +55,15 @@ struct FeedEntryView: View {
             
             // Workout Details
             VStack(alignment: .leading, spacing: 8) {
-                // Workout Type as Title
+                // Workout Type as Title - reduced size
                 Text(workout.workoutType)
-                    .font(.system(size: 20, weight: .bold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.primary)
                 
                 // Achievement
                 if !workout.achievement.isEmpty {
                     Text(workout.achievement)
-                        .font(.system(size: 16))
+                        .font(.system(size: 15))
                         .foregroundColor(.primary)
                 }
             }
@@ -79,7 +79,7 @@ struct FeedEntryView: View {
     VStack {
         FeedEntryView(workout: WorkoutFeedEntry(
             id: UUID(),
-            userName: "Robert Spies",
+            userName: "Robert Price",
             workoutType: "Morning Run",
             location: "Deschutes National Forest, Oregon",
             achievement: "27.99 mi • 15,158 ft elevation",

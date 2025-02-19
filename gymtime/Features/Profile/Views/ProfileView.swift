@@ -1,60 +1,196 @@
 /*
  * 🖼️ What is this file for?
  * -------------------------
- * This is like the layout blueprint for the Profile screen.
- * It defines how everything looks and is arranged on the profile page.
- * Think of it as an interior designer that arranges all the visual elements of the profile.
+ * This is the main profile view that shows the user's gym progress and achievements.
+ * It displays workout statistics, milestones, and progress towards goals.
  */
-
 
 import SwiftUI
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
-
-    let username: String
-    let tapOnLinkAction: (URL) -> Void
-    
-    var user: User? {
-        viewModel.user
-    }
     
     var body: some View {
-        VStack(spacing: 10) {
-            Text(viewModel.username ?? "")
-                .font(.title)
-                .leadingAlignment()
-            
-            Text(viewModel.displayName ?? "")
-                .font(.title2)
-                .leadingAlignment()
-            
-            Text(viewModel.bio ?? "")
-            
-            VStack {
-                Text(viewModel.publicReposText ?? "")
-                    .leadingAlignment()
-                Text(viewModel.publicGistsText ?? "")
-                    .leadingAlignment()
-                Text(viewModel.followersText ?? "")
-                    .leadingAlignment()
-                Text(viewModel.followingText ?? "")
-                    .leadingAlignment()
+        ScrollView {
+            VStack(spacing: 24) {
+                // Profile Header
+                VStack(spacing: 16) {
+                    // Profile Image
+                    Circle()
+                        .fill(Color.gray.opacity(0.2))
+                        .frame(width: 80, height: 80)
+                        .overlay(
+                            Text(viewModel.username?.prefix(1).uppercased() ?? "")
+                                .font(.title.bold())
+                                .foregroundColor(.gymtimeText)
+                        )
+                    
+                    // Name and Username
+                    VStack(spacing: 4) {
+                        Text(viewModel.displayName ?? "")
+                            .font(.title2.bold())
+                            .foregroundColor(.gymtimeText)
+                        
+                        Text("@\(viewModel.username ?? "")")
+                            .font(.subheadline)
+                            .foregroundColor(.gymtimeTextSecondary)
+                    }
+                }
+                .padding(.top)
+                
+                // Stats Grid
+                LazyVGrid(columns: [
+                    GridItem(.flexible()),
+                    GridItem(.flexible())
+                ], spacing: 16) {
+                    // Workouts
+                    StatCard(
+                        title: "WORKOUTS",
+                        value: "\(viewModel.totalWorkouts)",
+                        subtitle: "All time"
+                    )
+                    
+                    // Weekly Goal
+                    StatCard(
+                        title: "WEEKLY GOAL",
+                        value: "\(viewModel.workoutsThisWeek)/\(viewModel.weeklyGoal)",
+                        subtitle: "This week"
+                    )
+                    
+                    // Current Streak
+                    StatCard(
+                        title: "CURRENT STREAK",
+                        value: "\(viewModel.currentStreak)",
+                        subtitle: "weeks"
+                    )
+                    
+                    // Personal Records
+                    StatCard(
+                        title: "PERSONAL RECORDS",
+                        value: "\(viewModel.personalRecords)",
+                        subtitle: "All time"
+                    )
+                }
+                .padding(.horizontal)
+                
+                // Milestones Section
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("MILESTONES")
+                        .font(.headline)
+                        .foregroundColor(.gymtimeTextSecondary)
+                        .padding(.horizontal)
+                    
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 12) {
+                            ForEach(viewModel.milestones) { milestone in
+                                MilestoneCard(milestone: milestone)
+                            }
+                        }
+                        .padding(.horizontal)
+                    }
+                }
+                
+                // Progress Section
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("RECENT PROGRESS")
+                        .font(.headline)
+                        .foregroundColor(.gymtimeTextSecondary)
+                        .padding(.horizontal)
+                    
+                    // Progress Chart
+                    ChartView(data: viewModel.progressData)
+                        .frame(height: 200)
+                        .padding(.horizontal)
+                }
+                
+                Spacer(minLength: 32)
             }
+        }
+        .background(Color.gymtimeBackground)
+        .navigationBarTitle("Profile", displayMode: .inline)
+    }
+}
+
+// MARK: - Supporting Views
+
+struct StatCard: View {
+    let title: String
+    let value: String
+    let subtitle: String
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.gymtimeTextSecondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
             
-            Button("Open Github website to see more details") {
-                if let url = user?.htmlURL {
-                    tapOnLinkAction(url)
+            Text(value)
+                .font(.system(size: 32, weight: .bold))
+                .foregroundColor(.gymtimeText)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            Text(subtitle)
+                .font(.caption)
+                .foregroundColor(.gymtimeTextSecondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(16)
+        .background(Color.black.opacity(0.3))
+        .cornerRadius(12)
+    }
+}
+
+struct MilestoneCard: View {
+    let milestone: Milestone
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Image(systemName: milestone.iconName)
+                .font(.system(size: 24))
+                .foregroundColor(milestone.color)
+            
+            Text(milestone.title)
+                .font(.caption)
+                .foregroundColor(.gymtimeText)
+                .multilineTextAlignment(.center)
+        }
+        .frame(width: 80, height: 80)
+        .padding(12)
+        .background(Color.black.opacity(0.3))
+        .cornerRadius(12)
+    }
+}
+
+struct ChartView: View {
+    let data: [ProgressPoint]
+    
+    var body: some View {
+        // Placeholder for actual chart implementation
+        GeometryReader { geometry in
+            Path { path in
+                // Calculate points
+                let points = data.enumerated().map { index, point -> CGPoint in
+                    let x = geometry.size.width * CGFloat(index) / CGFloat(data.count - 1)
+                    let y = geometry.size.height * (1 - CGFloat(point.value) / 100)
+                    return CGPoint(x: x, y: y)
+                }
+                
+                // Draw path
+                if let firstPoint = points.first {
+                    path.move(to: firstPoint)
+                    for point in points.dropFirst() {
+                        path.addLine(to: point)
+                    }
                 }
             }
-            .leadingAlignment()
-            
-            Spacer()
+            .stroke(Color.gymtimeAccent, lineWidth: 2)
         }
-        .padding()
-        .onAppear(perform: {
-            viewModel.getUser(username: username)
-        })
-        .navigationBarTitle("Profile", displayMode: .inline)
+    }
+}
+
+#Preview {
+    NavigationView {
+        ProfileView()
     }
 }

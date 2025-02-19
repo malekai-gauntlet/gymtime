@@ -122,3 +122,43 @@ learned_fixes:
                 └── ViewModels/
                     └── HomeViewModel.swift
     context: "In Swift modules, source files must be in the correct module directory to be accessible. Files in the project root are not part of the module's source files and cannot be imported or accessed by other files in the module."
+
+    learned_fixes:
+  // ... existing fixes ...
+
+
+  - error: "Argument passed to call that takes no arguments when using TabView navigation"
+    solution: "Remove nested NavigationView in tab content and simplify view initialization"
+    example: |
+      // Before (error):
+      struct ProfileView: View {
+          var body: some View {
+              NavigationView {  // Nested NavigationView causes issues
+                  ScrollView { ... }
+              }
+          }
+      }
+      
+      struct ProfileCoordinator: View {
+          let username: String  // Unnecessary parameter
+          var body: some View {
+              NavigationView {
+                  ProfileView(username: username)  // Causes initialization error
+              }
+          }
+      }
+      
+      // After (fixed):
+      struct ProfileView: View {
+          var body: some View {
+              ScrollView { ... }
+                  .navigationBarTitle("Profile", displayMode: .inline)
+          }
+      }
+      
+      struct ProfileCoordinator: View {
+          var body: some View {
+              ProfileView()  // Clean, parameterless initialization
+          }
+      }
+    context: "When using TabView for navigation, each tab's content view is already wrapped in a navigation context. Adding nested NavigationViews can cause initialization and navigation stack issues. Additionally, keeping views parameter-less when possible (using ViewModels for state instead) makes them more reusable in different navigation contexts."

@@ -27,5 +27,3 @@ Comments:
 - Add comments to each file to explain what it does at the top
 - Add detail comments to each function or code blockto explain what it does
 - Use proper naming conventions
-
-

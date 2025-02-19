@@ -15,10 +15,10 @@ struct HomeCoordinator: View {
                 PTView()
                     .tag(1)
                 
-                FeedView()  // Replace placeholder with actual FeedView
+                FeedView()
                     .tag(2)
                 
-                Color.gymtimeBackground  // Placeholder for Profile
+                ProfileView()  // Replace placeholder with actual ProfileView
                     .tag(3)
             }
             .tabViewStyle(.automatic)

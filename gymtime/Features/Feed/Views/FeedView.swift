@@ -14,9 +14,18 @@ struct FeedView: View {
         NavigationView {
             List {
                 ForEach(workouts) { workout in
-                    FeedEntryView(workout: workout)
-                        .listRowInsets(EdgeInsets())
-                        .listRowSeparator(.hidden)
+                    VStack(spacing: 0) {
+                        FeedEntryView(workout: workout)
+                        
+                        if workout.id != workouts.last?.id {
+                            Divider()
+                                .background(Color.gymtimeTextSecondary.opacity(0.2))
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                        }
+                    }
+                    .listRowInsets(EdgeInsets())
+                    .listRowSeparator(.hidden)
                 }
                 
                 if isLoading {
@@ -51,7 +60,7 @@ struct FeedView: View {
         // This is just sample data for now
         workouts = [
             WorkoutFeedEntry(id: UUID(), 
-                           userName: "Robert Spies",
+                           userName: "Robert Price",
                            workoutType: "Morning Run",
                            location: "Deschutes National Forest, Oregon",
                            achievement: "27.99 mi • 15,158 ft elevation",

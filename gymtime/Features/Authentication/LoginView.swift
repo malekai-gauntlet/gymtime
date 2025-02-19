@@ -8,14 +8,22 @@ struct LoginView: View {
         VStack(spacing: 20) {
             // Email field
             TextField("Email", text: $viewModel.email)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .textFieldStyle(.plain)
+                .padding()
+                .background(Color.black.opacity(0.3))
+                .cornerRadius(12)
                 .textContentType(.emailAddress)
                 .autocapitalization(.none)
+                .foregroundColor(.gymtimeText)
             
             // Password field
             SecureField("Password", text: $viewModel.password)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .textFieldStyle(.plain)
+                .padding()
+                .background(Color.black.opacity(0.3))
+                .cornerRadius(12)
                 .textContentType(.password)
+                .foregroundColor(.gymtimeText)
             
             // Login button
             Button(action: {
@@ -24,18 +32,20 @@ struct LoginView: View {
                 }
             }) {
                 Text("Log In")
+                    .font(.headline)
                     .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(Color.blue)
+                    .padding(.vertical, 16)
+                    .background(Color.gymtimeAccent)
                     .foregroundColor(.white)
-                    .cornerRadius(10)
+                    .cornerRadius(12)
             }
             
             // Switch to signup
             Button("Don't have an account? Sign Up") {
                 viewModel.switchFlow()
             }
-            .foregroundColor(.blue)
+            .foregroundColor(.gymtimeAccent)
+            .font(.subheadline)
         }
         .padding(.horizontal)
     }
