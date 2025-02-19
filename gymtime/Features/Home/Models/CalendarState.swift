@@ -10,19 +10,39 @@ struct CalendarState {
     
     // Initialize with current date
     init(initialDate: Date = Date()) {
-        self.selectedDate = initialDate
-        self.displayedWeek = initialDate
+        // Start with the current date
+        let now = Date()
+        
+        // Ensure we're working with the start of the day
+        if let startOfDay = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: now) {
+            self.selectedDate = startOfDay
+            self.displayedWeek = startOfDay
+        } else {
+            self.selectedDate = now
+            self.displayedWeek = now
+        }
     }
     
     // MARK: - Date Management
     
     mutating func selectDate(_ date: Date) {
-        selectedDate = date
-        displayedWeek = date
+        // Ensure we're working with the start of the day
+        if let startOfDay = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: date) {
+            selectedDate = startOfDay
+            displayedWeek = startOfDay
+        } else {
+            selectedDate = date
+            displayedWeek = date
+        }
     }
     
     mutating func moveToDate(_ date: Date) {
-        displayedWeek = date
+        // Ensure we're working with the start of the day
+        if let startOfDay = calendar.date(bySettingHour: 12, minute: 0, second: 0, of: date) {
+            displayedWeek = startOfDay
+        } else {
+            displayedWeek = date
+        }
     }
     
     // Week Navigation

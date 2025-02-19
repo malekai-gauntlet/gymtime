@@ -5,6 +5,7 @@ import SwiftUI
 struct CalendarView: View {
     @ObservedObject var viewModel: HomeViewModel
     @State private var scrollOffset: CGFloat = 0
+    @State private var hasScrolledToToday = false
     
     private let dayWidth: CGFloat = 50 // Width of each day column
     @Namespace private var scrollSpace
@@ -84,6 +85,12 @@ struct CalendarView: View {
                 .scrollClipDisabled()
                 .onChange(of: viewModel.calendarState.selectedDate) { _, newDate in
                     proxy.scrollTo(newDate, anchor: .center)
+                }
+                .onAppear {
+                    if !hasScrolledToToday {
+                        proxy.scrollTo(viewModel.calendarState.selectedDate, anchor: .center)
+                        hasScrolledToToday = true
+                    }
                 }
             }
         }

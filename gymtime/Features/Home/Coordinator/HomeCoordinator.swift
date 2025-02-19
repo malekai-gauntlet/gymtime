@@ -15,7 +15,7 @@ struct HomeCoordinator: View {
                 PTView()
                     .tag(1)
                 
-                Color.gymtimeBackground  // Placeholder for Feed
+                FeedView()  // Replace placeholder with actual FeedView
                     .tag(2)
                 
                 Color.gymtimeBackground  // Placeholder for Profile

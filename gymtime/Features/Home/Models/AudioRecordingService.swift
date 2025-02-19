@@ -76,10 +76,15 @@ class AudioRecordingService: ObservableObject {
             
             self.audioRecorder?.updateMeters()
             let level = self.audioRecorder?.averagePower(forChannel: 0) ?? -160
-            let normalizedLevel = pow(10, level / 20)
+            
+            // Enhanced normalization for better sensitivity
+            // Adjust range from -160...0 to 0...1 with enhanced sensitivity for speech
+            let minDb: Float = -60  // Focus on speech-relevant range
+            let normalizedLevel = max(0.0, min(1.0, (level - minDb) / abs(minDb)))
+            let enhancedLevel = pow(normalizedLevel, 0.5)  // Square root to enhance lower levels
             
             DispatchQueue.main.async {
-                self.audioLevel = normalizedLevel
+                self.audioLevel = enhancedLevel
             }
         }
     }
