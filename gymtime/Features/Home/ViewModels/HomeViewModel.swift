@@ -163,15 +163,40 @@ class HomeViewModel: ObservableObject {
     
     func deleteWorkout(id: UUID) {
         print("🗑️ Delete workout requested for id: \(id)")
-        if let index = workouts.firstIndex(where: { $0.id == id }) {
-            print("📍 Found workout at index: \(index)")
-            print("📝 Workout details before deletion: \(workouts[index])")
-            withAnimation {
-                workouts.remove(at: index)
-            }
-            print("✅ Workout successfully removed from array")
-        } else {
+        
+        // Store the index before deletion for rollback if needed
+        guard let index = workouts.firstIndex(where: { $0.id == id }) else {
             print("❌ No workout found with id: \(id)")
+            return
+        }
+        
+        let deletedWorkout = workouts[index]
+        print("📍 Found workout at index: \(index)")
+        print("📝 Workout details before deletion: \(deletedWorkout)")
+        
+        // Remove from local state immediately for responsive UI
+        withAnimation {
+            workouts.remove(at: index)
+        }
+        
+        // Delete from Supabase
+        Task {
+            do {
+                try await supabase.database
+                    .from("workouts")
+                    .delete()
+                    .eq("id", value: id)
+                    .execute()
+                
+                print("✅ Workout successfully deleted from Supabase")
+            } catch {
+                print("❌ Failed to delete workout from Supabase: \(error)")
+                // Rollback local state if Supabase deletion fails
+                DispatchQueue.main.async {
+                    self.workouts.insert(deletedWorkout, at: index)
+                    self.error = "Failed to delete workout"
+                }
+            }
         }
     }
     
