@@ -23,6 +23,23 @@ struct AuthenticationView: View {
                 } else {
                     SignUpView(viewModel: viewModel)
                 }
+                
+                // Skip Signup button
+                Button(action: {
+                    Task {
+                        await viewModel.signInAnonymously()
+                    }
+                }) {
+                    Text("Skip Signup")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(Color.black)
+                .cornerRadius(12)
+                .padding(.horizontal)
+                .disabled(viewModel.isLoading)
             }
             .padding()
             .navigationBarHidden(true)

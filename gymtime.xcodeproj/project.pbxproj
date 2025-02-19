@@ -21,6 +21,13 @@
 		43A601E0265268BD00B24B9D /* TestUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43A601DF265268BD00B24B9D /* TestUtils.swift */; };
 		43A601E526526AAC00B24B9D /* MockNetworkClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43A601E426526AAC00B24B9D /* MockNetworkClient.swift */; };
 		43A601FF2652780100B24B9D /* View+Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43A601FE2652780100B24B9D /* View+Utils.swift */; };
+		890552692D665DD300FED78D /* Auth in Frameworks */ = {isa = PBXBuildFile; productRef = 890552682D665DD300FED78D /* Auth */; };
+		8905526B2D665DD300FED78D /* Functions in Frameworks */ = {isa = PBXBuildFile; productRef = 8905526A2D665DD300FED78D /* Functions */; };
+		8905526D2D665DD300FED78D /* PostgREST in Frameworks */ = {isa = PBXBuildFile; productRef = 8905526C2D665DD300FED78D /* PostgREST */; };
+		8905526F2D665DD300FED78D /* Realtime in Frameworks */ = {isa = PBXBuildFile; productRef = 8905526E2D665DD300FED78D /* Realtime */; };
+		890552712D665DD300FED78D /* Storage in Frameworks */ = {isa = PBXBuildFile; productRef = 890552702D665DD300FED78D /* Storage */; };
+		890552732D665E8800FED78D /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 890552722D665E8800FED78D /* Supabase */; };
+		890552752D665F6000FED78D /* Supabase.swift in Sources */ = {isa = PBXBuildFile; fileRef = 890552742D665F2B00FED78D /* Supabase.swift */; };
 		894D7AA92D63E0AF00291911 /* .gitignore in Resources */ = {isa = PBXBuildFile; fileRef = 894D7AA82D63E0A700291911 /* .gitignore */; };
 /* End PBXBuildFile section */
 
@@ -52,6 +59,7 @@
 		43A601DF265268BD00B24B9D /* TestUtils.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestUtils.swift; sourceTree = "<group>"; };
 		43A601E426526AAC00B24B9D /* MockNetworkClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockNetworkClient.swift; sourceTree = "<group>"; };
 		43A601FE2652780100B24B9D /* View+Utils.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = "View+Utils.swift"; sourceTree = "<group>"; };
+		890552742D665F2B00FED78D /* Supabase.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Supabase.swift; sourceTree = "<group>"; };
 		894D7AA82D63E0A700291911 /* .gitignore */ = {isa = PBXFileReference; lastKnownFileType = text; path = .gitignore; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -66,6 +74,12 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				890552732D665E8800FED78D /* Supabase in Frameworks */,
+				890552712D665DD300FED78D /* Storage in Frameworks */,
+				8905526D2D665DD300FED78D /* PostgREST in Frameworks */,
+				8905526B2D665DD300FED78D /* Functions in Frameworks */,
+				890552692D665DD300FED78D /* Auth in Frameworks */,
+				8905526F2D665DD300FED78D /* Realtime in Frameworks */,
 				43A6019E26522CFF00B24B9D /* Alamofire in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -83,9 +97,11 @@
 		43736D722652280700CE4368 = {
 			isa = PBXGroup;
 			children = (
+				890552742D665F2B00FED78D /* Supabase.swift */,
 				894D7AA82D63E0A700291911 /* .gitignore */,
 				43736D7D2652280700CE4368 /* gymtime */,
 				43A601CB265267C000B24B9D /* gymtime tests */,
+				89D43C282D665576000644BC /* Frameworks */,
 				43736D7C2652280700CE4368 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -187,6 +203,13 @@
 			path = Extensions;
 			sourceTree = "<group>";
 		};
+		89D43C282D665576000644BC /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -210,6 +233,12 @@
 			name = gymtime;
 			packageProductDependencies = (
 				43A6019D26522CFF00B24B9D /* Alamofire */,
+				890552682D665DD300FED78D /* Auth */,
+				8905526A2D665DD300FED78D /* Functions */,
+				8905526C2D665DD300FED78D /* PostgREST */,
+				8905526E2D665DD300FED78D /* Realtime */,
+				890552702D665DD300FED78D /* Storage */,
+				890552722D665E8800FED78D /* Supabase */,
 			);
 			productName = gymtime;
 			productReference = 43736D7B2652280700CE4368 /* gymtime.app */;
@@ -262,6 +291,7 @@
 			mainGroup = 43736D722652280700CE4368;
 			packageReferences = (
 				43A6019C26522CFF00B24B9D /* XCRemoteSwiftPackageReference "Alamofire" */,
+				890552672D665DD300FED78D /* XCRemoteSwiftPackageReference "supabase-swift" */,
 			);
 			productRefGroup = 43736D7C2652280700CE4368 /* Products */;
 			projectDirPath = "";
@@ -306,6 +336,7 @@
 				43552DAA2653B8CF00E97D8D /* Publisher+Utils.swift in Sources */,
 				43552D7526535EC100E97D8D /* Binding+Utils.swift in Sources */,
 				43552D892653777800E97D8D /* User.swift in Sources */,
+				890552752D665F6000FED78D /* Supabase.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -582,6 +613,14 @@
 				minimumVersion = 5.4.3;
 			};
 		};
+		890552672D665DD300FED78D /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase-community/supabase-swift.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.5.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -589,6 +628,36 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 43A6019C26522CFF00B24B9D /* XCRemoteSwiftPackageReference "Alamofire" */;
 			productName = Alamofire;
+		};
+		890552682D665DD300FED78D /* Auth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 890552672D665DD300FED78D /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Auth;
+		};
+		8905526A2D665DD300FED78D /* Functions */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 890552672D665DD300FED78D /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Functions;
+		};
+		8905526C2D665DD300FED78D /* PostgREST */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 890552672D665DD300FED78D /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = PostgREST;
+		};
+		8905526E2D665DD300FED78D /* Realtime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 890552672D665DD300FED78D /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Realtime;
+		};
+		890552702D665DD300FED78D /* Storage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 890552672D665DD300FED78D /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Storage;
+		};
+		890552722D665E8800FED78D /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 890552672D665DD300FED78D /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

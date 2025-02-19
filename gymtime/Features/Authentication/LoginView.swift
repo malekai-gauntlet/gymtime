@@ -15,6 +15,7 @@ struct LoginView: View {
                 .textContentType(.emailAddress)
                 .autocapitalization(.none)
                 .foregroundColor(.gymtimeText)
+                .disabled(viewModel.isLoading)
             
             // Password field
             SecureField("Password", text: $viewModel.password)
@@ -24,6 +25,14 @@ struct LoginView: View {
                 .cornerRadius(12)
                 .textContentType(.password)
                 .foregroundColor(.gymtimeText)
+                .disabled(viewModel.isLoading)
+            
+            // Error message
+            if let error = viewModel.error {
+                Text(error.localizedDescription)
+                    .foregroundColor(.red)
+                    .font(.caption)
+            }
             
             // Login button
             Button(action: {
@@ -31,14 +40,20 @@ struct LoginView: View {
                     await viewModel.signIn()
                 }
             }) {
-                Text("Log In")
-                    .font(.headline)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(Color.gymtimeAccent)
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
+                if viewModel.isLoading {
+                    ProgressView()
+                        .tint(.white)
+                } else {
+                    Text("Log In")
+                        .font(.headline)
+                }
             }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(Color.gymtimeAccent)
+            .foregroundColor(.white)
+            .cornerRadius(12)
+            .disabled(viewModel.isLoading)
             
             // Switch to signup
             Button("Don't have an account? Sign Up") {
@@ -46,6 +61,7 @@ struct LoginView: View {
             }
             .foregroundColor(.gymtimeAccent)
             .font(.subheadline)
+            .disabled(viewModel.isLoading)
         }
         .padding(.horizontal)
     }
