@@ -23,38 +23,42 @@ struct PTView: View {
                         }
                     }
                     
-                    // Debug Info for Testing
                     if let analysis = viewModel.analysisResults {
+                        // Push/Pull Card
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Push/Pull Ratio: \(analysis.pushPullRatio, specifier: "%.2f")")
                                 .foregroundColor(viewModel.isPushPullBalanced ? .green : .red)
-                            
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.gray.opacity(0.2))
+                        .cornerRadius(12)
+                        
+                        // Warnings Card
+                        VStack(alignment: .leading, spacing: 12) {
                             Text("Warnings:")
                                 .font(.headline)
                             ForEach(viewModel.warnings, id: \.self) { warning in
                                 Text("• \(warning)")
                                     .foregroundColor(.red)
                             }
-                            
+                        }
+                        .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.gray.opacity(0.2))
+                        .cornerRadius(12)
+                        
+                        // Recommendations Card
+                        VStack(alignment: .leading, spacing: 12) {
                             Text("Recommendations:")
                                 .font(.headline)
                             ForEach(viewModel.recommendations, id: \.self) { recommendation in
                                 Text("• \(recommendation)")
                                     .foregroundColor(.blue)
                             }
-                            
-                            Text("Muscle Group Scores:")
-                                .font(.headline)
-                            ForEach(WorkoutAnalysis.knownMuscleGroups, id: \.self) { group in
-                                HStack {
-                                    Text(group.capitalized)
-                                    Spacer()
-                                    Text("\(viewModel.strengthScore(for: group), specifier: "%.0f")")
-                                        .foregroundColor(viewModel.needsAttention(group) ? .red : .green)
-                                }
-                            }
                         }
                         .padding()
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color.gray.opacity(0.2))
                         .cornerRadius(12)
                     }
