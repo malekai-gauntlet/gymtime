@@ -10,7 +10,7 @@ struct SwipeArea: View {
     
     var body: some View {
         Rectangle()
-            .fill(Color.red.opacity(0.1)) // Temporary to see the area
+            .fill(.clear) // No visible tint
             .contentShape(Rectangle())
             .gesture(
                 DragGesture()
@@ -46,9 +46,16 @@ struct HomeView: View {
                             .foregroundColor(.gymtimeText)
                         
                         Spacer()
+                        
+                        if !viewModel.aiWorkoutSummary.isEmpty {
+                            Text(viewModel.aiWorkoutSummary)
+                                .font(.subheadline)
+                                .foregroundColor(.gymtimeTextSecondary)
+                                .animation(.easeInOut, value: viewModel.aiWorkoutSummary)
+                        }
                     }
                 }
-                .padding(.horizontal, 24)
+                .padding(.horizontal, 12)
                 .padding(.vertical)
                 .background(Color.gymtimeBackground)
                 
@@ -60,13 +67,15 @@ struct HomeView: View {
                     // SwipeArea fills available space
                     GeometryReader { geometry in
                         SwipeArea { isRight in
-                            if isRight {
-                                viewModel.selectDate(Calendar.current.date(byAdding: .day, value: -1, to: viewModel.calendarState.selectedDate) ?? Date())
-                            } else {
-                                viewModel.selectDate(Calendar.current.date(byAdding: .day, value: 1, to: viewModel.calendarState.selectedDate) ?? Date())
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                if isRight {
+                                    viewModel.selectDate(Calendar.current.date(byAdding: .day, value: -1, to: viewModel.calendarState.selectedDate) ?? Date())
+                                } else {
+                                    viewModel.selectDate(Calendar.current.date(byAdding: .day, value: 1, to: viewModel.calendarState.selectedDate) ?? Date())
+                                }
                             }
                         }
-                        .frame(height: viewModel.workouts.isEmpty ? 200 : 100) // Adjust height based on workouts
+                        .frame(height: viewModel.workouts.isEmpty ? 300 : 150) // Adjust height based on workouts
                         .frame(maxHeight: .infinity, alignment: .bottom)
                         .padding(.bottom, 140) // Stay above buttons
                         .allowsHitTesting(true)

@@ -8,6 +8,10 @@ struct CalendarState {
     private(set) var displayedWeek: Date
     private let calendar = Calendar.current
     
+    // Constants for date range
+    private let bufferWeeks = 2 // Number of weeks to buffer on each side
+    private let visibleWeeks = 5 // Number of weeks to show at once
+    
     // Initialize with current date
     init(initialDate: Date = Date()) {
         // Start with the current date
@@ -78,8 +82,11 @@ struct CalendarState {
         return calendar.date(byAdding: .day, value: -dayOffset, to: displayedWeek) ?? displayedWeek
     }
     
-    func visibleDates(totalDays: Int = 21) -> [(weekday: String, date: Date)] {
-        // Get the start date (going back 10 days from displayed week)
+    func visibleDates() -> [(weekday: String, date: Date)] {
+        // Calculate total days to show (buffer weeks + visible weeks + buffer weeks)
+        let totalDays = (bufferWeeks * 2 + visibleWeeks) * 7
+        
+        // Get the start date (going back buffer weeks from displayed week)
         guard let startDate = calendar.date(byAdding: .day, value: -(totalDays/2), to: displayedWeek) else {
             return []
         }
@@ -101,10 +108,11 @@ struct CalendarState {
         return dates
     }
     
-    func monthYearString() -> String {
+    // Get the month and year for a specific date
+    func monthYearString(for date: Date? = nil) -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "MMMM yyyy"
-        return formatter.string(from: displayedWeek)
+        return formatter.string(from: date ?? displayedWeek)
     }
     
     func isDateSelected(_ date: Date) -> Bool {
@@ -113,5 +121,12 @@ struct CalendarState {
     
     func isDateToday(_ date: Date) -> Bool {
         calendar.isDateInToday(date)
+    }
+    
+    // Helper to determine if a date is within the buffer zone
+    func isDateInBufferZone(_ date: Date) -> Bool {
+        let daysFromDisplayed = calendar.dateComponents([.day], from: displayedWeek, to: date).day ?? 0
+        let bufferDays = bufferWeeks * 7
+        return abs(daysFromDisplayed) > bufferDays
     }
 } 

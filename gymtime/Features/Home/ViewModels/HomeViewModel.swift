@@ -20,6 +20,54 @@ class HomeViewModel: ObservableObject {
     @Published var audioLevel: Float = 0.0
     @Published var transcript: String = ""
     @Published var error: String?
+    @Published var aiWorkoutSummary: String = ""
+    
+    // MARK: - Computed Properties
+    
+    var workoutSummary: String {
+        // If no workouts, return empty string
+        guard !workouts.isEmpty else { return "" }
+        
+        // Get unique exercises
+        let exercises = Set(workouts.map { $0.exercise.split(separator: " ").first?.description ?? $0.exercise })
+        
+        // If only one type of exercise
+        if exercises.count == 1 {
+            return exercises.first!
+        }
+        
+        // If 2-3 exercises, join with +
+        if exercises.count <= 3 {
+            return exercises.joined(separator: " + ")
+        }
+        
+        // If more than 3, show first two and count
+        let first = Array(exercises.prefix(2))
+        return "\(first.joined(separator: " + ")) +\(exercises.count - 2)"
+    }
+    
+    private func generateWorkoutSummary() async {
+        guard !workouts.isEmpty else {
+            self.aiWorkoutSummary = ""
+            return
+        }
+        
+        // Create a simple description of the workouts
+        let workoutDescriptions = workouts.map { workout in
+            "\(workout.exercise) (\(workout.sets ?? 0)x\(workout.reps ?? 0))"
+        }.joined(separator: ", ")
+        
+        do {
+            let prompt = "Summarize this workout in 3-4 words (e.g. 'Upper Body + Core', 'Full Body Circuit', 'Legs + Cardio', 'Push Day', or 'Back & Biceps'): \(workoutDescriptions)"
+            
+            let summary = try await workoutParser.summarizeWorkout(text: prompt)
+            self.aiWorkoutSummary = summary
+        } catch {
+            print("Failed to generate workout summary: \(error)")
+            // Fallback to basic summary
+            self.aiWorkoutSummary = self.workoutSummary
+        }
+    }
     
     init() {
         // Initialize calendar state
@@ -144,6 +192,11 @@ class HomeViewModel: ObservableObject {
         }
         
         print("After filtering: \(workouts.count) workouts remain\n")
+        
+        // Generate new summary when workouts change
+        Task {
+            await generateWorkoutSummary()
+        }
     }
     
     func addWorkout(_ workout: WorkoutEntry) {

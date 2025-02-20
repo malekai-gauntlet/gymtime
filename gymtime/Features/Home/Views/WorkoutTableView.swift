@@ -49,7 +49,7 @@ struct WorkoutTableView: View {
                                     .foregroundColor(.gymtimeTextSecondary)
                             }
                             .frame(maxWidth: .infinity)
-                            .frame(height: 200) // Fixed height when empty
+                            .frame(height: 300) // Fixed height when empty
                             .listRowBackground(Color.gymtimeBackground)
                             .listRowSeparator(.hidden)
                             .listRowInsets(EdgeInsets())

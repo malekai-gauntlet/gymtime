@@ -91,6 +91,15 @@ actor WorkoutParser {
         return Double(numbers)
     }
     
+    func summarizeWorkout(text: String) async throws -> String {
+        // Get response from OpenAI
+        let response = try await openAIService.generateCompletion(prompt: text)
+        
+        // Clean up any quotes or extra whitespace
+        return response.trimmingCharacters(in: .whitespacesAndNewlines)
+            .trimmingCharacters(in: CharacterSet(charactersIn: "\"'"))
+    }
+    
     enum ParserError: Error {
         case invalidData
         case missingExercise
