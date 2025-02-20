@@ -31,6 +31,48 @@ class OpenAIService {
     }
     
     func generateCompletion(prompt: String) async throws -> String {
+        return try await makeRequest(
+            prompt: prompt,
+            model: "gpt-3.5-turbo",
+            systemPrompt: """
+            You are a fitness tracking assistant. Parse the workout description into one or more exercises.
+            Return a JSON array where each exercise contains:
+            - exercise: (required) name of the exercise
+            - duration: time spent (e.g. '10 minutes', '30 seconds')
+            - weight: any weight/resistance used
+            - sets: number of sets
+            - reps: reps per set
+            - notes: any additional details or context
+
+            Return as a JSON array even for single exercises. Examples:
+            "10 minutes of abs" → [{"exercise": "Ab Workout", "duration": "10 mins"}]
+            "Bench press 185lbs 3x5" → [{"exercise": "Bench Press", "weight": "185", "sets": 3, "reps": 5}]
+            """
+        )
+    }
+    
+    func generateSummary(prompt: String) async throws -> String {
+        return try await makeRequest(
+            prompt: prompt,
+            model: "gpt-4",
+            systemPrompt: """
+            You are a fitness tracking assistant that creates concise, natural workout summaries.
+            Summarize the workout in 3-4 words using common fitness terminology.
+            Focus on the main muscle groups or workout type.
+            Use "+" to combine different focuses.
+            DO NOT return JSON formatting or quotes.
+
+            Examples:
+            - "Upper Body + Core"
+            - "Full Body Circuit"
+            - "Legs + Cardio"
+            - "Push Day"
+            - "Back & Biceps"
+            """
+        )
+    }
+    
+    private func makeRequest(prompt: String, model: String, systemPrompt: String) async throws -> String {
         guard let url = URL(string: endpoint) else {
             throw OpenAIError.invalidURL
         }
@@ -43,22 +85,9 @@ class OpenAIService {
         
         // Prepare the request body
         let body: [String: Any] = [
-            "model": "gpt-3.5-turbo",
+            "model": model,
             "messages": [
-                ["role": "system", "content": """
-                You are a fitness tracking assistant. Parse the workout description into one or more exercises.
-                Return a JSON array where each exercise contains:
-                - exercise: (required) name of the exercise
-                - duration: time spent (e.g. '10 minutes', '30 seconds')
-                - weight: any weight/resistance used
-                - sets: number of sets
-                - reps: reps per set
-                - notes: any additional details or context
-
-                Return as a JSON array even for single exercises. Examples:
-                "10 minutes of abs" → [{"exercise": "Ab Workout", "duration": "10 mins"}]
-                "Bench press 185lbs 3x5" → [{"exercise": "Bench Press", "weight": "185", "sets": 3, "reps": 5}]
-                """],
+                ["role": "system", "content": systemPrompt],
                 ["role": "user", "content": prompt]
             ],
             "temperature": 0.7

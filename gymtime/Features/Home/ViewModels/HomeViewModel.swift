@@ -14,6 +14,9 @@ class HomeViewModel: ObservableObject {
     private let speechRecognitionService = SpeechRecognitionService()
     private let workoutParser: WorkoutParser
     
+    // Cache for workout summaries
+    private var summaryCache: [Date: String] = [:]
+    
     // UI State
     @Published var isRecording: Bool = false
     @Published var isProcessing: Bool = false
@@ -53,6 +56,13 @@ class HomeViewModel: ObservableObject {
     }
     
     private func loadDailySummary() async {
+        let selectedDate = calendarState.selectedDate
+        
+        // Immediately show cached summary if available
+        if let cachedSummary = summaryCache[selectedDate] {
+            self.aiWorkoutSummary = cachedSummary
+        }
+        
         guard let userId = try? await supabase.auth.session.user.id else { return }
         
         do {
@@ -60,18 +70,20 @@ class HomeViewModel: ObservableObject {
                 .from("daily_workout_summaries")
                 .select()
                 .eq("user_id", value: userId)
-                .eq("date", value: calendarState.selectedDate)
+                .eq("date", value: selectedDate)
                 .execute()
                 .value
             
             if let existingSummary = response.first?.summary {
                 self.aiWorkoutSummary = existingSummary
+                summaryCache[selectedDate] = existingSummary
             } else {
                 // No existing summary, generate a new one if we have workouts
                 if !workouts.isEmpty {
                     await generateWorkoutSummary()
                 } else {
                     self.aiWorkoutSummary = ""
+                    summaryCache[selectedDate] = ""
                 }
             }
         } catch {
@@ -80,12 +92,16 @@ class HomeViewModel: ObservableObject {
                 await generateWorkoutSummary()
             } else {
                 self.aiWorkoutSummary = ""
+                summaryCache[selectedDate] = ""
             }
         }
     }
     
     private func saveDailySummary(_ summary: String) async {
         guard let userId = try? await supabase.auth.session.user.id else { return }
+        
+        // Update cache immediately
+        summaryCache[calendarState.selectedDate] = summary
         
         let dailySummary = DailyWorkoutSummary(
             userId: userId,
@@ -107,6 +123,9 @@ class HomeViewModel: ObservableObject {
     }
     
     private func deleteDailySummary() async {
+        // Clear cache immediately
+        summaryCache[calendarState.selectedDate] = ""
+        
         guard let userId = try? await supabase.auth.session.user.id else { return }
         
         do {
