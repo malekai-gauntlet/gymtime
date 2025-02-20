@@ -12,7 +12,7 @@ struct HomeCoordinator: View {
                 HomeView(viewModel: viewModel)
                     .tag(0)
                 
-                PTView()
+                PTView(viewModel: PTViewModel(homeViewModel: viewModel))
                     .tag(1)
                 
                 FeedView()

@@ -3,6 +3,8 @@
 import SwiftUI
 
 struct PTView: View {
+    @StateObject var viewModel: PTViewModel
+    
     var body: some View {
         VStack(spacing: 0) {
             ScrollView {
@@ -16,74 +18,64 @@ struct PTView: View {
                             
                             Spacer()
                             
-                            Button(action: {}) {
-                                Image(systemName: "info.circle")
-                                    .foregroundColor(.gray)
-                            }
-                            
-                            Button(action: {}) {
-                                Image(systemName: "chevron.right")
-                                    .foregroundColor(.red)
+                            if viewModel.isLoading {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
                             }
                         }
                         
-                        HStack(spacing: 8) {
-                            Image(systemName: "lock.fill")
-                                .foregroundColor(.gray)
-                            
-                            // Gray bars
-                            ForEach(0..<10, id: \.self) { _ in
-                                Rectangle()
-                                    .fill(Color.gray.opacity(0.3))
-                                    .frame(height: 8)
-                            }
-                        }
-                        
-                        Text("Hit every muscle to unlock this score")
-                            .foregroundColor(.gray)
-                            .font(.footnote)
-                        
-                        // Muscle Group Cards
-                        VStack(spacing: 12) {
-                            MuscleGroupCard(title: "Push Muscles", strength: "00")
-                            MuscleGroupCard(title: "Pull Muscles", strength: "00")
-                        }
-                    }
-                    .padding(.horizontal)
-                    
-                    // Anterior Muscles to Work Section
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text("Anterior Muscles to Work")
-                            .font(.title3.weight(.semibold))
-                            .foregroundColor(.white)
-                        
-                        // Apple Health Card
-                        VStack(alignment: .leading, spacing: 8) {
-                            HStack {
-                                Text("Use Apple Health?")
-                                    .foregroundColor(.white)
-                                    .font(.callout.weight(.medium))
+                        // Debug Info for Testing
+                        if let analysis = viewModel.analysisResults {
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Push/Pull Ratio: \(analysis.pushPullRatio, specifier: "%.2f")")
+                                    .foregroundColor(viewModel.isPushPullBalanced ? .green : .red)
                                 
-                                Spacer()
-                                
-                                Button(action: {}) {
-                                    Image(systemName: "xmark")
+                                Text("Warnings:")
+                                    .font(.headline)
+                                ForEach(viewModel.warnings, id: \.self) { warning in
+                                    Text("• \(warning)")
                                         .foregroundColor(.red)
                                 }
+                                
+                                Text("Recommendations:")
+                                    .font(.headline)
+                                ForEach(viewModel.recommendations, id: \.self) { recommendation in
+                                    Text("• \(recommendation)")
+                                        .foregroundColor(.blue)
+                                }
+                                
+                                Text("Muscle Group Scores:")
+                                    .font(.headline)
+                                ForEach(WorkoutAnalysis.knownMuscleGroups, id: \.self) { group in
+                                    HStack {
+                                        Text(group.capitalized)
+                                        Spacer()
+                                        Text("\(viewModel.strengthScore(for: group), specifier: "%.0f")")
+                                            .foregroundColor(viewModel.needsAttention(group) ? .red : .green)
+                                    }
+                                }
                             }
-                            
-                            Text("Use body composition stats and")
-                                .foregroundColor(.gray)
-                                .font(.footnote)
+                            .padding()
+                            .background(Color.gray.opacity(0.2))
+                            .cornerRadius(12)
                         }
-                        .padding()
-                        .background(Color.gray.opacity(0.2))
-                        .cornerRadius(12)
+                        
+                        // Original Muscle Group Cards
+                        VStack(spacing: 12) {
+                            MuscleGroupCard(title: "Push Muscles", strength: "\(Int(viewModel.strengthScore(for: "chest")))")
+                            MuscleGroupCard(title: "Pull Muscles", strength: "\(Int(viewModel.strengthScore(for: "back")))")
+                        }
                     }
                     .padding(.horizontal)
                 }
             }
             .padding(.top)
+            
+            if let error = viewModel.error {
+                Text(error)
+                    .foregroundColor(.red)
+                    .padding()
+            }
             
             Spacer()
         }
@@ -119,5 +111,5 @@ struct MuscleGroupCard: View {
 }
 
 #Preview {
-    PTView()
+    PTView(viewModel: PTViewModel.preview)
 } 
