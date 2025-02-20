@@ -24,17 +24,11 @@ class HomeViewModel: ObservableObject {
     @Published var transcript: String = ""
     @Published var error: String?
     @Published var aiWorkoutSummary: String = ""
+    @Published var isLoadingSummary: Bool = false
     
     // MARK: - Computed Properties
     
     private func generateWorkoutSummary() async {
-        guard !workouts.isEmpty else {
-            self.aiWorkoutSummary = ""
-            // Delete any existing summary for this day
-            await deleteDailySummary()
-            return
-        }
-        
         // Create a simple description of the workouts
         let workoutDescriptions = workouts.map { workout in
             "\(workout.exercise) (\(workout.sets ?? 0)x\(workout.reps ?? 0))"
@@ -44,101 +38,50 @@ class HomeViewModel: ObservableObject {
             let prompt = "Summarize this workout in 3-4 words (e.g. 'Upper Body + Core', 'Full Body Circuit', 'Legs + Cardio', 'Push Day', or 'Back & Biceps'): \(workoutDescriptions)"
             
             let summary = try await workoutParser.summarizeWorkout(text: prompt)
+            
+            // Save to Supabase
+            let dailySummary = DailyWorkoutSummary(
+                userId: try await supabase.auth.session.user.id,
+                date: calendarState.selectedDate,
+                summary: summary
+            )
+            
+            try await supabase.database
+                .from("daily_workout_summaries")
+                .upsert(dailySummary, onConflict: "user_id,date")
+                .execute()
+            
+            // Update UI
             self.aiWorkoutSummary = summary
             
-            // Save the summary to Supabase
-            await saveDailySummary(summary)
         } catch {
-            print("Failed to generate workout summary: \(error)")
-            // Just clear the summary on error
+            print("Failed to generate/save workout summary: \(error)")
             self.aiWorkoutSummary = ""
         }
     }
     
     private func loadDailySummary() async {
-        let selectedDate = calendarState.selectedDate
-        
-        // Immediately show cached summary if available
-        if let cachedSummary = summaryCache[selectedDate] {
-            self.aiWorkoutSummary = cachedSummary
+        // Clear summary if no workouts
+        if workouts.isEmpty {
+            self.aiWorkoutSummary = ""
+            return
         }
-        
-        guard let userId = try? await supabase.auth.session.user.id else { return }
         
         do {
             let response: [DailyWorkoutSummary] = try await supabase.database
                 .from("daily_workout_summaries")
                 .select()
-                .eq("user_id", value: userId)
-                .eq("date", value: selectedDate)
+                .eq("user_id", value: try await supabase.auth.session.user.id)
+                .eq("date", value: calendarState.selectedDate)
                 .execute()
                 .value
             
-            if let existingSummary = response.first?.summary {
-                self.aiWorkoutSummary = existingSummary
-                summaryCache[selectedDate] = existingSummary
-            } else {
-                // No existing summary, generate a new one if we have workouts
-                if !workouts.isEmpty {
-                    await generateWorkoutSummary()
-                } else {
-                    self.aiWorkoutSummary = ""
-                    summaryCache[selectedDate] = ""
-                }
-            }
+            // Only set summary if one exists
+            self.aiWorkoutSummary = response.first?.summary ?? ""
+            
         } catch {
             print("Error loading daily summary: \(error)")
-            if !workouts.isEmpty {
-                await generateWorkoutSummary()
-            } else {
-                self.aiWorkoutSummary = ""
-                summaryCache[selectedDate] = ""
-            }
-        }
-    }
-    
-    private func saveDailySummary(_ summary: String) async {
-        guard let userId = try? await supabase.auth.session.user.id else { return }
-        
-        // Update cache immediately
-        summaryCache[calendarState.selectedDate] = summary
-        
-        let dailySummary = DailyWorkoutSummary(
-            userId: userId,
-            date: calendarState.selectedDate,
-            summary: summary
-        )
-        
-        do {
-            // Upsert the summary (insert if not exists, update if exists)
-            try await supabase.database
-                .from("daily_workout_summaries")
-                .upsert(dailySummary)
-                .execute()
-            
-            print("✅ Successfully saved daily summary")
-        } catch {
-            print("❌ Failed to save daily summary: \(error)")
-        }
-    }
-    
-    private func deleteDailySummary() async {
-        // Clear cache immediately
-        summaryCache[calendarState.selectedDate] = ""
-        
-        guard let userId = try? await supabase.auth.session.user.id else { return }
-        
-        do {
-            try await supabase.database
-                .from("daily_workout_summaries")
-                .delete()
-                .eq("user_id", value: userId)
-                .eq("date", value: calendarState.selectedDate)
-                .execute()
-            
-            print("✅ Successfully deleted daily summary")
-        } catch {
-            print("❌ Failed to delete daily summary: \(error)")
+            self.aiWorkoutSummary = ""
         }
     }
     
@@ -253,20 +196,12 @@ class HomeViewModel: ObservableObject {
     private func filterWorkoutsForSelectedDate() {
         let calendar = Calendar.current
         let selectedDate = calendarState.selectedDate
-        print("\n📆 Filtering workouts for selected date: \(selectedDate)")
-        print("Before filtering: \(workouts.count) workouts")
         
         workouts = workouts.filter { workout in
-            let isMatch = calendar.isDate(workout.date, equalTo: selectedDate, toGranularity: .day)
-            print("   • Workout: \(workout.exercise)")
-            print("     Date: \(workout.date)")
-            print("     Matches selected date? \(isMatch)")
-            return isMatch
+            calendar.isDate(workout.date, equalTo: selectedDate, toGranularity: .day)
         }
         
-        print("After filtering: \(workouts.count) workouts remain\n")
-        
-        // Load or generate summary when workouts change
+        // Load existing summary for the filtered workouts
         Task {
             await loadDailySummary()
         }
@@ -283,6 +218,12 @@ class HomeViewModel: ObservableObject {
                 // Add to local state after successful save
                 DispatchQueue.main.async {
                     self.workouts.insert(workout, at: 0)
+                    // Generate new summary after adding workout
+                    Task { [self] in
+                        self.isLoadingSummary = true
+                        await self.generateWorkoutSummary()
+                        self.isLoadingSummary = false
+                    }
                 }
             } catch {
                 print("Error saving workout: \(error)")

@@ -50,10 +50,19 @@ struct HomeView: View {
                         if !viewModel.aiWorkoutSummary.isEmpty {
                             Text(viewModel.aiWorkoutSummary
                                 .trimmingCharacters(in: CharacterSet(charactersIn: "[]\""))
+                                + " Day"
                             )
                                 .font(.subheadline)
                                 .foregroundColor(.gymtimeTextSecondary)
                                 .animation(.easeInOut, value: viewModel.aiWorkoutSummary)
+                        } else if viewModel.isLoadingSummary {
+                            HStack(spacing: 4) {
+                                Text("Summarizing")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gymtimeTextSecondary)
+                                ProgressView()
+                                    .scaleEffect(0.7)
+                            }
                         }
                     }
                 }
