@@ -102,28 +102,50 @@ struct FeedView: View {
         isLoading = true
         defer { isLoading = false }
         
-        // TODO: Implement actual workout loading logic
-        // This is just sample data for now
-        workouts = [
-            WorkoutFeedEntry(id: UUID(), 
-                           userName: "Robert Price",
-                           workoutType: "Morning Run",
-                           location: "Deschutes National Forest, Oregon",
-                           achievement: "27.99 mi • 15,158 ft elevation",
-                           timestamp: Date()),
-            WorkoutFeedEntry(id: UUID(),
-                           userName: "Sarah Chen",
-                           workoutType: "Strength Training",
-                           location: "LifeTime Sky NYC",
-                           achievement: "Bench Press: 225lbs × 5 • Deadlift: 315lbs × 3",
-                           timestamp: Date().addingTimeInterval(-3600)),
-            WorkoutFeedEntry(id: UUID(),
-                           userName: "Mike Johnson",
-                           workoutType: "Evening HIIT",
-                           location: "Home Gym",
-                           achievement: "45 min • 650 cal burned",
-                           timestamp: Date().addingTimeInterval(-7200))
-        ]
+        do {
+            // Fetch workouts from Supabase
+            let response: [WorkoutEntry] = try await supabase.database
+                .from("workouts")
+                .select()
+                .order("date", ascending: false)
+                .limit(10)
+                .execute()
+                .value
+            
+            // Map WorkoutEntry to WorkoutFeedEntry
+            workouts = response.map { workout in
+                WorkoutFeedEntry(
+                    id: workout.id,
+                    userName: "User \(workout.userId.uuidString.prefix(4))", // Temporary user display
+                    workoutType: workout.exercise,
+                    location: "Gym", // Default location for now
+                    achievement: formatAchievement(workout),
+                    timestamp: workout.date
+                )
+            }
+        } catch {
+            showingError = true
+            errorMessage = "Failed to load workouts: \(error.localizedDescription)"
+        }
+    }
+    
+    // Helper function to format the achievement string
+    private func formatAchievement(_ workout: WorkoutEntry) -> String {
+        var parts: [String] = []
+        
+        if let weight = workout.weight {
+            parts.append("\(Int(weight))lbs")
+        }
+        
+        if let sets = workout.sets, let reps = workout.reps {
+            parts.append("\(sets)×\(reps)")
+        }
+        
+        if let notes = workout.notes {
+            parts.append(notes)
+        }
+        
+        return parts.isEmpty ? "Completed workout" : parts.joined(separator: " • ")
     }
 }
 

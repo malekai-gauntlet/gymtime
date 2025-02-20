@@ -12,7 +12,7 @@ struct HomeCoordinator: View {
                 HomeView(viewModel: viewModel)
                     .tag(0)
                 
-                PTView(viewModel: PTViewModel(homeViewModel: viewModel))
+                PTView(viewModel: PTViewModel(homeViewModel: viewModel), selectedTab: $selectedTab)
                     .tag(1)
                 
                 FeedView()

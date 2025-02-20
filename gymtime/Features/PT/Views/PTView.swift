@@ -4,6 +4,7 @@ import SwiftUI
 
 struct PTView: View {
     @StateObject var viewModel: PTViewModel
+    @Binding var selectedTab: Int
     
     var body: some View {
         ScrollView {
@@ -81,10 +82,7 @@ struct PTView: View {
                                 .foregroundColor(.gymtimeTextSecondary)
                             
                             Button(action: {
-                                // Switch to Log tab (index 0)
-                                if let tabSelection = (UIApplication.shared.windows.first?.rootViewController as? UITabBarController)?.selectedIndex {
-                                    (UIApplication.shared.windows.first?.rootViewController as? UITabBarController)?.selectedIndex = 0
-                                }
+                                selectedTab = 0  // Switch to Home tab
                             }) {
                                 HStack {
                                     Image(systemName: "plus.circle.fill")
@@ -174,5 +172,5 @@ struct PTView: View {
 }
 
 #Preview {
-    PTView(viewModel: PTViewModel.preview)
+    PTView(viewModel: PTViewModel.preview, selectedTab: .constant(1))
 } 
