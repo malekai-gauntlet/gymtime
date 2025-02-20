@@ -48,7 +48,9 @@ struct HomeView: View {
                         Spacer()
                         
                         if !viewModel.aiWorkoutSummary.isEmpty {
-                            Text(viewModel.aiWorkoutSummary)
+                            Text(viewModel.aiWorkoutSummary
+                                .trimmingCharacters(in: CharacterSet(charactersIn: "[]\""))
+                            )
                                 .font(.subheadline)
                                 .foregroundColor(.gymtimeTextSecondary)
                                 .animation(.easeInOut, value: viewModel.aiWorkoutSummary)

@@ -24,31 +24,11 @@ class HomeViewModel: ObservableObject {
     
     // MARK: - Computed Properties
     
-    var workoutSummary: String {
-        // If no workouts, return empty string
-        guard !workouts.isEmpty else { return "" }
-        
-        // Get unique exercises
-        let exercises = Set(workouts.map { $0.exercise.split(separator: " ").first?.description ?? $0.exercise })
-        
-        // If only one type of exercise
-        if exercises.count == 1 {
-            return exercises.first!
-        }
-        
-        // If 2-3 exercises, join with +
-        if exercises.count <= 3 {
-            return exercises.joined(separator: " + ")
-        }
-        
-        // If more than 3, show first two and count
-        let first = Array(exercises.prefix(2))
-        return "\(first.joined(separator: " + ")) +\(exercises.count - 2)"
-    }
-    
     private func generateWorkoutSummary() async {
         guard !workouts.isEmpty else {
             self.aiWorkoutSummary = ""
+            // Delete any existing summary for this day
+            await deleteDailySummary()
             return
         }
         
@@ -62,10 +42,84 @@ class HomeViewModel: ObservableObject {
             
             let summary = try await workoutParser.summarizeWorkout(text: prompt)
             self.aiWorkoutSummary = summary
+            
+            // Save the summary to Supabase
+            await saveDailySummary(summary)
         } catch {
             print("Failed to generate workout summary: \(error)")
-            // Fallback to basic summary
-            self.aiWorkoutSummary = self.workoutSummary
+            // Just clear the summary on error
+            self.aiWorkoutSummary = ""
+        }
+    }
+    
+    private func loadDailySummary() async {
+        guard let userId = try? await supabase.auth.session.user.id else { return }
+        
+        do {
+            let response: [DailyWorkoutSummary] = try await supabase.database
+                .from("daily_workout_summaries")
+                .select()
+                .eq("user_id", value: userId)
+                .eq("date", value: calendarState.selectedDate)
+                .execute()
+                .value
+            
+            if let existingSummary = response.first?.summary {
+                self.aiWorkoutSummary = existingSummary
+            } else {
+                // No existing summary, generate a new one if we have workouts
+                if !workouts.isEmpty {
+                    await generateWorkoutSummary()
+                } else {
+                    self.aiWorkoutSummary = ""
+                }
+            }
+        } catch {
+            print("Error loading daily summary: \(error)")
+            if !workouts.isEmpty {
+                await generateWorkoutSummary()
+            } else {
+                self.aiWorkoutSummary = ""
+            }
+        }
+    }
+    
+    private func saveDailySummary(_ summary: String) async {
+        guard let userId = try? await supabase.auth.session.user.id else { return }
+        
+        let dailySummary = DailyWorkoutSummary(
+            userId: userId,
+            date: calendarState.selectedDate,
+            summary: summary
+        )
+        
+        do {
+            // Upsert the summary (insert if not exists, update if exists)
+            try await supabase.database
+                .from("daily_workout_summaries")
+                .upsert(dailySummary)
+                .execute()
+            
+            print("✅ Successfully saved daily summary")
+        } catch {
+            print("❌ Failed to save daily summary: \(error)")
+        }
+    }
+    
+    private func deleteDailySummary() async {
+        guard let userId = try? await supabase.auth.session.user.id else { return }
+        
+        do {
+            try await supabase.database
+                .from("daily_workout_summaries")
+                .delete()
+                .eq("user_id", value: userId)
+                .eq("date", value: calendarState.selectedDate)
+                .execute()
+            
+            print("✅ Successfully deleted daily summary")
+        } catch {
+            print("❌ Failed to delete daily summary: \(error)")
         }
     }
     
@@ -193,9 +247,9 @@ class HomeViewModel: ObservableObject {
         
         print("After filtering: \(workouts.count) workouts remain\n")
         
-        // Generate new summary when workouts change
+        // Load or generate summary when workouts change
         Task {
-            await generateWorkoutSummary()
+            await loadDailySummary()
         }
     }
     
