@@ -48,8 +48,8 @@ struct WorkoutTableView: View {
                                     .font(.headline)
                                     .foregroundColor(.gymtimeTextSecondary)
                             }
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .padding(.top, 60)
+                            .frame(maxWidth: .infinity)
+                            .frame(height: 200) // Fixed height when empty
                             .listRowBackground(Color.gymtimeBackground)
                             .listRowSeparator(.hidden)
                             .listRowInsets(EdgeInsets())
@@ -78,7 +78,6 @@ struct WorkoutTableView: View {
                                     .tint(.red)
                                 }
                             }
-                            .transition(.opacity.combined(with: .move(edge: .trailing)))
                         }
                     }
                     .listStyle(.plain)
@@ -128,7 +127,6 @@ struct WorkoutTableView: View {
                     HStack {
                         Spacer()
                         Button(action: {
-                            // TODO: Add new workout action
                             print("Plus button tapped")
                         }) {
                             ZStack {
@@ -175,7 +173,7 @@ struct WorkoutTableView: View {
                     .disabled(viewModel.isProcessing)
                 }
                 .padding(.bottom, 25)
-                .zIndex(1)
+                .zIndex(2) // Ensure buttons are above swipe area
             }
             
             // Dimming Overlay

@@ -2,9 +2,33 @@
 
 import SwiftUI
 
+// SwipeArea view to handle horizontal swipes
+struct SwipeArea: View {
+    let onSwipe: (Bool) -> Void // true for right, false for left
+    @GestureState private var translation: CGFloat = 0
+    private let swipeThreshold: CGFloat = 50
+    
+    var body: some View {
+        Rectangle()
+            .fill(Color.red.opacity(0.1)) // Temporary to see the area
+            .contentShape(Rectangle())
+            .gesture(
+                DragGesture()
+                    .updating($translation) { value, state, _ in
+                        state = value.translation.width
+                    }
+                    .onEnded { gesture in
+                        if abs(gesture.translation.width) > swipeThreshold {
+                            onSwipe(gesture.translation.width > 0)
+                        }
+                    }
+            )
+    }
+}
+
 struct HomeView: View {
     @ObservedObject var viewModel: HomeViewModel
-    @State private var selectedTab: Int = 0  // Add state for selected tab
+    @State private var selectedTab: Int = 0
     @State private var showingVoiceLogger = false
     
     var body: some View {
@@ -28,15 +52,30 @@ struct HomeView: View {
                 .padding(.vertical)
                 .background(Color.gymtimeBackground)
                 
-                // Workout Table
-                WorkoutTableView(workouts: $viewModel.workouts, viewModel: viewModel)
+                // Workout Table with SwipeArea
+                ZStack {
+                    WorkoutTableView(workouts: $viewModel.workouts, viewModel: viewModel)
+                        .allowsHitTesting(true) // Ensure workout interactions still work
+                    
+                    // SwipeArea fills available space
+                    GeometryReader { geometry in
+                        SwipeArea { isRight in
+                            if isRight {
+                                viewModel.selectDate(Calendar.current.date(byAdding: .day, value: -1, to: viewModel.calendarState.selectedDate) ?? Date())
+                            } else {
+                                viewModel.selectDate(Calendar.current.date(byAdding: .day, value: 1, to: viewModel.calendarState.selectedDate) ?? Date())
+                            }
+                        }
+                        .frame(height: viewModel.workouts.isEmpty ? 200 : 100) // Adjust height based on workouts
+                        .frame(maxHeight: .infinity, alignment: .bottom)
+                        .padding(.bottom, 140) // Stay above buttons
+                        .allowsHitTesting(true)
+                        .zIndex(1) // Between table and buttons
+                    }
+                }
             }
             .background(Color.gymtimeBackground)
             .sheet(isPresented: $showingVoiceLogger) {
-                // Temporarily comment out VoiceWorkoutLogger until we create it
-                // VoiceWorkoutLogger { workout in
-                //     viewModel.addWorkout(workout)
-                // }
                 Text("Voice Logger Coming Soon")
             }
         }

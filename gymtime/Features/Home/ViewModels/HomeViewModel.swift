@@ -55,6 +55,18 @@ class HomeViewModel: ObservableObject {
         loadWorkouts()  // Reload and filter workouts for the new date
     }
     
+    // MARK: - Swipe Gesture Logging
+    
+    func logSwipeGestureStart() {
+        print("👆 Swipe gesture started")
+    }
+    
+    func logSwipeGestureEnd(direction: String, succeeded: Bool) {
+        print("👆 Swipe gesture ended")
+        print("   Direction: \(direction)")
+        print("   Successfully changed date: \(succeeded)")
+    }
+    
     func moveToDate(_ date: Date) {
         calendarState.moveToDate(date)
     }
