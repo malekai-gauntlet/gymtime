@@ -21,16 +21,16 @@
 ## 2. Initial Testing Setup
 
 ### 2.1 Connect to HomeViewModel
-- [ ] Update PTViewModel
-  - [ ] Implement workout observer using Combine
-  - [ ] Add preview with sample data
-  - [ ] Test data transformation logic
+- [x] Update PTViewModel
+  - [x] Implement workout observer using Combine
+  - [x] Add preview with sample data
+  - [x] Test data transformation logic
 
 ### 2.2 Basic Integration
-- [ ] Update PTView
-  - [ ] Add PTViewModel as ObservedObject
-  - [ ] Add simple text display of analysis results
-  - [ ] Add basic error handling
+- [x] Update PTView
+  - [x] Add PTViewModel as ObservedObject
+  - [x] Add simple text display of analysis results
+  - [x] Add basic error handling
 
 ### 2.3 Testing Scenarios
 - [ ] Test with real workout data
@@ -59,12 +59,6 @@
   - Recommendation icon
   - Recommendation text
   - Styling
-
-### 3.2 Create Muscle Balance Components
-- [ ] Update existing `MuscleGroupCard`
-  - Add real strength calculation
-  - Add progress indicators
-  - Add warning indicators
 
 ## 4. Integration
 
