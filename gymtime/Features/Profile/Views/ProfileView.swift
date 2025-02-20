@@ -62,7 +62,15 @@ struct ProfileView: View {
                             )
                         
                         // Name and Username with Edit Button
-                        HStack {
+                        VStack(spacing: 8) {
+                            Button {
+                                showingEditProfile = true
+                            } label: {
+                                Image(systemName: "pencil.circle.fill")
+                                    .font(.title2)
+                                    .foregroundColor(.gymtimeAccent)
+                            }
+                            
                             VStack(spacing: 4) {
                                 Text(viewModel.displayName ?? "")
                                     .font(.title2.bold())
@@ -72,15 +80,6 @@ struct ProfileView: View {
                                     .font(.subheadline)
                                     .foregroundColor(.gymtimeTextSecondary)
                             }
-                            
-                            Button {
-                                showingEditProfile = true
-                            } label: {
-                                Image(systemName: "pencil.circle.fill")
-                                    .font(.title2)
-                                    .foregroundColor(.gymtimeAccent)
-                            }
-                            .padding(.leading, 8)
                         }
                     }
                     .padding(.top)
