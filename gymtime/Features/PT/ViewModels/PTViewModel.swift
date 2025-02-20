@@ -44,8 +44,8 @@ class PTViewModel: ObservableObject {
     // MARK: - Public Methods
     
     /// Manually trigger a refresh of the analysis
-    func refreshAnalysis() {
-        analyzeWorkouts()
+    func refreshAnalysis() async {
+        await analyzeWorkouts()
     }
     
     // MARK: - Private Methods
@@ -55,45 +55,50 @@ class PTViewModel: ObservableObject {
         homeViewModel.$workouts
             .debounce(for: .seconds(0.5), scheduler: DispatchQueue.main)  // Prevent rapid updates
             .sink { [weak self] _ in
-                self?.analyzeWorkouts()
+                Task {
+                    await self?.analyzeWorkouts()
+                }
             }
             .store(in: &cancellables)
     }
     
-    private func analyzeWorkouts() {
+    private func analyzeWorkouts() async {
         // Cancel any existing analysis task
         analysisTask?.cancel()
         
-        analysisTask = Task {
-            do {
-                isLoading = true
-                error = nil
-                
-                // Convert HomeViewModel workouts to analyzer format
-                let workoutEntries = homeViewModel.workouts.map { workout in
-                    MuscleBalanceAnalyzer.WorkoutEntry(
-                        exercise: workout.exercise,
-                        weight: workout.weight ?? 0,
-                        sets: workout.sets ?? 0,
-                        reps: workout.reps ?? 0,
-                        date: workout.date
-                    )
-                }
-                
-                // Perform analysis
-                let analysis = try analyzer.analyzeWorkouts(workoutEntries)
-                
-                // Update UI
-                if !Task.isCancelled {
-                    self.analysisResults = analysis
-                    self.isLoading = false
-                }
-            } catch {
-                if !Task.isCancelled {
-                    self.error = error.localizedDescription
-                    self.isLoading = false
-                }
+        do {
+            isLoading = true
+            error = nil
+            
+            // Check if there are any workouts
+            guard !homeViewModel.workouts.isEmpty else {
+                // Clear any existing analysis and set a friendly message
+                self.analysisResults = nil
+                self.error = nil
+                self.isLoading = false
+                return
             }
+            
+            // Convert HomeViewModel workouts to analyzer format
+            let workoutEntries = homeViewModel.workouts.map { workout in
+                MuscleBalanceAnalyzer.WorkoutEntry(
+                    exercise: workout.exercise,
+                    weight: workout.weight ?? 0,
+                    sets: workout.sets ?? 0,
+                    reps: workout.reps ?? 0,
+                    date: workout.date
+                )
+            }
+            
+            // Perform analysis
+            let analysis = try analyzer.analyzeWorkouts(workoutEntries)
+            
+            // Update UI
+            self.analysisResults = analysis
+            self.isLoading = false
+        } catch {
+            self.error = error.localizedDescription
+            self.isLoading = false
         }
     }
     

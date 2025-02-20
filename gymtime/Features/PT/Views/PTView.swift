@@ -61,6 +61,47 @@ struct PTView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color.gray.opacity(0.2))
                         .cornerRadius(12)
+                    } else if !viewModel.isLoading && viewModel.error == nil {
+                        // Welcome message for new users
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                Image(systemName: "figure.strengthtraining.traditional")
+                                    .font(.system(size: 32))
+                                    .foregroundColor(.gymtimeAccent)
+                                
+                                Text("Get Started")
+                                    .font(.title2)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.gymtimeText)
+                                
+                                Spacer()
+                            }
+                            
+                            Text("Log your first workout to receive personalized training insights.")
+                                .foregroundColor(.gymtimeTextSecondary)
+                            
+                            Button(action: {
+                                // Switch to Log tab (index 0)
+                                if let tabSelection = (UIApplication.shared.windows.first?.rootViewController as? UITabBarController)?.selectedIndex {
+                                    (UIApplication.shared.windows.first?.rootViewController as? UITabBarController)?.selectedIndex = 0
+                                }
+                            }) {
+                                HStack {
+                                    Image(systemName: "plus.circle.fill")
+                                    Text("Add Workout")
+                                }
+                                .padding(.horizontal, 24)
+                                .padding(.vertical, 12)
+                                .frame(maxWidth: .infinity)
+                                .background(Color.gymtimeAccent)
+                                .foregroundColor(.white)
+                                .cornerRadius(12)
+                            }
+                        }
+                        .padding(24)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.gray.opacity(0.2))
+                        .cornerRadius(12)
                     }
                 }
                 .padding(.horizontal)
@@ -72,6 +113,9 @@ struct PTView: View {
                 }
             }
             .padding(.top)
+        }
+        .refreshable {
+            await viewModel.refreshAnalysis()
         }
         .background(Color.black)
     }
