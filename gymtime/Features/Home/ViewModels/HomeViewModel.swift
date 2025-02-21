@@ -25,6 +25,19 @@ class HomeViewModel: ObservableObject {
     @Published var error: String?
     @Published var aiWorkoutSummary: String = ""
     @Published var isLoadingSummary: Bool = false
+    @Published var isSuggestionsVisible: Bool = false
+    @Published var suggestedWorkouts: [WorkoutEntry] = []  // Holds suggestion data
+    
+    // Dummy suggestion data
+    private func getDummySuggestions() async -> [WorkoutEntry] {
+        guard let userId = try? await supabase.auth.session.user.id else { return [] }
+        
+        return [
+            WorkoutEntry(userId: userId, exercise: "Bench Press", weight: 135, sets: 3, reps: 10),
+            WorkoutEntry(userId: userId, exercise: "Squats", weight: 185, sets: 4, reps: 8),
+            WorkoutEntry(userId: userId, exercise: "Deadlifts", weight: 225, sets: 3, reps: 5)
+        ]
+    }
     
     // MARK: - Computed Properties
     
@@ -333,6 +346,24 @@ class HomeViewModel: ObservableObject {
                 self.error = "Failed to process workout: \(error.localizedDescription)"
             }
             isProcessing = false
+        }
+    }
+    
+    // MARK: - Suggestion Management
+    
+    func toggleSuggestions() {
+        isSuggestionsVisible.toggle()
+        
+        Task {
+            if isSuggestionsVisible {
+                // Load suggestions when showing
+                suggestedWorkouts = await getDummySuggestions()
+            } else {
+                // Clear suggestions when hiding
+                suggestedWorkouts.removeAll()
+            }
+            print("🔄 Suggestions visibility toggled: \(isSuggestionsVisible)")
+            print("📝 Loaded \(suggestedWorkouts.count) suggestions")
         }
     }
 } 

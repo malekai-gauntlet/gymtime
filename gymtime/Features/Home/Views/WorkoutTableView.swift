@@ -39,7 +39,7 @@ struct WorkoutTableView: View {
                     
                     // Table Content
                     List {
-                        if workouts.isEmpty {
+                        if workouts.isEmpty && viewModel.suggestedWorkouts.isEmpty {
                             VStack(spacing: 8) {
                                 Image(systemName: "dumbbell.fill")
                                     .font(.system(size: 24))
@@ -54,6 +54,7 @@ struct WorkoutTableView: View {
                             .listRowSeparator(.hidden)
                             .listRowInsets(EdgeInsets())
                         } else {
+                            // Regular workouts
                             ForEach(workouts) { workout in
                                 WorkoutRow(
                                     workout: workout,
@@ -77,6 +78,34 @@ struct WorkoutTableView: View {
                                     }
                                     .tint(.red)
                                 }
+                            }
+                            
+                            // Suggested workouts
+                            ForEach(viewModel.suggestedWorkouts) { suggestion in
+                                WorkoutRow(
+                                    workout: suggestion,
+                                    exerciseWidth: exerciseWidth,
+                                    weightWidth: weightWidth,
+                                    setsWidth: setsWidth,
+                                    repsWidth: repsWidth,
+                                    notesWidth: notesWidth,
+                                    viewModel: viewModel
+                                )
+                                .listRowInsets(EdgeInsets())
+                                .listRowBackground(Color.gymtimeBackground)
+                                .opacity(0.4)  // Increased fade (was 0.6)
+                                .overlay(
+                                    Button(action: {
+                                        print("✅ Adding suggestion: \(suggestion.exercise)")
+                                        // TODO: Add selection handling
+                                    }) {
+                                        Image(systemName: "checkmark.circle")
+                                            .foregroundColor(.gymtimeAccent)
+                                            .font(.system(size: 24))
+                                    }
+                                    .padding(.trailing, 16),
+                                    alignment: .trailing
+                                )
                             }
                         }
                     }
@@ -128,6 +157,7 @@ struct WorkoutTableView: View {
                         Spacer()
                         Button(action: {
                             print("Plus button tapped")
+                            viewModel.toggleSuggestions()
                         }) {
                             ZStack {
                                 Circle()
@@ -137,7 +167,7 @@ struct WorkoutTableView: View {
                                         Circle()
                                             .strokeBorder(Color.gymtimeAccent.opacity(0.3), lineWidth: 2)
                                     )
-                                Image(systemName: "plus")
+                                Image(systemName: viewModel.isSuggestionsVisible ? "xmark" : "plus")
                                     .font(.system(size: 26, weight: .semibold))
                                     .foregroundColor(.gymtimeAccent)
                             }
