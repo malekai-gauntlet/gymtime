@@ -97,15 +97,26 @@ struct WorkoutTableView: View {
                                 .overlay(
                                     Button(action: {
                                         print("✅ Adding suggestion: \(suggestion.exercise)")
-                                        // TODO: Add selection handling
+                                        withAnimation(.easeInOut(duration: 0.3)) {
+                                            viewModel.addSuggestionToWorkouts(suggestion)
+                                        }
                                     }) {
-                                        Image(systemName: "checkmark.circle")
-                                            .foregroundColor(.gymtimeAccent)
-                                            .font(.system(size: 24))
+                                        ZStack {
+                                            // Invisible larger tap area
+                                            Color.clear
+                                                .frame(width: 60, height: 60)
+                                            
+                                            // Visual checkmark remains the same size
+                                            Image(systemName: "checkmark.circle")
+                                                .foregroundColor(.gymtimeAccent)
+                                                .font(.system(size: 24))
+                                        }
                                     }
-                                    .padding(.trailing, 16),
+                                    .contentShape(Rectangle())  // Makes entire ZStack tappable
+                                    .padding(.trailing, 24),
                                     alignment: .trailing
                                 )
+                                .transition(.opacity.combined(with: .move(edge: .bottom)))
                             }
                         }
                     }

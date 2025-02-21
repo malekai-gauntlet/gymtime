@@ -366,4 +366,39 @@ class HomeViewModel: ObservableObject {
             print("📝 Loaded \(suggestedWorkouts.count) suggestions")
         }
     }
+    
+    func addSuggestionToWorkouts(_ suggestion: WorkoutEntry) {
+        print("➕ Adding suggestion to workouts: \(suggestion.exercise)")
+        
+        // Create a new workout entry from the suggestion
+        let newWorkout = WorkoutEntry(
+            userId: suggestion.userId,
+            exercise: suggestion.exercise,
+            weight: suggestion.weight,
+            sets: suggestion.sets,
+            reps: suggestion.reps,
+            notes: suggestion.notes,
+            date: calendarState.selectedDate  // Use current selected date
+        )
+        
+        // Add to workouts array
+        withAnimation(.easeIn(duration: 0.3)) {
+            // Append to end of the list
+            workouts.append(newWorkout)
+            
+            // Remove from suggestions
+            if let index = suggestedWorkouts.firstIndex(where: { $0.id == suggestion.id }) {
+                suggestedWorkouts.remove(at: index)
+            }
+        }
+        
+        print("✅ Successfully added suggestion to workouts")
+        
+        // If no more suggestions, hide the suggestions UI
+        if suggestedWorkouts.isEmpty {
+            withAnimation(.easeOut(duration: 0.2)) {
+                isSuggestionsVisible = false
+            }
+        }
+    }
 } 
