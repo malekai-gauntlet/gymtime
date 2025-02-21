@@ -11,14 +11,24 @@ The MVP version focuses on implementing the UI/UX of the quick add feature using
 - ✅ Show suggestions in workout table
 - ✅ Style suggestions (opacity, layout)
 - ✅ Add checkmark buttons with proper sizing/positioning
-- 🔄 Implement suggestion selection/addition
-- Add animation when adding suggestions
+- ✅ Implement suggestion selection/addition
+- ✅ Add animation when adding suggestions
+- 🔄 Add blank row for manual entry
 
 ### Phase 2: Polish UI/UX
-- Smooth transitions when showing/hiding suggestions
-- Multiple selection support
-- Improved visual feedback on selection
-- Better suggestion layout
+- ✅ Smooth transitions when showing/hiding suggestions
+- ✅ Multiple selection support
+- ✅ Improved visual feedback on selection
+- ✅ Better suggestion layout
+- 🔄 Implement blank row functionality:
+  - Show below suggestions when plus button is pressed
+  - Match suggestion row opacity (0.4) initially
+  - Show input field borders for visual affordance
+  - Animate to full opacity on tap/focus
+  - Use existing EditableCell component
+  - Maintain consistent row layout and spacing
+  - Auto-save on field completion
+  - Clear row after successful save
 
 ### Future Phase: Real Data Integration
 - Replace dummy data with real workout history
@@ -46,45 +56,74 @@ The MVP version focuses on implementing the UI/UX of the quick add feature using
 
 ## Next Steps (Priority Order)
 
-1. **Implement Selection Handling**
-   - Add function to handle checkmark taps
-   - Create new workout entry from suggestion
-   - Add animation when suggestion becomes permanent
-   - Clear suggestion after selection
+1. **Implement Blank Row Component**
+   - Create empty workout entry state in ViewModel
+   - Add blank row below suggestions
+   - Style with faded appearance
+   - Show input field borders
+   - Handle tap/focus animations
 
-2. **Add Visual Feedback**
-   - Show brief highlight when checkmark is tapped
-   - Animate suggestion row when being added
-   - Consider showing success indicator
+2. **Add Field Validation**
+   - Validate required fields
+   - Show appropriate error states
+   - Handle numeric input correctly
+   - Format weight values consistently
 
-3. **Multiple Selection Support**
-   - Allow multiple suggestions to be selected
-   - Add "Add Selected" button when multiple selected
-   - Show selection count
+3. **Implement Save Logic**
+   - Save to Supabase on completion
+   - Clear fields after successful save
+   - Handle errors gracefully
+   - Show success feedback
+
+4. **Polish Interactions**
+   - Smooth focus transitions
+   - Keyboard handling
+   - Error state animations
+   - Success state feedback
 
 ## Technical Considerations
 
 ### State Management
 - ✅ Track suggestion visibility
 - ✅ Manage suggestion list
-- 🔄 Handle selection state
-- Track multiple selections
+- ✅ Handle selection state
+- ✅ Track multiple selections
+- 🔄 Manage blank row state:
+  - Track editing state
+  - Handle field values
+  - Manage focus state
+  - Control visibility
 
 ### UI Implementation
 - ✅ Reuse existing workout row components
 - ✅ Add checkmark button
 - ✅ Implement opacity transitions
-- Handle selection states
+- ✅ Handle selection states
+- 🔄 Blank row implementation:
+  - Use EditableCell component
+  - Match existing row layout
+  - Add input field borders
+  - Handle focus states
+  - Implement save triggers
 
 ## Testing Approach
 - ✅ Test with 5-10 dummy exercises
 - ✅ Verify suggestion display
-- Test selection mechanics
-- Check visual transitions
-- Validate multiple selections
+- ✅ Test selection mechanics
+- ✅ Check visual transitions
+- ✅ Validate multiple selections
+- 🔄 Test blank row functionality:
+  - Verify field focus behavior
+  - Test data validation
+  - Check save functionality
+  - Validate error handling
+  - Test keyboard interactions
 
 ## Future Considerations
 - Real workout history integration
 - Smart suggestion algorithms
 - Personalization features
-- Advanced filtering options 
+- Advanced filtering options
+- Quick-add templates from blank row
+- Keyboard shortcuts for power users
+- Multi-row batch entry mode 
