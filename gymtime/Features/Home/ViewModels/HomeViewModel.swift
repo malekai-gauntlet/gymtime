@@ -28,15 +28,37 @@ class HomeViewModel: ObservableObject {
     @Published var isSuggestionsVisible: Bool = false
     @Published var suggestedWorkouts: [WorkoutEntry] = []  // Holds suggestion data
     
-    // Dummy suggestion data
-    private func getDummySuggestions() async -> [WorkoutEntry] {
-        guard let userId = try? await supabase.auth.session.user.id else { return [] }
-        
-        return [
-            WorkoutEntry(userId: userId, exercise: "Bench Press", weight: 135, sets: 3, reps: 10),
-            WorkoutEntry(userId: userId, exercise: "Squats", weight: 185, sets: 4, reps: 8),
-            WorkoutEntry(userId: userId, exercise: "Deadlifts", weight: 225, sets: 3, reps: 5)
-        ]
+    // Get recent workouts for suggestions
+    private func getWorkoutSuggestions() async -> [WorkoutEntry] {
+        do {
+            // Get current user ID - using same pattern as loadWorkouts()
+            guard let userId = try? await supabase.auth.session.user.id else {
+                print("❌ Error: No user ID found for suggestions")
+                return []
+            }
+            
+            print("🔄 Fetching recent workouts for suggestions...")
+            
+            let response: [WorkoutEntry] = try await supabase.database
+                .from("workouts")
+                .select()
+                .eq("user_id", value: userId)
+                .order("created_at", ascending: false)
+                .limit(5)
+                .execute()
+                .value
+            
+            print("✅ Fetched \(response.count) recent workouts for suggestions")
+            response.forEach { workout in
+                print("   • \(workout.exercise) (\(workout.sets ?? 0)x\(workout.reps ?? 0))")
+            }
+            
+            return response
+            
+        } catch {
+            print("❌ Error fetching suggestions: \(error)")
+            return []
+        }
     }
     
     // MARK: - Computed Properties
@@ -357,7 +379,7 @@ class HomeViewModel: ObservableObject {
         Task {
             if isSuggestionsVisible {
                 // Load suggestions when showing
-                suggestedWorkouts = await getDummySuggestions()
+                suggestedWorkouts = await getWorkoutSuggestions()
                 print("🔄 Suggestions loaded:")
                 suggestedWorkouts.enumerated().forEach { index, workout in
                     print("  [\(index)] \(workout.exercise) (ID: \(workout.id))")
