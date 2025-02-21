@@ -26,6 +26,24 @@ The MVP version focuses on implementing the UI/UX of the quick add feature using
 - Context-aware suggestions
 - Personalized recommendations
 
+### Future Enhancement: Advanced Gesture Handling
+- Implement coexisting swipe and tap gestures for better UX
+- Potential approaches:
+  1. Edge-Based Swipe Areas
+     - Restrict horizontal swipes to screen edges
+     - Leave center area clear for suggestion taps
+     - Similar to iOS Mail app interaction model
+  2. Gesture Priority System
+     - Use SwiftUI's gesture disambiguation
+     - Prioritize taps over swipes when needed
+     - Maintain both functionalities simultaneously
+  3. Two-Finger Navigation
+     - Single taps for suggestions
+     - Two-finger swipes for day changes
+  4. Time-Based Gesture Detection
+     - Quick taps for suggestions
+     - Sustained swipes for navigation
+
 ## Next Steps (Priority Order)
 
 1. **Implement Selection Handling**

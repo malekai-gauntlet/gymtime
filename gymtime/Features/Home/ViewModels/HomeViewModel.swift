@@ -230,7 +230,7 @@ class HomeViewModel: ObservableObject {
                 
                 // Add to local state after successful save
                 DispatchQueue.main.async {
-                    self.workouts.insert(workout, at: 0)
+                    self.workouts.append(workout)
                     // Generate new summary after adding workout
                     Task { [self] in
                         self.isLoadingSummary = true
@@ -389,13 +389,11 @@ class HomeViewModel: ObservableObject {
             date: calendarState.selectedDate  // Use current selected date
         )
         
-        // Add to workouts array
+        // Use existing addWorkout function to handle Supabase persistence
+        addWorkout(newWorkout)
+        
+        // Remove from suggestions
         withAnimation(.easeIn(duration: 0.3)) {
-            // Append to end of the list
-            workouts.append(newWorkout)
-            print("   ✓ Added to workouts array")
-            
-            // Remove from suggestions
             if let index = suggestedWorkouts.firstIndex(where: { $0.id == suggestion.id }) {
                 suggestedWorkouts.remove(at: index)
                 print("   ✓ Removed from suggestions at index \(index)")
