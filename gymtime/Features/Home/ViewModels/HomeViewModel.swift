@@ -358,8 +358,13 @@ class HomeViewModel: ObservableObject {
             if isSuggestionsVisible {
                 // Load suggestions when showing
                 suggestedWorkouts = await getDummySuggestions()
+                print("🔄 Suggestions loaded:")
+                suggestedWorkouts.enumerated().forEach { index, workout in
+                    print("  [\(index)] \(workout.exercise) (ID: \(workout.id))")
+                }
             } else {
                 // Clear suggestions when hiding
+                print("🧹 Clearing suggestions (count: \(suggestedWorkouts.count))")
                 suggestedWorkouts.removeAll()
             }
             print("🔄 Suggestions visibility toggled: \(isSuggestionsVisible)")
@@ -368,7 +373,10 @@ class HomeViewModel: ObservableObject {
     }
     
     func addSuggestionToWorkouts(_ suggestion: WorkoutEntry) {
-        print("➕ Adding suggestion to workouts: \(suggestion.exercise)")
+        print("➕ Adding suggestion to workouts:")
+        print("   Exercise: \(suggestion.exercise)")
+        print("   ID: \(suggestion.id)")
+        print("   Index in suggestions: \(suggestedWorkouts.firstIndex(where: { $0.id == suggestion.id }) ?? -1)")
         
         // Create a new workout entry from the suggestion
         let newWorkout = WorkoutEntry(
@@ -385,19 +393,25 @@ class HomeViewModel: ObservableObject {
         withAnimation(.easeIn(duration: 0.3)) {
             // Append to end of the list
             workouts.append(newWorkout)
+            print("   ✓ Added to workouts array")
             
             // Remove from suggestions
             if let index = suggestedWorkouts.firstIndex(where: { $0.id == suggestion.id }) {
                 suggestedWorkouts.remove(at: index)
+                print("   ✓ Removed from suggestions at index \(index)")
+            } else {
+                print("   ⚠️ Could not find suggestion in array to remove")
             }
         }
         
-        print("✅ Successfully added suggestion to workouts")
+        print("✅ Successfully processed suggestion")
+        print("   Remaining suggestions: \(suggestedWorkouts.count)")
         
         // If no more suggestions, hide the suggestions UI
         if suggestedWorkouts.isEmpty {
             withAnimation(.easeOut(duration: 0.2)) {
                 isSuggestionsVisible = false
+                print("   🔄 Auto-hiding suggestions UI (no more suggestions)")
             }
         }
     }

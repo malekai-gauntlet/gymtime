@@ -93,10 +93,14 @@ struct WorkoutTableView: View {
                                 )
                                 .listRowInsets(EdgeInsets())
                                 .listRowBackground(Color.gymtimeBackground)
-                                .opacity(0.4)  // Increased fade (was 0.6)
+                                .opacity(0.4)
                                 .overlay(
                                     Button(action: {
-                                        print("✅ Adding suggestion: \(suggestion.exercise)")
+                                        print("👆 Suggestion button tapped:")
+                                        print("   Exercise: \(suggestion.exercise)")
+                                        print("   ID: \(suggestion.id)")
+                                        print("   Position in list: \(viewModel.suggestedWorkouts.firstIndex(where: { $0.id == suggestion.id }) ?? -1)")
+                                        
                                         withAnimation(.easeInOut(duration: 0.3)) {
                                             viewModel.addSuggestionToWorkouts(suggestion)
                                         }
@@ -105,6 +109,9 @@ struct WorkoutTableView: View {
                                             // Invisible larger tap area
                                             Color.clear
                                                 .frame(width: 60, height: 60)
+                                                .onTapGesture {
+                                                    print("🎯 Tap area hit for \(suggestion.exercise)")
+                                                }
                                             
                                             // Visual checkmark remains the same size
                                             Image(systemName: "checkmark.circle")
@@ -112,11 +119,17 @@ struct WorkoutTableView: View {
                                                 .font(.system(size: 24))
                                         }
                                     }
-                                    .contentShape(Rectangle())  // Makes entire ZStack tappable
+                                    .contentShape(Rectangle())
+                                    .onAppear {
+                                        print("🔲 Suggestion button appeared: \(suggestion.exercise)")
+                                    }
                                     .padding(.trailing, 24),
                                     alignment: .trailing
                                 )
                                 .transition(.opacity.combined(with: .move(edge: .bottom)))
+                                .onAppear {
+                                    print("📍 Suggestion row appeared: \(suggestion.exercise)")
+                                }
                             }
                         }
                     }

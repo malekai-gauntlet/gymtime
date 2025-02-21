@@ -73,7 +73,7 @@ struct HomeView: View {
                 // Workout Table with SwipeArea
                 ZStack {
                     WorkoutTableView(workouts: $viewModel.workouts, viewModel: viewModel)
-                        .allowsHitTesting(true) // Ensure workout interactions still work
+                        .allowsHitTesting(true)
                     
                     // SwipeArea fills available space
                     GeometryReader { geometry in
@@ -89,7 +89,8 @@ struct HomeView: View {
                         .frame(height: viewModel.workouts.isEmpty ? 300 : 150) // Adjust height based on workouts
                         .frame(maxHeight: .infinity, alignment: .bottom)
                         .padding(.bottom, 140) // Stay above buttons
-                        .allowsHitTesting(true)
+                        .allowsHitTesting(!viewModel.isSuggestionsVisible) // Disable when suggestions are visible
+                        .opacity(viewModel.isSuggestionsVisible ? 0 : 1) // Hide when suggestions are visible
                         .zIndex(1) // Between table and buttons
                     }
                 }
