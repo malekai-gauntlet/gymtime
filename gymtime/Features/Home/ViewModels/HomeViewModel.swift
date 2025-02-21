@@ -267,31 +267,54 @@ class HomeViewModel: ObservableObject {
         }
     }
     
-    func updateWorkout(id: UUID, field: String, value: String) {
-        // Update local state immediately for responsive UI
-        if let index = workouts.firstIndex(where: { $0.id == id }) {
-            var workout = workouts[index]
-            
-            // Update the appropriate field
-            switch field {
-            case "exercise":
-                workout.exercise = value
-            case "weight":
-                workout.weight = Double(value)
-            case "sets":
-                workout.sets = Int(value)
-            case "reps":
-                workout.reps = Int(value)
-            case "notes":
-                workout.notes = value
-            default:
-                break
+    func updateWorkoutField(id: UUID, field: String, value: String) {
+        // Store the index for rollback
+        guard let index = workouts.firstIndex(where: { $0.id == id }) else {
+            print("❌ No workout found with id: \(id)")
+            return
+        }
+        
+        // Store previous state for rollback
+        let previousWorkout = workouts[index]
+        var updatedWorkout = previousWorkout
+        
+        // Prepare the update data based on field type
+        switch field {
+        case "exercise":
+            updatedWorkout.exercise = value
+        case "weight":
+            updatedWorkout.weight = Double(value)
+        case "sets":
+            updatedWorkout.sets = Int(value)
+        case "reps":
+            updatedWorkout.reps = Int(value)
+        case "notes":
+            updatedWorkout.notes = value
+        default:
+            return
+        }
+        
+        // Optimistically update UI
+        workouts[index] = updatedWorkout
+        
+        // Update Supabase
+        Task {
+            do {
+                try await supabase.database
+                    .from("workouts")
+                    .update([field: value])
+                    .eq("id", value: id)
+                    .execute()
+                
+                print("✅ Successfully updated workout field: \(field)")
+            } catch {
+                print("❌ Failed to update workout: \(error)")
+                // Rollback on failure
+                DispatchQueue.main.async {
+                    self.workouts[index] = previousWorkout
+                    self.error = "Failed to update workout"
+                }
             }
-            
-            // Update in array
-            workouts[index] = workout
-            
-            // TODO: Implement persistence update
         }
     }
     

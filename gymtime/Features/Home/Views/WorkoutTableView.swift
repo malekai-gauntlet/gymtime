@@ -5,6 +5,8 @@ import SwiftUI
 struct WorkoutTableView: View {
     @Binding var workouts: [WorkoutEntry]
     @ObservedObject var viewModel: HomeViewModel
+    @State private var isAnyFieldEditing = false
+    @Binding var isEditing: Bool  // Add binding for parent view
     
     // Column widths (proportional)
     private let exerciseWidth: CGFloat = 0.26  // Increased for longer exercise names
@@ -13,9 +15,15 @@ struct WorkoutTableView: View {
     private let repsWidth: CGFloat = 0.13      // Slightly increased for better spacing
     private let notesWidth: CGFloat = 0.27     // Reduced to accommodate other columns
     
+    init(workouts: Binding<[WorkoutEntry]>, viewModel: HomeViewModel, isEditing: Binding<Bool>) {
+        self._workouts = workouts
+        self.viewModel = viewModel
+        self._isEditing = isEditing
+    }
+    
     var body: some View {
         ZStack {
-            // Main Content
+            // Base Layer: Main Content
             ZStack(alignment: .bottom) {
                 VStack(spacing: 0) {
                     // Header Row
@@ -63,7 +71,8 @@ struct WorkoutTableView: View {
                                     setsWidth: setsWidth,
                                     repsWidth: repsWidth,
                                     notesWidth: notesWidth,
-                                    viewModel: viewModel
+                                    viewModel: viewModel,
+                                    isAnyFieldEditing: $isAnyFieldEditing
                                 )
                                 .listRowInsets(EdgeInsets())
                                 .listRowBackground(Color.gymtimeBackground)
@@ -89,7 +98,8 @@ struct WorkoutTableView: View {
                                     setsWidth: setsWidth,
                                     repsWidth: repsWidth,
                                     notesWidth: notesWidth,
-                                    viewModel: viewModel
+                                    viewModel: viewModel,
+                                    isAnyFieldEditing: $isAnyFieldEditing
                                 )
                                 .listRowInsets(EdgeInsets())
                                 .listRowBackground(Color.gymtimeBackground)
@@ -227,10 +237,40 @@ struct WorkoutTableView: View {
                     .disabled(viewModel.isProcessing)
                 }
                 .padding(.bottom, 25)
-                .zIndex(2) // Ensure buttons are above swipe area
+            }
+            .zIndex(0)  // Base layer
+            
+            // Middle Layer: Editing Overlay
+            if isAnyFieldEditing {
+                Color.clear
+                    .opacity(0.2)
+                    .edgesIgnoringSafeArea(.all)
+                    .contentShape(Rectangle())  // Ensure entire area is tappable
+                    .onTapGesture { location in
+                        let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene
+                        let window = windowScene?.windows.first
+                        let bounds = window?.bounds ?? .zero
+                        
+                        print("🎯 Tap detected in blue overlay")
+                        print("   Screen bounds: \(bounds)")
+                        print("   Tap location: \(location)")
+                        print("   isAnyFieldEditing: \(isAnyFieldEditing)")
+                        
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                                     to: nil,
+                                                     from: nil,
+                                                     for: nil)
+                        
+                        // Log after attempting to resign
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            print("   Post-tap isAnyFieldEditing: \(isAnyFieldEditing)")
+                            print("   First responder resigned: \(!isAnyFieldEditing)")
+                        }
+                    }
+                    .zIndex(1)
             }
             
-            // Dimming Overlay
+            // Top Layer: Recording Overlay
             if viewModel.isRecording {
                 Color.black
                     .opacity(0.5)
@@ -239,54 +279,82 @@ struct WorkoutTableView: View {
                     .onTapGesture {
                         viewModel.toggleRecording()
                     }
-                    .zIndex(0)  // Between main content and recording UI
+                    .zIndex(2)  // Topmost layer
             }
         }
         .animation(.easeInOut(duration: 0.2), value: viewModel.isRecording)
+        .onChange(of: isAnyFieldEditing) { _, newValue in
+            isEditing = newValue  // Update parent's editing state
+        }
     }
 }
 
 struct EditableCell: View {
     let value: String
     let onChange: (String) -> Void
-    let alignment: TextAlignment
     let isNumeric: Bool
+    @Binding var isAnyFieldEditing: Bool
     
     @State private var isEditing = false
     @State private var editValue: String
     @FocusState private var isFocused: Bool
     
-    init(value: String, onChange: @escaping (String) -> Void, alignment: TextAlignment = .leading, isNumeric: Bool = false) {
+    init(value: String, onChange: @escaping (String) -> Void, isNumeric: Bool = false, isAnyFieldEditing: Binding<Bool>) {
         self.value = value
         self.onChange = onChange
-        self.alignment = alignment
         self.isNumeric = isNumeric
         self._editValue = State(initialValue: value)
+        self._isAnyFieldEditing = isAnyFieldEditing
     }
     
     var body: some View {
         if isEditing {
             TextField("", text: $editValue)
-                .multilineTextAlignment(alignment)
-                .keyboardType(isNumeric ? .numberPad : .default)
-                .font(.system(.subheadline, design: isNumeric ? .monospaced : .default))
+                .keyboardType(isNumeric ? .decimalPad : .default)
+                .textFieldStyle(PlainTextFieldStyle())
+                .padding(4)
+                .frame(maxWidth: .infinity)
+                .background(Color.white.opacity(0.1))
+                .cornerRadius(4)
                 .focused($isFocused)
-                .onChange(of: isFocused) { focused in
+                .onAppear { 
+                    isFocused = true
+                    isAnyFieldEditing = true 
+                }
+                .onChange(of: isFocused) { _, focused in
                     if !focused {
                         isEditing = false
+                        isAnyFieldEditing = false
                         if editValue != value {
                             onChange(editValue)
                         }
                     }
                 }
-                .onTapGesture {}  // Prevents tap from dismissing keyboard
+                .onSubmit {
+                    isEditing = false
+                    if editValue != value {
+                        onChange(editValue)
+                    }
+                }
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(Color.gymtimeAccent, lineWidth: 1)
+                )
         } else {
             Text(value)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(4)
+                .contentShape(Rectangle())
                 .onTapGesture {
                     editValue = value
                     isEditing = true
-                    isFocused = true
                 }
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(Color.gymtimeAccent.opacity(0.2), lineWidth: 1)
+                        .opacity(0)
+                        .opacity(isEditing ? 1 : 0)
+                )
         }
     }
 }
@@ -301,16 +369,19 @@ struct WorkoutRow: View {
     let notesWidth: CGFloat
     
     @ObservedObject var viewModel: HomeViewModel
+    @Binding var isAnyFieldEditing: Bool
     @State private var isExpanded = false
     private let notesThreshold = 8
     
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack {
             // Main row content
             HStack(spacing: 0) {
                 EditableCell(
                     value: workout.exercise,
-                    onChange: { viewModel.updateWorkout(id: workout.id, field: "exercise", value: $0) }
+                    onChange: { viewModel.updateWorkoutField(id: workout.id, field: "exercise", value: $0) },
+                    isNumeric: false,
+                    isAnyFieldEditing: $isAnyFieldEditing
                 )
                 .frame(width: UIScreen.main.bounds.width * exerciseWidth, alignment: .leading)
                 .font(.subheadline.weight(.medium))
@@ -322,27 +393,27 @@ struct WorkoutRow: View {
                             ? String(format: "%.0f", weightValue) 
                             : String(weightValue)
                     } ?? "-",
-                    onChange: { viewModel.updateWorkout(id: workout.id, field: "weight", value: $0) },
-                    alignment: .center,
-                    isNumeric: true
+                    onChange: { viewModel.updateWorkoutField(id: workout.id, field: "weight", value: $0) },
+                    isNumeric: true,
+                    isAnyFieldEditing: $isAnyFieldEditing
                 )
                 .frame(width: UIScreen.main.bounds.width * weightWidth, alignment: .center)
                 .foregroundColor(workout.weight == nil ? .gymtimeTextSecondary : .gymtimeText)
                 
                 EditableCell(
                     value: workout.sets.map { "\($0)" } ?? "-",
-                    onChange: { viewModel.updateWorkout(id: workout.id, field: "sets", value: $0) },
-                    alignment: .center,
-                    isNumeric: true
+                    onChange: { viewModel.updateWorkoutField(id: workout.id, field: "sets", value: $0) },
+                    isNumeric: true,
+                    isAnyFieldEditing: $isAnyFieldEditing
                 )
                 .frame(width: UIScreen.main.bounds.width * setsWidth, alignment: .center)
                 .foregroundColor(workout.sets == nil ? .gymtimeTextSecondary : .gymtimeText)
                 
                 EditableCell(
                     value: workout.reps.map { "\($0)" } ?? "-",
-                    onChange: { viewModel.updateWorkout(id: workout.id, field: "reps", value: $0) },
-                    alignment: .center,
-                    isNumeric: true
+                    onChange: { viewModel.updateWorkoutField(id: workout.id, field: "reps", value: $0) },
+                    isNumeric: true,
+                    isAnyFieldEditing: $isAnyFieldEditing
                 )
                 .frame(width: UIScreen.main.bounds.width * repsWidth, alignment: .center)
                 .foregroundColor(workout.reps == nil ? .gymtimeTextSecondary : .gymtimeText)
@@ -358,7 +429,9 @@ struct WorkoutRow: View {
                     } else {
                         EditableCell(
                             value: notes,
-                            onChange: { viewModel.updateWorkout(id: workout.id, field: "notes", value: $0) }
+                            onChange: { viewModel.updateWorkoutField(id: workout.id, field: "notes", value: $0) },
+                            isNumeric: false,
+                            isAnyFieldEditing: $isAnyFieldEditing
                         )
                         .lineLimit(1)
                     }
@@ -383,17 +456,17 @@ struct WorkoutRow: View {
             
             // Expanded notes view
             if isExpanded && (workout.notes?.count ?? 0) > notesThreshold {
-                EditableCell(
-                    value: workout.notes ?? "",
-                    onChange: { viewModel.updateWorkout(id: workout.id, field: "notes", value: $0) }
-                )
-                .font(.subheadline)
-                .foregroundColor(.gymtimeTextSecondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 24)
-                .padding(.vertical, 8)
-                .background(Color.black.opacity(0.2))
-                .transition(.move(edge: .top).combined(with: .opacity))
+                VStack {  // Add VStack to ensure proper View type
+                    Text(workout.notes ?? "")
+                        .font(.subheadline)
+                        .foregroundColor(.gymtimeTextSecondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 8)
+                        .background(Color.black.opacity(0.2))
+                        .transition(.move(edge: .top).combined(with: .opacity))
+                }
+                .zIndex(2)  // Move zIndex to the VStack
             }
         }
         .foregroundColor(.gymtimeText)

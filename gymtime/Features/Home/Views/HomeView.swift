@@ -7,6 +7,7 @@ struct SwipeArea: View {
     let onSwipe: (Bool) -> Void // true for right, false for left
     @GestureState private var translation: CGFloat = 0
     private let swipeThreshold: CGFloat = 50
+    let isEditing: Bool  // Add isEditing parameter
     
     var body: some View {
         Rectangle()
@@ -15,14 +16,17 @@ struct SwipeArea: View {
             .gesture(
                 DragGesture()
                     .updating($translation) { value, state, _ in
-                        state = value.translation.width
+                        if !isEditing {  // Only update translation if not editing
+                            state = value.translation.width
+                        }
                     }
                     .onEnded { gesture in
-                        if abs(gesture.translation.width) > swipeThreshold {
+                        if !isEditing && abs(gesture.translation.width) > swipeThreshold {
                             onSwipe(gesture.translation.width > 0)
                         }
                     }
             )
+            .allowsHitTesting(!isEditing)  // Disable hit testing when editing
     }
 }
 
@@ -30,6 +34,7 @@ struct HomeView: View {
     @ObservedObject var viewModel: HomeViewModel
     @State private var selectedTab: Int = 0
     @State private var showingVoiceLogger = false
+    @State private var isEditing = false  // Add editing state
     
     var body: some View {
         NavigationView {
@@ -72,12 +77,12 @@ struct HomeView: View {
                 
                 // Workout Table with SwipeArea
                 ZStack {
-                    WorkoutTableView(workouts: $viewModel.workouts, viewModel: viewModel)
+                    WorkoutTableView(workouts: $viewModel.workouts, viewModel: viewModel, isEditing: $isEditing)
                         .allowsHitTesting(true)
                     
                     // SwipeArea fills available space
                     GeometryReader { geometry in
-                        SwipeArea { isRight in
+                        SwipeArea(onSwipe: { isRight in
                             withAnimation(.easeInOut(duration: 0.3)) {
                                 if isRight {
                                     viewModel.selectDate(Calendar.current.date(byAdding: .day, value: -1, to: viewModel.calendarState.selectedDate) ?? Date())
@@ -85,13 +90,12 @@ struct HomeView: View {
                                     viewModel.selectDate(Calendar.current.date(byAdding: .day, value: 1, to: viewModel.calendarState.selectedDate) ?? Date())
                                 }
                             }
-                        }
-                        .frame(height: viewModel.workouts.isEmpty ? 300 : 150) // Adjust height based on workouts
+                        }, isEditing: isEditing)
+                        .frame(height: viewModel.workouts.isEmpty ? 300 : 150)
                         .frame(maxHeight: .infinity, alignment: .bottom)
-                        .padding(.bottom, 140) // Stay above buttons
-                        .allowsHitTesting(!viewModel.isSuggestionsVisible) // Disable when suggestions are visible
-                        .opacity(viewModel.isSuggestionsVisible ? 0 : 1) // Hide when suggestions are visible
-                        .zIndex(1) // Between table and buttons
+                        .padding(.bottom, 140)
+                        .allowsHitTesting(!viewModel.isSuggestionsVisible && !isEditing)
+                        .opacity(viewModel.isSuggestionsVisible ? 0 : 1)
                     }
                 }
             }
