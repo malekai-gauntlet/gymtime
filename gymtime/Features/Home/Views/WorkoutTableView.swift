@@ -310,13 +310,23 @@ struct EditableCell: View {
     var body: some View {
         if isEditing {
             TextField("", text: $editValue)
-                .keyboardType(isNumeric ? .decimalPad : .default)
+                .keyboardType(isNumeric ? .numberPad : .default)
                 .textFieldStyle(PlainTextFieldStyle())
                 .padding(4)
                 .frame(maxWidth: .infinity)
                 .background(Color.white.opacity(0.1))
                 .cornerRadius(4)
                 .focused($isFocused)
+                .toolbar {
+                    if isNumeric {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            Spacer()
+                            Button("Done") {
+                                isFocused = false
+                            }
+                        }
+                    }
+                }
                 .onAppear { 
                     isFocused = true
                     isAnyFieldEditing = true 
@@ -346,7 +356,7 @@ struct EditableCell: View {
                 .padding(4)
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    editValue = value
+                    editValue = value == "-" ? "" : value
                     isEditing = true
                 }
                 .overlay(
