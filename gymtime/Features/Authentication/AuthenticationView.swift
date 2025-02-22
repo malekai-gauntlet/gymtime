@@ -32,13 +32,20 @@ struct AuthenticationView: View {
                 }) {
                     Text("Skip Signup")
                         .font(.headline)
-                        .foregroundColor(.white)
+                        .foregroundColor(.black)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 16)
-                .background(Color.black)
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: [Color.white.opacity(0.9), Color.white.opacity(0.8)]),
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
                 .cornerRadius(12)
                 .padding(.horizontal)
+                .shadow(color: Color.white.opacity(0.2), radius: 8, x: 0, y: 4)
                 .disabled(viewModel.isLoading)
             }
             .padding()

@@ -9,8 +9,10 @@ struct ContentView: View {
     var body: some View {
         if coordinator.isAuthenticated {
             HomeCoordinator()
+                .environmentObject(coordinator)
         } else {
             AuthenticationView(viewModel: AuthenticationViewModel(coordinator: coordinator))
+                .environmentObject(coordinator)
         }
     }
 }

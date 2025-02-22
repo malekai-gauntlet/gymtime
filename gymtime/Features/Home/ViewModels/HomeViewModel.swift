@@ -27,6 +27,7 @@ class HomeViewModel: ObservableObject {
     @Published var isLoadingSummary: Bool = false
     @Published var isSuggestionsVisible: Bool = false
     @Published var suggestedWorkouts: [WorkoutEntry] = []  // Holds suggestion data
+    @Published var blankWorkoutEntry: WorkoutEntry?  // For manual entry
     
     // Get recent workouts for suggestions
     private func getWorkoutSuggestions() async -> [WorkoutEntry] {
@@ -401,6 +402,15 @@ class HomeViewModel: ObservableObject {
         
         Task {
             if isSuggestionsVisible {
+                // Create blank workout entry
+                if let userId = try? await supabase.auth.session.user.id {
+                    blankWorkoutEntry = WorkoutEntry(
+                        userId: userId,
+                        exercise: "",
+                        date: calendarState.selectedDate
+                    )
+                }
+                
                 // Load suggestions when showing
                 suggestedWorkouts = await getWorkoutSuggestions()
                 print("🔄 Suggestions loaded:")
@@ -408,9 +418,10 @@ class HomeViewModel: ObservableObject {
                     print("  [\(index)] \(workout.exercise) (ID: \(workout.id))")
                 }
             } else {
-                // Clear suggestions when hiding
+                // Clear suggestions and blank entry when hiding
                 print("🧹 Clearing suggestions (count: \(suggestedWorkouts.count))")
                 suggestedWorkouts.removeAll()
+                blankWorkoutEntry = nil
             }
             print("🔄 Suggestions visibility toggled: \(isSuggestionsVisible)")
             print("📝 Loaded \(suggestedWorkouts.count) suggestions")
@@ -455,6 +466,46 @@ class HomeViewModel: ObservableObject {
             withAnimation(.easeOut(duration: 0.2)) {
                 isSuggestionsVisible = false
                 print("   🔄 Auto-hiding suggestions UI (no more suggestions)")
+            }
+        }
+    }
+    
+    func updateBlankWorkoutField(field: String, value: String) {
+        guard var workout = blankWorkoutEntry else { return }
+        
+        // Update the field
+        switch field {
+        case "exercise":
+            workout.exercise = value
+        case "weight":
+            workout.weight = Double(value)
+        case "sets":
+            workout.sets = Int(value)
+        case "reps":
+            workout.reps = Int(value)
+        case "notes":
+            workout.notes = value
+        default:
+            return
+        }
+        
+        // Update the blank workout entry
+        blankWorkoutEntry = workout
+        
+        // If we have at least an exercise name, save the workout
+        if !workout.exercise.isEmpty {
+            addWorkout(workout)
+            blankWorkoutEntry = nil
+            
+            // Create a new blank entry
+            Task {
+                if let userId = try? await supabase.auth.session.user.id {
+                    blankWorkoutEntry = WorkoutEntry(
+                        userId: userId,
+                        exercise: "",
+                        date: calendarState.selectedDate
+                    )
+                }
             }
         }
     }

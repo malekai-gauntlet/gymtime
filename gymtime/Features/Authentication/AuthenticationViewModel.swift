@@ -143,4 +143,19 @@ class AuthenticationViewModel: ObservableObject {
         
         isLoading = false
     }
+    
+    // Function to handle logout
+    func signOut() async {
+        isLoading = true
+        error = nil
+        
+        do {
+            try await supabase.auth.signOut()
+            coordinator.signOut()
+        } catch {
+            self.error = .unknownError(error.localizedDescription)
+        }
+        
+        isLoading = false
+    }
 }

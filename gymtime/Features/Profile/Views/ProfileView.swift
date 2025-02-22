@@ -10,157 +10,177 @@ import SwiftUI
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
     @State private var showingEditProfile = false
+    @EnvironmentObject private var coordinator: AppCoordinator
+    @State private var showingAuth = false
     
     var body: some View {
-        ScrollView {
-            if viewModel.isLoading {
-                VStack {
-                    Spacer()
-                    ProgressView()
-                        .tint(.gymtimeText)
-                        .scaleEffect(1.5)
-                        .padding(.top, 100)
-                    Text("Loading profile...")
-                        .foregroundColor(.gymtimeTextSecondary)
-                        .padding(.top)
-                    Spacer()
-                }
-            } else if let error = viewModel.error {
-                VStack {
-                    Spacer()
-                    Image(systemName: "exclamationmark.triangle")
-                        .font(.system(size: 50))
-                        .foregroundColor(.red)
-                        .padding(.top, 100)
-                    Text(error)
-                        .foregroundColor(.gymtimeTextSecondary)
-                        .multilineTextAlignment(.center)
+        NavigationView {
+            ScrollView {
+                if viewModel.isLoading {
+                    VStack {
+                        Spacer()
+                        ProgressView()
+                            .tint(.gymtimeText)
+                            .scaleEffect(1.5)
+                            .padding(.top, 100)
+                        Text("Loading profile...")
+                            .foregroundColor(.gymtimeTextSecondary)
+                            .padding(.top)
+                        Spacer()
+                    }
+                } else if let error = viewModel.error {
+                    VStack {
+                        Spacer()
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.system(size: 50))
+                            .foregroundColor(.red)
+                            .padding(.top, 100)
+                        Text(error)
+                            .foregroundColor(.gymtimeTextSecondary)
+                            .multilineTextAlignment(.center)
+                            .padding()
+                        Button("Try Again") {
+                            Task {
+                                await viewModel.refreshProfile()
+                            }
+                        }
                         .padding()
-                    Button("Try Again") {
-                        Task {
-                            await viewModel.refreshProfile()
-                        }
+                        .background(Color.gymtimeAccent)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                        Spacer()
                     }
-                    .padding()
-                    .background(Color.gymtimeAccent)
-                    .foregroundColor(.white)
-                    .cornerRadius(12)
-                    Spacer()
-                }
-            } else {
-                VStack(spacing: 24) {
-                    // Profile Header
-                    VStack(spacing: 16) {
-                        // Profile Image
-                        Circle()
-                            .fill(Color.gray.opacity(0.2))
-                            .frame(width: 80, height: 80)
-                            .overlay(
-                                Text(viewModel.username?.prefix(1).uppercased() ?? "")
-                                    .font(.title.bold())
-                                    .foregroundColor(.gymtimeText)
-                            )
-                        
-                        // Name and Username with Edit Button
-                        VStack(spacing: 8) {
-                            Button {
-                                showingEditProfile = true
-                            } label: {
-                                Image(systemName: "pencil.circle.fill")
-                                    .font(.title2)
-                                    .foregroundColor(.gymtimeAccent)
-                            }
+                } else {
+                    VStack(spacing: 24) {
+                        // Profile Header
+                        VStack(spacing: 16) {
+                            // Profile Image
+                            Circle()
+                                .fill(Color.gray.opacity(0.2))
+                                .frame(width: 80, height: 80)
+                                .overlay(
+                                    Text(viewModel.username?.prefix(1).uppercased() ?? "")
+                                        .font(.title.bold())
+                                        .foregroundColor(.gymtimeText)
+                                )
                             
-                            VStack(spacing: 4) {
-                                Text(viewModel.displayName ?? "")
-                                    .font(.title2.bold())
-                                    .foregroundColor(.gymtimeText)
-                                
-                                Text("@\(viewModel.username ?? "")")
-                                    .font(.subheadline)
-                                    .foregroundColor(.gymtimeTextSecondary)
-                            }
-                        }
-                    }
-                    .padding(.top)
-                    
-                    // Stats Grid
-                    LazyVGrid(columns: [
-                        GridItem(.flexible()),
-                        GridItem(.flexible())
-                    ], spacing: 16) {
-                        // Workouts
-                        StatCard(
-                            title: "WORKOUTS",
-                            value: "\(viewModel.totalWorkouts)",
-                            subtitle: "All time"
-                        )
-                        
-                        // Weekly Goal
-                        StatCard(
-                            title: "WEEKLY GOAL",
-                            value: "\(viewModel.workoutsThisWeek)/\(viewModel.weeklyGoal)",
-                            subtitle: "This week"
-                        )
-                        
-                        // Current Streak
-                        StatCard(
-                            title: "CURRENT STREAK",
-                            value: "\(viewModel.currentStreak)",
-                            subtitle: "days"
-                        )
-                        
-                        // Personal Records
-                        StatCard(
-                            title: "PERSONAL RECORDS",
-                            value: "\(viewModel.personalRecords)",
-                            subtitle: "All time"
-                        )
-                    }
-                    .padding(.horizontal)
-                    
-                    // Milestones Section
-                    if !viewModel.milestones.isEmpty {
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("MILESTONES")
-                                .font(.headline)
-                                .foregroundColor(.gymtimeTextSecondary)
-                                .padding(.horizontal)
-                            
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                HStack(spacing: 12) {
-                                    ForEach(viewModel.milestones) { milestone in
-                                        MilestoneCard(milestone: milestone)
-                                    }
+                            // Name and Username with Edit Button
+                            VStack(spacing: 8) {
+                                Button {
+                                    showingEditProfile = true
+                                } label: {
+                                    Image(systemName: "pencil.circle.fill")
+                                        .font(.title2)
+                                        .foregroundColor(.gymtimeAccent)
                                 }
-                                .padding(.horizontal)
+                                
+                                VStack(spacing: 4) {
+                                    Text(viewModel.displayName ?? "")
+                                        .font(.title2.bold())
+                                        .foregroundColor(.gymtimeText)
+                                    
+                                    Text("@\(viewModel.username ?? "")")
+                                        .font(.subheadline)
+                                        .foregroundColor(.gymtimeTextSecondary)
+                                }
                             }
                         }
-                    }
-                    
-                    // Progress Section
-                    if !viewModel.progressData.isEmpty {
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("RECENT PROGRESS")
-                                .font(.headline)
-                                .foregroundColor(.gymtimeTextSecondary)
-                                .padding(.horizontal)
+                        .padding(.top)
+                        
+                        // Stats Grid
+                        LazyVGrid(columns: [
+                            GridItem(.flexible()),
+                            GridItem(.flexible())
+                        ], spacing: 16) {
+                            // Workouts
+                            StatCard(
+                                title: "WORKOUTS",
+                                value: "\(viewModel.totalWorkouts)",
+                                subtitle: "All time"
+                            )
                             
-                            // Progress Chart
-                            ChartView(data: viewModel.progressData)
-                                .frame(height: 200)
-                                .padding(.horizontal)
+                            // Weekly Goal
+                            StatCard(
+                                title: "WEEKLY GOAL",
+                                value: "\(viewModel.workoutsThisWeek)/\(viewModel.weeklyGoal)",
+                                subtitle: "This week"
+                            )
+                            
+                            // Current Streak
+                            StatCard(
+                                title: "CURRENT STREAK",
+                                value: "\(viewModel.currentStreak)",
+                                subtitle: "days"
+                            )
+                            
+                            // Personal Records
+                            StatCard(
+                                title: "PERSONAL RECORDS",
+                                value: "\(viewModel.personalRecords)",
+                                subtitle: "All time"
+                            )
                         }
+                        .padding(.horizontal)
+                        
+                        // Milestones Section
+                        if !viewModel.milestones.isEmpty {
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("MILESTONES")
+                                    .font(.headline)
+                                    .foregroundColor(.gymtimeTextSecondary)
+                                    .padding(.horizontal)
+                                
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    HStack(spacing: 12) {
+                                        ForEach(viewModel.milestones) { milestone in
+                                            MilestoneCard(milestone: milestone)
+                                        }
+                                    }
+                                    .padding(.horizontal)
+                                }
+                            }
+                        }
+                        
+                        // Progress Section
+                        if !viewModel.progressData.isEmpty {
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("RECENT PROGRESS")
+                                    .font(.headline)
+                                    .foregroundColor(.gymtimeTextSecondary)
+                                    .padding(.horizontal)
+                                
+                                // Progress Chart
+                                ChartView(data: viewModel.progressData)
+                                    .frame(height: 200)
+                                    .padding(.horizontal)
+                            }
+                        }
+                        
+                        Spacer(minLength: 32)
                     }
-                    
-                    Spacer(minLength: 32)
                 }
             }
-        }
-        .background(Color.gymtimeBackground)
-        .navigationBarTitle("Profile", displayMode: .inline)
-        .sheet(isPresented: $showingEditProfile) {
-            EditProfileView(viewModel: viewModel)
+            .background(Color.gymtimeBackground)
+            .navigationBarTitle("Profile", displayMode: .inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        Task {
+                            await AuthenticationViewModel(coordinator: coordinator).signOut()
+                            showingAuth = true
+                        }
+                    } label: {
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                            .foregroundColor(.gymtimeAccent)
+                    }
+                }
+            }
+            .sheet(isPresented: $showingEditProfile) {
+                EditProfileView(viewModel: viewModel)
+            }
+            .fullScreenCover(isPresented: $showingAuth) {
+                AuthenticationView(viewModel: AuthenticationViewModel(coordinator: coordinator))
+            }
         }
     }
 }

@@ -3,66 +3,114 @@ import SwiftUI
 
 struct SignUpView: View {
     @ObservedObject var viewModel: AuthenticationViewModel
+    @State private var isKeyboardVisible = false
+    @FocusState private var focusedField: Field?
+    
+    enum Field {
+        case email
+        case password
+    }
     
     var body: some View {
-        VStack(spacing: 20) {
-            // Email field
-            TextField("Email", text: $viewModel.email)
-                .textFieldStyle(.plain)
-                .padding()
-                .background(Color.black.opacity(0.3))
-                .cornerRadius(12)
-                .textContentType(.emailAddress)
-                .autocapitalization(.none)
-                .foregroundColor(.gymtimeText)
-                .disabled(viewModel.isLoading)
-            
-            // Password field
-            SecureField("Password", text: $viewModel.password)
-                .textFieldStyle(.plain)
-                .padding()
-                .background(Color.black.opacity(0.3))
-                .cornerRadius(12)
-                .textContentType(.password)
-                .foregroundColor(.gymtimeText)
-                .disabled(viewModel.isLoading)
-            
-            // Error message
-            if let error = viewModel.error {
-                Text(error.localizedDescription)
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
-            
-            // Sign Up button
-            Button(action: {
-                Task {
-                    await viewModel.signUp()
+        ScrollView(.vertical, showsIndicators: false) {
+            VStack(spacing: 20) {
+                Spacer()
+                    .frame(height: isKeyboardVisible ? 0 : 100)
+                    
+                // Email field
+                Button(action: {}) {
+                    TextField("Email", text: $viewModel.email)
+                        .textFieldStyle(.plain)
+                        .padding()
+                        .background(Color.black.opacity(0.15))
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(focusedField == .email ? Color.gymtimeAccent : Color.white.opacity(0.1), lineWidth: focusedField == .email ? 2 : 1)
+                                .animation(.easeInOut(duration: 0.2), value: focusedField)
+                        )
+                        .textContentType(.emailAddress)
+                        .autocapitalization(.none)
+                        .foregroundColor(.gymtimeText)
+                        .focused($focusedField, equals: .email)
+                        .disabled(viewModel.isLoading)
                 }
-            }) {
-                if viewModel.isLoading {
-                    ProgressView()
-                        .tint(.white)
-                } else {
-                    Text("Sign Up")
+                .buttonStyle(.plain)
+                .disabled(viewModel.isLoading)
+                
+                // Password field
+                Button(action: {}) {
+                    SecureField("Password", text: $viewModel.password)
+                        .textFieldStyle(.plain)
+                        .padding()
+                        .background(Color.black.opacity(0.15))
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(focusedField == .password ? Color.gymtimeAccent : Color.white.opacity(0.1), lineWidth: focusedField == .password ? 2 : 1)
+                                .animation(.easeInOut(duration: 0.2), value: focusedField)
+                        )
+                        .textContentType(.password)
+                        .foregroundColor(.gymtimeText)
+                        .focused($focusedField, equals: .password)
+                        .disabled(viewModel.isLoading)
+                }
+                .buttonStyle(.plain)
+                .disabled(viewModel.isLoading)
+                
+                // Error message
+                if let error = viewModel.error {
+                    Text(error.localizedDescription)
+                        .foregroundColor(.red)
+                        .font(.caption)
+                }
+                
+                // Sign Up button
+                Button(action: {
+                    Task {
+                        await viewModel.signUp()
+                    }
+                }) {
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text("Sign Up")
+                            .font(.headline)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(Color.gymtimeAccent)
+                .foregroundColor(.white)
+                .cornerRadius(12)
+                .disabled(viewModel.isLoading)
+                
+                // Switch to login
+                Button(action: {
+                    viewModel.switchFlow()
+                }) {
+                    Text("Already have an account? Log In")
                         .font(.headline)
                 }
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 16)
+                .background(Color.black.opacity(0.15))
+                .foregroundColor(.gymtimeAccent)
+                .cornerRadius(12)
+                .disabled(viewModel.isLoading)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 16)
-            .background(Color.gymtimeAccent)
-            .foregroundColor(.white)
-            .cornerRadius(12)
-            .disabled(viewModel.isLoading)
-            
-            // Switch to login
-            Button("Already have an account? Log In") {
-                viewModel.switchFlow()
-            }
-            .foregroundColor(.gymtimeAccent)
-            .font(.subheadline)
-            .disabled(viewModel.isLoading)
+            .padding(.horizontal)
+            .animation(.easeOut(duration: 0.25), value: isKeyboardVisible)
         }
-        .padding(.horizontal)
+        .ignoresSafeArea(.keyboard, edges: .bottom)
+        .onAppear {
+            NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { _ in
+                isKeyboardVisible = true
+            }
+            NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
+                isKeyboardVisible = false
+            }
+        }
     }
 }

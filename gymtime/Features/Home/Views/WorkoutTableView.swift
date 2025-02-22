@@ -141,6 +141,25 @@ struct WorkoutTableView: View {
                                     print("📍 Suggestion row appeared: \(suggestion.exercise)")
                                 }
                             }
+                            
+                            // Add blank workout entry if available
+                            if let blankWorkout = viewModel.blankWorkoutEntry {
+                                WorkoutRow(
+                                    workout: blankWorkout,
+                                    exerciseWidth: exerciseWidth,
+                                    weightWidth: weightWidth,
+                                    setsWidth: setsWidth,
+                                    repsWidth: repsWidth,
+                                    notesWidth: notesWidth,
+                                    viewModel: viewModel,
+                                    isAnyFieldEditing: $isAnyFieldEditing,
+                                    isBlankEntry: true
+                                )
+                                .listRowInsets(EdgeInsets())
+                                .listRowBackground(Color.gymtimeBackground)
+                                .opacity(0.4)
+                                .transition(.opacity.combined(with: .move(edge: .bottom)))
+                            }
                         }
                     }
                     .listStyle(.plain)
@@ -319,12 +338,10 @@ struct EditableCell: View {
                 .cornerRadius(4)
                 .focused($isFocused)
                 .toolbar {
-                    if isNumeric {
-                        ToolbarItemGroup(placement: .keyboard) {
-                            Spacer()
-                            Button("Done") {
-                                isFocused = false
-                            }
+                    ToolbarItemGroup(placement: .keyboard) {
+                        Spacer()
+                        Button("Done") {
+                            isFocused = false
                         }
                     }
                 }
@@ -364,6 +381,7 @@ struct EditableCell: View {
                     editValue = value == "-" ? "" : value
                     isEditing = true
                 }
+                .foregroundColor(value == "-" ? .gymtimeTextSecondary : .gymtimeText)
                 .overlay(
                     RoundedRectangle(cornerRadius: 4)
                         .stroke(Color.gymtimeAccent.opacity(0.2), lineWidth: 1)
@@ -387,6 +405,27 @@ struct WorkoutRow: View {
     @Binding var isAnyFieldEditing: Bool
     @State private var isExpanded = false
     private let notesThreshold = 8
+    let isBlankEntry: Bool
+    
+    init(workout: WorkoutEntry,
+         exerciseWidth: CGFloat,
+         weightWidth: CGFloat,
+         setsWidth: CGFloat,
+         repsWidth: CGFloat,
+         notesWidth: CGFloat,
+         viewModel: HomeViewModel,
+         isAnyFieldEditing: Binding<Bool>,
+         isBlankEntry: Bool = false) {
+        self.workout = workout
+        self.exerciseWidth = exerciseWidth
+        self.weightWidth = weightWidth
+        self.setsWidth = setsWidth
+        self.repsWidth = repsWidth
+        self.notesWidth = notesWidth
+        self.viewModel = viewModel
+        self._isAnyFieldEditing = isAnyFieldEditing
+        self.isBlankEntry = isBlankEntry
+    }
     
     var body: some View {
         ZStack {
@@ -394,7 +433,13 @@ struct WorkoutRow: View {
             HStack(spacing: 0) {
                 EditableCell(
                     value: workout.exercise,
-                    onChange: { viewModel.updateWorkoutField(id: workout.id, field: "exercise", value: $0) },
+                    onChange: { value in
+                        if isBlankEntry {
+                            viewModel.updateBlankWorkoutField(field: "exercise", value: value)
+                        } else {
+                            viewModel.updateWorkoutField(id: workout.id, field: "exercise", value: value)
+                        }
+                    },
                     isNumeric: false,
                     isAnyFieldEditing: $isAnyFieldEditing
                 )
@@ -408,7 +453,13 @@ struct WorkoutRow: View {
                             ? String(format: "%.0f", weightValue) 
                             : String(weightValue)
                     } ?? "-",
-                    onChange: { viewModel.updateWorkoutField(id: workout.id, field: "weight", value: $0) },
+                    onChange: { value in
+                        if isBlankEntry {
+                            viewModel.updateBlankWorkoutField(field: "weight", value: value)
+                        } else {
+                            viewModel.updateWorkoutField(id: workout.id, field: "weight", value: value)
+                        }
+                    },
                     isNumeric: true,
                     isAnyFieldEditing: $isAnyFieldEditing
                 )
@@ -417,7 +468,13 @@ struct WorkoutRow: View {
                 
                 EditableCell(
                     value: workout.sets.map { "\($0)" } ?? "-",
-                    onChange: { viewModel.updateWorkoutField(id: workout.id, field: "sets", value: $0) },
+                    onChange: { value in
+                        if isBlankEntry {
+                            viewModel.updateBlankWorkoutField(field: "sets", value: value)
+                        } else {
+                            viewModel.updateWorkoutField(id: workout.id, field: "sets", value: value)
+                        }
+                    },
                     isNumeric: true,
                     isAnyFieldEditing: $isAnyFieldEditing
                 )
@@ -426,7 +483,13 @@ struct WorkoutRow: View {
                 
                 EditableCell(
                     value: workout.reps.map { "\($0)" } ?? "-",
-                    onChange: { viewModel.updateWorkoutField(id: workout.id, field: "reps", value: $0) },
+                    onChange: { value in
+                        if isBlankEntry {
+                            viewModel.updateBlankWorkoutField(field: "reps", value: value)
+                        } else {
+                            viewModel.updateWorkoutField(id: workout.id, field: "reps", value: value)
+                        }
+                    },
                     isNumeric: true,
                     isAnyFieldEditing: $isAnyFieldEditing
                 )
@@ -436,7 +499,7 @@ struct WorkoutRow: View {
                 // Notes column with expansion
                 HStack(spacing: 4) {
                     let notes = workout.notes ?? ""
-                    if notes.count > notesThreshold {
+                    if !isBlankEntry && notes.count > notesThreshold {
                         Text("\(notes.prefix(notesThreshold))...")
                             .lineLimit(1)
                         Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
@@ -444,7 +507,13 @@ struct WorkoutRow: View {
                     } else {
                         EditableCell(
                             value: notes,
-                            onChange: { viewModel.updateWorkoutField(id: workout.id, field: "notes", value: $0) },
+                            onChange: { value in
+                                if isBlankEntry {
+                                    viewModel.updateBlankWorkoutField(field: "notes", value: value)
+                                } else {
+                                    viewModel.updateWorkoutField(id: workout.id, field: "notes", value: value)
+                                }
+                            },
                             isNumeric: false,
                             isAnyFieldEditing: $isAnyFieldEditing
                         )
@@ -459,7 +528,7 @@ struct WorkoutRow: View {
             .contentShape(Rectangle())
             .onTapGesture {
                 print("👆 Tap detected on workout row: \(workout.id)")
-                if (workout.notes?.count ?? 0) > notesThreshold {
+                if !isBlankEntry && (workout.notes?.count ?? 0) > notesThreshold {
                     print("📝 Notes expansion triggered")
                     withAnimation(.easeInOut(duration: 0.2)) {
                         isExpanded.toggle()
