@@ -12,6 +12,7 @@ struct ProfileView: View {
     @State private var showingEditProfile = false
     @EnvironmentObject private var coordinator: AppCoordinator
     @State private var showingAuth = false
+    @State private var showingLogoutConfirmation = false
     
     var body: some View {
         NavigationView {
@@ -165,10 +166,7 @@ struct ProfileView: View {
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
-                        Task {
-                            await AuthenticationViewModel(coordinator: coordinator).signOut()
-                            showingAuth = true
-                        }
+                        showingLogoutConfirmation = true
                     } label: {
                         Image(systemName: "rectangle.portrait.and.arrow.right")
                             .foregroundColor(.gymtimeAccent)
@@ -180,6 +178,17 @@ struct ProfileView: View {
             }
             .fullScreenCover(isPresented: $showingAuth) {
                 AuthenticationView(viewModel: AuthenticationViewModel(coordinator: coordinator))
+            }
+            .confirmationDialog("Are you sure you want to log out?", 
+                              isPresented: $showingLogoutConfirmation,
+                              titleVisibility: .visible) {
+                Button("Log Out", role: .destructive) {
+                    Task {
+                        await AuthenticationViewModel(coordinator: coordinator).signOut()
+                        showingAuth = true
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
             }
         }
     }

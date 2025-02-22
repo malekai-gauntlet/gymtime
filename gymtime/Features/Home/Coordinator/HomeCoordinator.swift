@@ -18,7 +18,7 @@ struct HomeCoordinator: View {
                 FeedView()
                     .tag(2)
                 
-                ProfileView()  // Replace placeholder with actual ProfileView
+                ProfileCoordinator()  // Use ProfileCoordinator instead of ProfileView
                     .tag(3)
             }
             .tabViewStyle(.automatic)

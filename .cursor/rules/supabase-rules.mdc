@@ -1,5 +1,9 @@
 ---
-description: Supabase integration guidelines for Gymtime MVP development
+description: This rule is helpful for when making any changes with supabase, creating tables, managing data, or auth.
+globs: 
+---
+ ---
+description: Supabase integration guidelines
 applies_to: ["*.swift", "*.sql"]
 version: 0.1.0
 ---
@@ -155,21 +159,6 @@ examples:
 </rule>
 
 learned_fixes:
-  - error: "Supabase connection errors in development"
-    solution: "Use direct database URL and anon key from project settings"
-    example: |
-      // Before (error):
-      let client = SupabaseClient(
-          supabaseURL: ProcessInfo.processInfo.environment["SUPABASE_URL"]!,
-          supabaseKey: ProcessInfo.processInfo.environment["SUPABASE_ANON_KEY"]!
-      )
-      
-      // After (fixed):
-      let client = SupabaseClient(
-          supabaseURL: URL(string: "https://your-project.supabase.co")!,
-          supabaseKey: "your-anon-key"
-      )
-    context: "For MVP development, using direct credentials is simpler than environment variables. Just ensure they're not committed to the repository."
 
   - error: "RLS policies blocking access in development"
     solution: "Disable RLS for rapid development"
@@ -184,4 +173,31 @@ learned_fixes:
       // After (fixed):
       -- Disable RLS for development
       alter table workouts disable row level security;
-    context: "During MVP development, RLS can slow down development. It's better to add proper security policies after core functionality is working." 
+    context: "During MVP development, RLS can slow down development. It's better to add proper security policies after core functionality is working."
+
+  - error: "Multiple AuthenticationViewModel instances causing login state inconsistency"
+    solution: "Use environment object pattern for single coordinator instance"
+    example: |
+      // Before (error):
+      struct ProfileView: View {
+          @StateObject private var authViewModel = AuthenticationViewModel(coordinator: AppCoordinator())  // Creating new coordinator
+      }
+      
+      // After (fixed):
+      // In ContentView (root level)
+      struct ContentView: View {
+          @StateObject private var coordinator = AppCoordinator()
+          
+          var body: some View {
+              if coordinator.isAuthenticated {
+                  HomeCoordinator()
+                      .environmentObject(coordinator)  // Broadcast to all views
+              }
+          }
+      }
+      
+      // In any view that needs auth
+      struct ProfileView: View {
+          @EnvironmentObject private var coordinator: AppCoordinator  // Single shared instance
+      }
+    context: "Creating multiple coordinator instances can break authentication state management. Using SwiftUI's environment object pattern ensures all views share the same authentication coordinator, maintaining consistent login state across the app."
