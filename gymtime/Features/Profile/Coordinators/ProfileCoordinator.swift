@@ -10,10 +10,6 @@ import SwiftUI
 
 struct ProfileCoordinator: View {
     var body: some View {
-        ProgressView()
+        ProfileView()
     }
-}
-
-#Preview {
-    ProfileCoordinator()
 }

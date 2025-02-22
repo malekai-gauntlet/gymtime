@@ -29,8 +29,8 @@ struct BottomNavBarView: View {
             .onTapGesture { selectedTab = 2 }
             
             NavBarItem(
-                icon: "chart.bar.fill",
-                text: "Progress",
+                icon: "person.fill",
+                text: "Profile",
                 isSelected: selectedTab == 3
             )
             .onTapGesture { selectedTab = 3 }

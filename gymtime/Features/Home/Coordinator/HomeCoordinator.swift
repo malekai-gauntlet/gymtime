@@ -18,7 +18,7 @@ struct HomeCoordinator: View {
                 FeedView()
                     .tag(2)
                 
-                ProfileCoordinator()  // Use ProfileCoordinator instead of ProfileView
+                ProfileView()
                     .tag(3)
             }
             .tabViewStyle(.automatic)
