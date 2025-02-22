@@ -333,18 +333,22 @@ struct EditableCell: View {
                 }
                 .onChange(of: isFocused) { _, focused in
                     if !focused {
-                        isEditing = false
-                        isAnyFieldEditing = false
                         if editValue != value {
                             onChange(editValue)
+                        }
+                        // Ensure state is fully reset after a short delay
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            isEditing = false
+                            isAnyFieldEditing = false
                         }
                     }
                 }
                 .onSubmit {
-                    isEditing = false
                     if editValue != value {
                         onChange(editValue)
                     }
+                    // Let onChange(of: isFocused) handle the state reset
+                    isFocused = false
                 }
                 .overlay(
                     RoundedRectangle(cornerRadius: 4)
