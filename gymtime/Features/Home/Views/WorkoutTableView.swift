@@ -283,6 +283,7 @@ struct WorkoutTableView: View {
             }
         }
         .animation(.easeInOut(duration: 0.2), value: viewModel.isRecording)
+        .ignoresSafeArea(.keyboard)  // Add this modifier to ignore keyboard adjustments
         .onChange(of: isAnyFieldEditing) { _, newValue in
             isEditing = newValue  // Update parent's editing state
         }
