@@ -201,3 +201,20 @@ learned_fixes:
           @EnvironmentObject private var coordinator: AppCoordinator  // Single shared instance
       }
     context: "Creating multiple coordinator instances can break authentication state management. Using SwiftUI's environment object pattern ensures all views share the same authentication coordinator, maintaining consistent login state across the app."
+
+
+  - error: "database is deprecated: Direct access to database is deprecated"
+    solution: "Remove .database from Supabase query chains"
+    example: |
+      // Before (error):
+      try await supabase.database
+          .from("workouts")
+          .select()
+          .execute()
+      
+      // After (fixed):
+      try await supabase
+          .from("workouts")
+          .select()
+          .execute()
+    context: "The .database property is being deprecated in favor of direct table access through .from(). This change simplifies the API while maintaining the same functionality. Update all Supabase database queries to remove the .database property from the chain."

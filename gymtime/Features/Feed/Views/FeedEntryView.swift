@@ -72,29 +72,4 @@ struct FeedEntryView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
     }
-}
-
-// MARK: - Preview
-#Preview {
-    VStack {
-        FeedEntryView(workout: WorkoutFeedEntry(
-            id: UUID(),
-            userName: "Robert Price",
-            workoutType: "Morning Run",
-            location: "Deschutes National Forest, Oregon",
-            achievement: "27.99 mi • 15,158 ft elevation",
-            timestamp: Date()
-        ))
-        
-        FeedEntryView(workout: WorkoutFeedEntry(
-            id: UUID(),
-            userName: "Sarah Chen",
-            workoutType: "Strength Training",
-            location: "LifeTime Sky NYC",
-            achievement: "Bench Press: 225lbs × 5 • Deadlift: 315lbs × 3",
-            timestamp: Date()
-        ))
-    }
-    .background(Color(.systemBackground))
-    .previewLayout(.sizeThatFits)
 } 

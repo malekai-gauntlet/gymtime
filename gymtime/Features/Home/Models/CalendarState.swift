@@ -49,20 +49,8 @@ struct CalendarState {
         }
     }
     
-    // Week Navigation
-    mutating func moveToNextWeek() {
-        if let newDate = calendar.date(byAdding: .weekOfYear, value: 1, to: displayedWeek) {
-            moveToDate(newDate)
-        }
-    }
+    // MARK: - Navigation
     
-    mutating func moveToPreviousWeek() {
-        if let newDate = calendar.date(byAdding: .weekOfYear, value: -1, to: displayedWeek) {
-            moveToDate(newDate)
-        }
-    }
-    
-    // Month Navigation
     mutating func moveToNextMonth() {
         if let newDate = calendar.date(byAdding: .month, value: 1, to: displayedWeek) {
             moveToDate(newDate)

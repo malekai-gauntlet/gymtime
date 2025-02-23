@@ -1,41 +1,42 @@
-// 📄 Visualizes audio input levels as an animated waveform
+// 📄 Visualizes audio levels during recording with an animated waveform
 
 import SwiftUI
 
 struct WaveformView: View {
     let audioLevel: Float
     
-    // Increased number of bars and adjusted spacing
-    private let numberOfBars = 40
-    private let spacing: CGFloat = 3
-    private let minBarHeight: CGFloat = 4
-    private let maxBarHeight: CGFloat = 80  // Increased maximum height
-    private let barWidth: CGFloat = 4       // Slightly thicker bars
+    // Constants for waveform appearance
+    private let numberOfBars = 30
+    private let spacing: CGFloat = 4
+    private let minBarHeight: CGFloat = 3
+    private let maxBarHeight: CGFloat = 50
+    private let cornerRadius: CGFloat = 2
     
     var body: some View {
         HStack(spacing: spacing) {
             ForEach(0..<numberOfBars, id: \.self) { index in
-                RoundedRectangle(cornerRadius: barWidth/2)
+                // Calculate height based on audio level and add randomness for visual effect
+                let randomFactor = Double.random(in: 0.8...1.2)
+                let height = max(
+                    minBarHeight,
+                    CGFloat(audioLevel) * maxBarHeight * CGFloat(randomFactor)
+                )
+                
+                RoundedRectangle(cornerRadius: cornerRadius)
                     .fill(Color.gymtimeAccent)
-                    .frame(width: barWidth, height: dynamicBarHeight(for: index))
+                    .frame(width: 3, height: height)
                     .animation(
                         .spring(response: 0.3, dampingFraction: 0.6, blendDuration: 0),
-                        value: audioLevel
+                        value: height
                     )
             }
         }
         .frame(height: maxBarHeight)
     }
-    
-    private func dynamicBarHeight(for index: Int) -> CGFloat {
-        // Create a more dynamic wave pattern
-        let centerOffset = abs(Float(index) - Float(numberOfBars)/2)
-        let positionFactor = 1.0 - (centerOffset / Float(numberOfBars)) * 0.5
-        
-        // Apply a more sensitive transformation to the audio level
-        let transformedLevel = pow(audioLevel, 0.7) // Makes lower levels more visible
-        let height = CGFloat(transformedLevel * positionFactor) * maxBarHeight
-        
-        return max(height, minBarHeight)
-    }
-} 
+}
+
+#Preview {
+    WaveformView(audioLevel: 0.5)
+        .padding()
+        .background(Color.black)
+}

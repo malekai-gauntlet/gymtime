@@ -104,7 +104,7 @@ struct FeedView: View {
         
         do {
             // Fetch workouts from Supabase
-            let response: [WorkoutEntry] = try await supabase.database
+            let response: [WorkoutEntry] = try await supabase
                 .from("workouts")
                 .select()
                 .order("date", ascending: false)

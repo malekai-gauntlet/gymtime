@@ -67,7 +67,7 @@ class ProfileViewModel: ObservableObject {
             let userId = try await supabase.auth.session.user.id
             
             // Update profile in Supabase
-            try await supabase.database
+            try await supabase
                 .from("profiles")
                 .update([
                     "username": username,
@@ -96,7 +96,7 @@ class ProfileViewModel: ObservableObject {
             let userId = session.user.id
             
             // Fetch profile data from profiles table
-            let profile: Profile = try await supabase.database
+            let profile: Profile = try await supabase
                 .from("profiles")
                 .select()
                 .eq("id", value: userId)
@@ -118,7 +118,7 @@ class ProfileViewModel: ObservableObject {
             let userId = try await supabase.auth.session.user.id
             
             // Get total workouts
-            let totalResponse: [WorkoutEntry] = try await supabase.database
+            let totalResponse: [WorkoutEntry] = try await supabase
                 .from("workouts")
                 .select()
                 .eq("user_id", value: userId)
@@ -176,7 +176,7 @@ class ProfileViewModel: ObservableObject {
         do {
             let userId = try await supabase.auth.session.user.id
             
-            let workouts: [WorkoutEntry] = try await supabase.database
+            let workouts: [WorkoutEntry] = try await supabase
                 .from("workouts")
                 .select()
                 .eq("user_id", value: userId)
@@ -236,7 +236,7 @@ class ProfileViewModel: ObservableObject {
             let calendar = Calendar.current
             let weekStart = calendar.startOfDay(for: calendar.date(byAdding: .day, value: -7, to: Date()) ?? Date())
             
-            let workouts: [WorkoutEntry] = try await supabase.database
+            let workouts: [WorkoutEntry] = try await supabase
                 .from("workouts")
                 .select()
                 .eq("user_id", value: userId)

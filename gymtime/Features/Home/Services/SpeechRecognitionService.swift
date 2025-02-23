@@ -3,6 +3,7 @@
 import Foundation
 import Speech
 import Combine
+import AVFAudio
 
 class SpeechRecognitionService: ObservableObject {
     @Published var transcript: String = ""
@@ -54,9 +55,9 @@ class SpeechRecognitionService: ObservableObject {
             return
         }
         
-        // Use existing audio session instead of configuring our own
-        guard let audioSession = try? AVAudioSession.sharedInstance(),
-              audioSession.recordPermission == .granted else {
+        // Check audio permission
+        let audioSession = AVAudioSession.sharedInstance()
+        guard audioSession.recordPermission == AVAudioSession.RecordPermission.granted else {
             error = "Microphone permission not granted"
             return
         }

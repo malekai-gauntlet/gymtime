@@ -52,7 +52,7 @@
 		43736D8A2652280900CE4368 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		43736D8C2652280900CE4368 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		43A601C2265257EE00B24B9D /* Repo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Repo.swift; sourceTree = "<group>"; };
-		43A601CA265267C000B24B9D /* SwiftUI-MVVM-CTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = "SwiftUI-MVVM-CTests.xctest"; path = "gymtime tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		43A601CA265267C000B24B9D /* gymtime tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "gymtime tests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		43A601CC265267C000B24B9D /* SwiftUI_MVVM_CTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftUI_MVVM_CTests.swift; sourceTree = "<group>"; };
 		43A601CE265267C000B24B9D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		43A601D92652687F00B24B9D /* repos.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = repos.json; sourceTree = "<group>"; };
@@ -110,7 +110,7 @@
 			isa = PBXGroup;
 			children = (
 				43736D7B2652280700CE4368 /* gymtime.app */,
-				43A601CA265267C000B24B9D /* SwiftUI-MVVM-CTests.xctest */,
+				43A601CA265267C000B24B9D /* gymtime tests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -259,7 +259,7 @@
 			);
 			name = "gymtime tests";
 			productName = "gymtime tests";
-			productReference = 43A601CA265267C000B24B9D /* SwiftUI-MVVM-CTests.xctest */;
+			productReference = 43A601CA265267C000B24B9D /* gymtime tests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
 /* End PBXNativeTarget section */
@@ -268,8 +268,9 @@
 		43736D732652280700CE4368 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
+				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 1220;
-				LastUpgradeCheck = 1220;
+				LastUpgradeCheck = 1620;
 				TargetAttributes = {
 					43736D7A2652280700CE4368 = {
 						CreatedOnToolsVersion = 12.2;
@@ -376,6 +377,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -409,6 +411,7 @@
 				DEBUG_INFORMATION_FORMAT = dwarf;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -437,6 +440,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
 				CLANG_ANALYZER_NONNULL = YES;
 				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
 				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
@@ -470,6 +474,7 @@
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
