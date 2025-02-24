@@ -19,9 +19,19 @@ extension HomeViewModel {
     func selectDate(_ date: Date) {
         print("📅 Selecting date: \(date)")
         
-        // Reset UI states
-        isSuggestionsVisible = false
-        blankWorkoutEntry = nil
+        // Only reset UI states if we're actually changing the date
+        if !Calendar.current.isDate(date, inSameDayAs: calendarState.selectedDate) {
+            // First hide suggestions with animation
+            withAnimation(.easeOut(duration: 0.2)) {
+                isSuggestionsVisible = false
+                suggestedWorkouts = []
+            }
+            
+            // Then reset other states after a slight delay to ensure smooth animation
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.blankWorkoutEntry = nil
+            }
+        }
         
         calendarState.selectDate(date)
         loadWorkouts()

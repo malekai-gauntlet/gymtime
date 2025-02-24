@@ -3,6 +3,7 @@
 import Foundation
 import SwiftUI
 import Supabase
+import Combine
 
 @MainActor
 class HomeViewModel: ObservableObject {
@@ -39,6 +40,7 @@ class HomeViewModel: ObservableObject {
     // MARK: - Private Properties
     
     var summaryCache: [Date: String] = [:]
+    private var cancellables = Set<AnyCancellable>()
     
     // MARK: - Initialization
     
@@ -55,6 +57,9 @@ class HomeViewModel: ObservableObject {
         
         // Set up service observations
         setupServiceObservers()
+        
+        // Set up date change observer
+        setupDateChangeObserver()
     }
     
     private func setupServiceObservers() {
@@ -69,5 +74,22 @@ class HomeViewModel: ObservableObject {
             
         speechRecognitionService.$error
             .assign(to: &$error)
+    }
+    
+    private func setupDateChangeObserver() {
+        // Observe changes to the selected date
+        $calendarState
+            .map { $0.selectedDate }
+            .removeDuplicates { Calendar.current.isDate($0, inSameDayAs: $1) }
+            .dropFirst() // Skip initial value
+            .sink { [weak self] _ in
+                // Hide suggestions when date changes
+                withAnimation {
+                    self?.isSuggestionsVisible = false
+                    self?.suggestedWorkouts = []
+                    self?.blankWorkoutEntry = nil
+                }
+            }
+            .store(in: &cancellables)
     }
 }

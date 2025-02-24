@@ -68,6 +68,14 @@ struct CalendarView: View {
                                     )
                                     .onTapGesture {
                                         withAnimation(smoothScroll) {
+                                            // First hide suggestions if visible
+                                            if viewModel.isSuggestionsVisible {
+                                                viewModel.isSuggestionsVisible = false
+                                                viewModel.suggestedWorkouts = []
+                                                viewModel.blankWorkoutEntry = nil
+                                            }
+                                            
+                                            // Then select the new date
                                             viewModel.selectDate(item.date)
                                             proxy.scrollTo(item.date, anchor: .center)
                                             updateDisplayedMonth(item.date)

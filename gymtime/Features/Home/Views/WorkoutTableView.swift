@@ -75,133 +75,127 @@ struct WorkoutTableView: View {
                     
                     // Table Content
                     ScrollViewReader { proxy in
-                        List {
-                            if workouts.isEmpty && viewModel.suggestedWorkouts.isEmpty {
-                                VStack(spacing: 8) {
-                                    Image(systemName: "dumbbell.fill")
-                                        .font(.system(size: 24))
-                                        .foregroundColor(.gymtimeTextSecondary)
-                                    Text("No workouts recorded yet")
-                                        .font(.headline)
-                                        .foregroundColor(.gymtimeTextSecondary)
-                                }
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 300) // Fixed height when empty
-                                .listRowBackground(Color.gymtimeBackground)
-                                .listRowSeparator(.hidden)
-                                .listRowInsets(EdgeInsets())
-                            } else {
-                                // Regular workouts
-                                ForEach(workouts) { workout in
-                                    WorkoutRow(
-                                        workout: workout,
-                                        scrollProxy: proxy,
-                                        exerciseWidth: exerciseWidth,
-                                        weightWidth: weightWidth,
-                                        setsWidth: setsWidth,
-                                        repsWidth: repsWidth,
-                                        notesWidth: notesWidth,
-                                        viewModel: viewModel,
-                                        isAnyFieldEditing: $isAnyFieldEditing
-                                    )
-                                    .id(workout.id.uuidString)  // Convert UUID to String
-                                    .listRowInsets(EdgeInsets())
-                                    .listRowBackground(Color.gymtimeBackground)
-                                    .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                                        Button(role: .destructive) {
-                                            print("🔴 Delete button tapped for workout: \(workout.id)")
-                                            withAnimation(.easeOut(duration: 0.3)) {
-                                                viewModel.deleteWorkout(id: workout.id)
-                                            }
-                                        } label: {
-                                            Label("Delete", systemImage: "minus.circle")
-                                        }
-                                        .tint(.red)
+                        ScrollView {
+                            LazyVStack(spacing: 0) {
+                                if workouts.isEmpty && viewModel.suggestedWorkouts.isEmpty {
+                                    VStack(spacing: 8) {
+                                        Image(systemName: "dumbbell.fill")
+                                            .font(.system(size: 24))
+                                            .foregroundColor(.gymtimeTextSecondary)
+                                        Text("No workouts recorded yet")
+                                            .font(.headline)
+                                            .foregroundColor(.gymtimeTextSecondary)
                                     }
-                                }
-                                
-                                // Suggested workouts
-                                ForEach(viewModel.suggestedWorkouts) { suggestion in
-                                    WorkoutRow(
-                                        workout: suggestion,
-                                        scrollProxy: proxy,
-                                        exerciseWidth: exerciseWidth,
-                                        weightWidth: weightWidth,
-                                        setsWidth: setsWidth,
-                                        repsWidth: repsWidth,
-                                        notesWidth: notesWidth,
-                                        viewModel: viewModel,
-                                        isAnyFieldEditing: $isAnyFieldEditing
-                                    )
-                                    .listRowInsets(EdgeInsets())
-                                    .listRowBackground(Color.gymtimeBackground)
-                                    .opacity(0.4)
-                                    .overlay(
-                                        Button(action: {
-                                            print("👆 Suggestion button tapped:")
-                                            print("   Exercise: \(suggestion.exercise)")
-                                            print("   ID: \(suggestion.id)")
-                                            print("   Position in list: \(viewModel.suggestedWorkouts.firstIndex(where: { $0.id == suggestion.id }) ?? -1)")
-                                            
-                                            withAnimation(.easeInOut(duration: 0.3)) {
-                                                viewModel.addSuggestionToWorkouts(suggestion)
+                                    .frame(maxWidth: .infinity)
+                                    .frame(height: 300) // Fixed height when empty
+                                    .background(Color.gymtimeBackground)
+                                    .padding(.horizontal, 0)
+                                } else {
+                                    // Regular workouts
+                                    ForEach(workouts) { workout in
+                                        WorkoutRow(
+                                            workout: workout,
+                                            scrollProxy: proxy,
+                                            exerciseWidth: exerciseWidth,
+                                            weightWidth: weightWidth,
+                                            setsWidth: setsWidth,
+                                            repsWidth: repsWidth,
+                                            notesWidth: notesWidth,
+                                            viewModel: viewModel,
+                                            isAnyFieldEditing: $isAnyFieldEditing
+                                        )
+                                        .id(workout.id.uuidString)  // Convert UUID to String
+                                        .background(Color.gymtimeBackground)
+                                        .contextMenu {
+                                            Button(role: .destructive) {
+                                                print("🔴 Delete button tapped for workout: \(workout.id)")
+                                                withAnimation(.easeOut(duration: 0.3)) {
+                                                    viewModel.deleteWorkout(id: workout.id)
+                                                }
+                                            } label: {
+                                                Label("Delete", systemImage: "minus.circle")
                                             }
-                                        }) {
-                                            ZStack {
-                                                // Invisible larger tap area
-                                                Color.clear
-                                                    .frame(width: 60, height: 60)
-                                                    .onTapGesture {
-                                                        print("🎯 Tap area hit for \(suggestion.exercise)")
-                                                    }
+                                        }
+                                    }
+                                    
+                                    // Suggested workouts
+                                    ForEach(viewModel.suggestedWorkouts) { suggestion in
+                                        WorkoutRow(
+                                            workout: suggestion,
+                                            scrollProxy: proxy,
+                                            exerciseWidth: exerciseWidth,
+                                            weightWidth: weightWidth,
+                                            setsWidth: setsWidth,
+                                            repsWidth: repsWidth,
+                                            notesWidth: notesWidth,
+                                            viewModel: viewModel,
+                                            isAnyFieldEditing: $isAnyFieldEditing
+                                        )
+                                        .background(Color.gymtimeBackground)
+                                        .opacity(0.4)
+                                        .overlay(
+                                            Button(action: {
+                                                print("👆 Suggestion button tapped:")
+                                                print("   Exercise: \(suggestion.exercise)")
+                                                print("   ID: \(suggestion.id)")
+                                                print("   Position in list: \(viewModel.suggestedWorkouts.firstIndex(where: { $0.id == suggestion.id }) ?? -1)")
                                                 
-                                                // Visual checkmark remains the same size
-                                                Image(systemName: "checkmark.circle")
-                                                    .foregroundColor(.gymtimeAccent)
-                                                    .font(.system(size: 24))
+                                                withAnimation(.easeInOut(duration: 0.3)) {
+                                                    viewModel.addSuggestionToWorkouts(suggestion)
+                                                }
+                                            }) {
+                                                ZStack {
+                                                    // Invisible larger tap area
+                                                    Color.clear
+                                                        .frame(width: 60, height: 60)
+                                                        .onTapGesture {
+                                                            print("🎯 Tap area hit for \(suggestion.exercise)")
+                                                        }
+                                                    
+                                                    // Visual checkmark remains the same size
+                                                    Image(systemName: "checkmark.circle")
+                                                        .foregroundColor(.gymtimeAccent)
+                                                        .font(.system(size: 24))
+                                                }
                                             }
-                                        }
-                                        .contentShape(Rectangle())
+                                            .contentShape(Rectangle())
+                                            .onAppear {
+                                                print("🔲 Suggestion button appeared: \(suggestion.exercise)")
+                                            }
+                                            .padding(.trailing, 24),
+                                            alignment: .trailing
+                                        )
+                                        .transition(.opacity.combined(with: .move(edge: .bottom)))
                                         .onAppear {
-                                            print("🔲 Suggestion button appeared: \(suggestion.exercise)")
+                                            print("📍 Suggestion row appeared: \(suggestion.exercise)")
                                         }
-                                        .padding(.trailing, 24),
-                                        alignment: .trailing
-                                    )
-                                    .transition(.opacity.combined(with: .move(edge: .bottom)))
-                                    .onAppear {
-                                        print("📍 Suggestion row appeared: \(suggestion.exercise)")
                                     }
+                                    
+                                    // Add blank workout entry if available
+                                    if let blankWorkout = viewModel.blankWorkoutEntry {
+                                        WorkoutRow(
+                                            workout: blankWorkout,
+                                            scrollProxy: proxy,
+                                            exerciseWidth: exerciseWidth,
+                                            weightWidth: weightWidth,
+                                            setsWidth: setsWidth,
+                                            repsWidth: repsWidth,
+                                            notesWidth: notesWidth,
+                                            viewModel: viewModel,
+                                            isAnyFieldEditing: $isAnyFieldEditing,
+                                            isBlankEntry: true
+                                        )
+                                        .background(Color.gymtimeBackground)
+                                        .opacity(0.4)
+                                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                                    }
+                                    
+                                    // Add spacer at bottom to prevent content hiding behind buttons
+                                    Color.clear
+                                        .frame(height: 180)  // Adjust based on bottom UI height
                                 }
-                                
-                                // Add blank workout entry if available
-                                if let blankWorkout = viewModel.blankWorkoutEntry {
-                                    WorkoutRow(
-                                        workout: blankWorkout,
-                                        scrollProxy: proxy,
-                                        exerciseWidth: exerciseWidth,
-                                        weightWidth: weightWidth,
-                                        setsWidth: setsWidth,
-                                        repsWidth: repsWidth,
-                                        notesWidth: notesWidth,
-                                        viewModel: viewModel,
-                                        isAnyFieldEditing: $isAnyFieldEditing,
-                                        isBlankEntry: true
-                                    )
-                                    .listRowInsets(EdgeInsets())
-                                    .listRowBackground(Color.gymtimeBackground)
-                                    .opacity(0.4)
-                                    .transition(.opacity.combined(with: .move(edge: .bottom)))
-                                }
-                                
-                                // Add spacer at bottom to prevent content hiding behind buttons
-                                Color.clear
-                                    .frame(height: 180)  // Adjust based on bottom UI height
-                                    .listRowBackground(Color.clear)
-                                    .listRowInsets(EdgeInsets())
                             }
                         }
-                        .listStyle(.plain)
                         .background(Color.gymtimeBackground)
                         .modifier(BottomFadeModifier(itemCount: workouts.count + (viewModel.blankWorkoutEntry != nil ? 1 : 0) + viewModel.suggestedWorkouts.count))
                     }
@@ -591,7 +585,7 @@ struct WorkoutRow: View {
                 .foregroundColor(.gymtimeTextSecondary)
                 .onTapGesture {
                     if !isBlankEntry && (workout.notes?.count ?? 0) > notesThreshold {
-                        withAnimation(.easeInOut(duration: 0.2)) {
+                        withAnimation(.easeInOut(duration: 0.3)) {
                             isExpanded.toggle()
                         }
                     }
@@ -609,7 +603,7 @@ struct WorkoutRow: View {
                     .padding(.horizontal, 24)
                     .padding(.vertical, 8)
                     .background(Color.black.opacity(0.2))
-                    .transition(.move(edge: .top).combined(with: .opacity))
+                    .transition(.opacity.combined(with: .scale(scale: 0.95, anchor: .top)))
             }
         }
         .padding(.vertical, 14)
