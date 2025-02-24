@@ -8,79 +8,52 @@ struct FeedView: View {
     @State private var isLoading = false
     @State private var showingError = false
     @State private var errorMessage = ""
-    @State private var selectedTab = "Feed"
     
     // MARK: - Body
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                // Top Toggle Tabs
+                // Top Bar
                 HStack(spacing: 0) {
-                    HStack(spacing: 0) {
-                        Button(action: { selectedTab = "Feed" }) {
-                            Text("Feed")
-                                .font(.system(size: 17, weight: .semibold))
-                                .foregroundColor(selectedTab == "Feed" ? .white : Color.gray)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 32)
-                                .background(
-                                    selectedTab == "Feed" ?
-                                    Color(white: 0.22) :
-                                    Color.clear
-                                )
-                        }
-                        
-                        Button(action: { selectedTab = "Place" }) {
-                            Text("Place")
-                                .font(.system(size: 17, weight: .semibold))
-                                .foregroundColor(selectedTab == "Place" ? .white : Color.gray)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 32)
-                                .background(
-                                    selectedTab == "Place" ?
-                                    Color(white: 0.22) :
-                                    Color.clear
-                                )
-                        }
-                    }
-                    .background(Color(white: 0.17))
-                    .cornerRadius(8)
+                    Text("Feed")
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 32)
+                        .background(Color(white: 0.22))
+                        .background(Color(white: 0.17))
+                        .cornerRadius(8)
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 8)
                 .background(Color.black)
                 
                 // Main Content
-                if selectedTab == "Feed" {
-                    List {
-                        ForEach(workouts) { workout in
-                            VStack(spacing: 0) {
-                                FeedEntryView(workout: workout)
-                                
-                                if workout.id != workouts.last?.id {
-                                    Divider()
-                                        .background(Color.gymtimeTextSecondary.opacity(0.2))
-                                        .padding(.horizontal, 16)
-                                        .padding(.vertical, 8)
-                                }
+                List {
+                    ForEach(workouts) { workout in
+                        VStack(spacing: 0) {
+                            FeedEntryView(workout: workout)
+                            
+                            if workout.id != workouts.last?.id {
+                                Divider()
+                                    .background(Color.gymtimeTextSecondary.opacity(0.2))
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 8)
                             }
-                            .listRowInsets(EdgeInsets())
+                        }
+                        .listRowInsets(EdgeInsets())
+                        .listRowSeparator(.hidden)
+                    }
+                    
+                    if isLoading {
+                        ProgressView()
+                            .frame(maxWidth: .infinity, alignment: .center)
                             .listRowSeparator(.hidden)
-                        }
-                        
-                        if isLoading {
-                            ProgressView()
-                                .frame(maxWidth: .infinity, alignment: .center)
-                                .listRowSeparator(.hidden)
-                        }
                     }
-                    .listStyle(.plain)
-                    .refreshable {
-                        await loadWorkouts()
-                    }
-                } else {
-                    // Placeholder for Place tab
-                    Color.black
+                }
+                .listStyle(.plain)
+                .refreshable {
+                    await loadWorkouts()
                 }
             }
             .navigationBarHidden(true)

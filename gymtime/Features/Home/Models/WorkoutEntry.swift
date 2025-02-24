@@ -6,6 +6,7 @@ struct WorkoutEntry: Identifiable, Codable {
     let id: UUID
     let userId: UUID
     var exercise: String
+    var muscleGroup: String?
     var weight: Double?
     var sets: Int?
     var reps: Int?
@@ -16,6 +17,7 @@ struct WorkoutEntry: Identifiable, Codable {
         case id
         case userId = "user_id"
         case exercise
+        case muscleGroup = "muscle_group"
         case weight
         case sets
         case reps
@@ -23,10 +25,11 @@ struct WorkoutEntry: Identifiable, Codable {
         case date
     }
     
-    init(id: UUID = UUID(), userId: UUID, exercise: String, weight: Double? = nil, sets: Int? = nil, reps: Int? = nil, notes: String? = nil, date: Date = Date()) {
+    init(id: UUID = UUID(), userId: UUID, exercise: String, muscleGroup: String? = nil, weight: Double? = nil, sets: Int? = nil, reps: Int? = nil, notes: String? = nil, date: Date = Date()) {
         self.id = id
         self.userId = userId
         self.exercise = exercise
+        self.muscleGroup = muscleGroup
         self.weight = weight
         self.sets = sets
         self.reps = reps
@@ -40,6 +43,7 @@ struct WorkoutEntry: Identifiable, Codable {
         id = try container.decode(UUID.self, forKey: .id)
         userId = try container.decode(UUID.self, forKey: .userId)
         exercise = try container.decode(String.self, forKey: .exercise)
+        muscleGroup = try container.decodeIfPresent(String.self, forKey: .muscleGroup)
         weight = try container.decodeIfPresent(Double.self, forKey: .weight)
         sets = try container.decodeIfPresent(Int.self, forKey: .sets)
         reps = try container.decodeIfPresent(Int.self, forKey: .reps)
@@ -74,6 +78,7 @@ struct WorkoutEntry: Identifiable, Codable {
         try container.encode(id, forKey: .id)
         try container.encode(userId, forKey: .userId)
         try container.encode(exercise, forKey: .exercise)
+        try container.encodeIfPresent(muscleGroup, forKey: .muscleGroup)
         try container.encodeIfPresent(weight, forKey: .weight)
         try container.encodeIfPresent(sets, forKey: .sets)
         try container.encodeIfPresent(reps, forKey: .reps)

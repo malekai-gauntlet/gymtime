@@ -88,15 +88,18 @@ extension HomeViewModel {
                 .select()
                 .eq("user_id", value: userId)
                 .order("created_at", ascending: false)
-                .limit(10)
+                .limit(10)  // Still fetch 10 for more variety
                 .execute()
                 .value
             
-            // Remove duplicates based on exercise name
+            // Remove duplicates based on exercise name and limit to 3 suggestions
             var uniqueExercises: Set<String> = []
-            return response.filter { workout in
-                uniqueExercises.insert(workout.exercise).inserted
-            }
+            return response
+                .filter { workout in
+                    uniqueExercises.insert(workout.exercise).inserted
+                }
+                .prefix(3)  // Limit to 3 suggestions
+                .map { $0 }  // Convert ArraySlice back to Array
             
         } catch {
             print("Error loading suggestions: \(error)")

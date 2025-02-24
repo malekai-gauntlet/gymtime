@@ -38,6 +38,7 @@ class OpenAIService {
             You are a fitness tracking assistant. Parse the workout description into one or more exercises.
             Return a JSON array where each exercise contains:
             - exercise: (required) name of the exercise
+            - muscle_group: (required) primary muscle group targeted (one of: Chest, Back, Shoulders, Biceps, Triceps, Legs, Core, Cardio)
             - duration: time spent (e.g. '10 minutes', '30 seconds')
             - weight: any weight/resistance used
             - sets: number of sets
@@ -45,8 +46,8 @@ class OpenAIService {
             - notes: any additional details or context
 
             Return as a JSON array even for single exercises. Examples:
-            "10 minutes of abs" → [{"exercise": "Ab Workout", "duration": "10 mins"}]
-            "Bench press 185lbs 3x5" → [{"exercise": "Bench Press", "weight": "185", "sets": 3, "reps": 5}]
+            "10 minutes of abs" → [{"exercise": "Ab Workout", "muscle_group": "Core", "duration": "10 mins"}]
+            "Bench press 185lbs 3x5" → [{"exercise": "Bench Press", "muscle_group": "Chest", "weight": "185", "sets": 3, "reps": 5}]
             """
         )
     }

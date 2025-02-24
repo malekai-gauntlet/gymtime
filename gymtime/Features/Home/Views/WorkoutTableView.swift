@@ -4,6 +4,8 @@ import SwiftUI
 
 // Custom view modifier for bottom fade effect
 struct BottomFadeModifier: ViewModifier {
+    let itemCount: Int
+    
     func body(content: Content) -> some View {
         content
             .mask(
@@ -201,7 +203,7 @@ struct WorkoutTableView: View {
                         }
                         .listStyle(.plain)
                         .background(Color.gymtimeBackground)
-                        .modifier(BottomFadeModifier())
+                        .modifier(BottomFadeModifier(itemCount: workouts.count + (viewModel.blankWorkoutEntry != nil ? 1 : 0) + viewModel.suggestedWorkouts.count))
                     }
                 }
                 .background(Color.gymtimeBackground)
@@ -482,7 +484,7 @@ struct WorkoutRow: View {
     }
     
     var body: some View {
-        ZStack {
+        VStack(spacing: 0) {
             // Main row content
             HStack(spacing: 0) {
                 EditableCell(
@@ -587,37 +589,29 @@ struct WorkoutRow: View {
                 .frame(width: UIScreen.main.bounds.width * notesWidth, alignment: .leading)
                 .font(.subheadline)
                 .foregroundColor(.gymtimeTextSecondary)
-            }
-            .padding(.horizontal, 24)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                print("👆 Tap detected on workout row: \(workout.id)")
-                if !isBlankEntry && (workout.notes?.count ?? 0) > notesThreshold {
-                    print("📝 Notes expansion triggered")
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        isExpanded.toggle()
-                        print("📖 Notes expanded state: \(isExpanded)")
+                .onTapGesture {
+                    if !isBlankEntry && (workout.notes?.count ?? 0) > notesThreshold {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            isExpanded.toggle()
+                        }
                     }
                 }
             }
-            .padding(.bottom, isExpanded && (workout.notes?.count ?? 0) > notesThreshold ? 14 : 0)
+            .padding(.horizontal, 24)
+            .padding(.bottom, isExpanded && (workout.notes?.count ?? 0) > notesThreshold ? 14 : 0)  // Add dynamic padding
             
             // Expanded notes view
             if isExpanded && (workout.notes?.count ?? 0) > notesThreshold {
-                VStack {  // Add VStack to ensure proper View type
-                    Text(workout.notes ?? "")
-                        .font(.subheadline)
-                        .foregroundColor(.gymtimeTextSecondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 24)
-                        .padding(.vertical, 8)
-                        .background(Color.black.opacity(0.2))
-                        .transition(.move(edge: .top).combined(with: .opacity))
-                }
-                .zIndex(2)  // Move zIndex to the VStack
+                Text(workout.notes ?? "")
+                    .font(.subheadline)
+                    .foregroundColor(.gymtimeTextSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 8)
+                    .background(Color.black.opacity(0.2))
+                    .transition(.move(edge: .top).combined(with: .opacity))
             }
         }
-        .foregroundColor(.gymtimeText)
         .padding(.vertical, 14)
         .contentShape(Rectangle()) // Ensure the entire row is interactive
         .onAppear {

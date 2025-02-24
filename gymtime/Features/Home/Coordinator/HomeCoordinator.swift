@@ -12,14 +12,17 @@ struct HomeCoordinator: View {
                 HomeView(viewModel: viewModel)
                     .tag(0)
                 
-                PTView(viewModel: PTViewModel(homeViewModel: viewModel), selectedTab: $selectedTab)
+                WeightsCoordinator()
                     .tag(1)
                 
-                FeedView()
+                PTView(viewModel: PTViewModel(homeViewModel: viewModel), selectedTab: $selectedTab)
                     .tag(2)
                 
-                ProfileCoordinator()  // Use ProfileCoordinator instead of ProfileView
+                FeedView()
                     .tag(3)
+                
+                ProfileCoordinator()  // Use ProfileCoordinator instead of ProfileView
+                    .tag(4)
             }
             .tabViewStyle(.automatic)
             

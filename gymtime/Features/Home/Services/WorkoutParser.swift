@@ -14,6 +14,7 @@ actor WorkoutParser {
     
     struct ParsedWorkout: Codable {
         var exercise: String
+        var muscle_group: String
         var duration: String?
         var weight: String?
         var sets: Int?
@@ -48,6 +49,12 @@ actor WorkoutParser {
             throw ParserError.missingExercise
         }
         
+        // Clean muscle group
+        let muscleGroup = parsed.muscle_group.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !muscleGroup.isEmpty else {
+            throw ParserError.missingMuscleGroup
+        }
+        
         // Clean weight (if present)
         let weight = parsed.weight.flatMap { cleanWeight($0) }
         
@@ -67,6 +74,7 @@ actor WorkoutParser {
         return WorkoutEntry(
             userId: userId,
             exercise: exercise,
+            muscleGroup: muscleGroup,
             weight: weight,
             sets: parsed.sets,
             reps: parsed.reps,
@@ -102,6 +110,7 @@ actor WorkoutParser {
     enum ParserError: Error {
         case invalidData
         case missingExercise
+        case missingMuscleGroup
         case invalidFormat
         case noUserId
     }

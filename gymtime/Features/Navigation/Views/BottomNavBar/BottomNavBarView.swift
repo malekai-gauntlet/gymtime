@@ -15,25 +15,32 @@ struct BottomNavBarView: View {
             .onTapGesture { selectedTab = 0 }
             
             NavBarItem(
-                icon: "dumbbell.fill",
-                text: "PT", 
+                icon: "number.circle.fill",
+                text: "Weights",
                 isSelected: selectedTab == 1
             )
             .onTapGesture { selectedTab = 1 }
             
             NavBarItem(
-                icon: "list.bullet",
-                text: "Feed",
+                icon: "dumbbell.fill",
+                text: "PT", 
                 isSelected: selectedTab == 2
             )
             .onTapGesture { selectedTab = 2 }
             
             NavBarItem(
-                icon: "person.fill",
-                text: "Profile",
+                icon: "list.bullet",
+                text: "Feed",
                 isSelected: selectedTab == 3
             )
             .onTapGesture { selectedTab = 3 }
+            
+            NavBarItem(
+                icon: "person.fill",
+                text: "Profile",
+                isSelected: selectedTab == 4
+            )
+            .onTapGesture { selectedTab = 4 }
         }
         .padding(.top, 8)
         .padding(.bottom, 4)
