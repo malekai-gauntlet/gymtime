@@ -1,6 +1,7 @@
 // 📄 Coordinates navigation and flow within the home feature
 
 import SwiftUI
+import Supabase
 
 struct HomeCoordinator: View {
     @StateObject private var viewModel = HomeViewModel()
@@ -12,7 +13,7 @@ struct HomeCoordinator: View {
                 HomeView(viewModel: viewModel)
                     .tag(0)
                 
-                WeightsCoordinator()
+                WeightsCoordinator(supabase: supabase)
                     .tag(1)
                 
                 PTView(viewModel: PTViewModel(homeViewModel: viewModel), selectedTab: $selectedTab)
