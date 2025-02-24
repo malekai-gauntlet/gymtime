@@ -13,21 +13,6 @@ struct FeedView: View {
     var body: some View {
         NavigationView {
             VStack(spacing: 0) {
-                // Top Bar
-                HStack(spacing: 0) {
-                    Text("Feed")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
-                        .frame(height: 32)
-                        .background(Color(white: 0.22))
-                        .background(Color(white: 0.17))
-                        .cornerRadius(8)
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 8)
-                .background(Color.black)
-                
                 // Main Content
                 List {
                     ForEach(workouts) { workout in
@@ -48,7 +33,7 @@ struct FeedView: View {
                     if isLoading {
                         ProgressView()
                             .frame(maxWidth: .infinity, alignment: .center)
-                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
                     }
                 }
                 .listStyle(.plain)
@@ -56,17 +41,18 @@ struct FeedView: View {
                     await loadWorkouts()
                 }
             }
-            .navigationBarHidden(true)
-            .navigationTitle("Activity Feed")
-            .navigationBarTitleDisplayMode(.automatic)
-            .alert("Error", isPresented: $showingError) {
-                Button("OK", role: .cancel) {}
-            } message: {
-                Text(errorMessage)
-            }
+            .background(Color.black)
+            .navigationBarTitle("Feed", displayMode: .inline)
         }
-        .task {
-            await loadWorkouts()
+        .alert("Error", isPresented: $showingError) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text(errorMessage)
+        }
+        .onAppear {
+            Task {
+                await loadWorkouts()
+            }
         }
     }
     
