@@ -10,6 +10,13 @@ struct WelcomeView: View {
                 Spacer()
                 
                 // App logo/title area
+                Image("weight")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 120, height: 100)
+                    .padding(.bottom)
+                    .background(Color.clear) // Adding this temporarily to debug
+                
                 Text("gymhead")
                     .font(.largeTitle)
                     .fontWeight(.bold)
@@ -25,15 +32,15 @@ struct WelcomeView: View {
                     HStack {
                         Spacer()
                         Image(systemName: "envelope")
-                            .foregroundColor(.black)
+                            .foregroundColor(.white)
                         Text("Continue with E-mail")
                             .font(.headline)
-                            .foregroundColor(.black)
+                            .foregroundColor(.white)
                         Spacer()
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(Color.white)
+                    .background(Color.gymtimeAccent)
                     .cornerRadius(12)
                 }
                 
@@ -62,4 +69,4 @@ struct WelcomeView: View {
             .navigationBarHidden(true)
         }
     }
-} 
+}
