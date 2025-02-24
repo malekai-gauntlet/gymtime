@@ -9,78 +9,110 @@ struct PTView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                VStack(alignment: .leading, spacing: 24) {
-                    // Muscles to Work Section
+                VStack(spacing: 24) {
+                    // Header Section
                     VStack(alignment: .leading, spacing: 16) {
                         HStack {
-                            Text("Muscles to Work")
-                                .font(.title3.weight(.semibold))
-                                .foregroundColor(.white)
+                            Image(systemName: "figure.strengthtraining.traditional")
+                                .font(.title2)
+                                .foregroundColor(.green)
+                            
+                            Text("Training Analysis")
+                                .font(.title2.weight(.semibold))
+                                .foregroundColor(.gymtimeText)
                             
                             Spacer()
                             
                             if viewModel.isLoading {
                                 ProgressView()
                                     .progressViewStyle(CircularProgressViewStyle())
+                                    .tint(.gymtimeText)
                             }
                         }
                         
                         if let analysis = viewModel.analysisResults {
                             // Push/Pull Card
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Push/Pull Ratio: \(analysis.pushPullRatio, specifier: "%.2f")")
-                                    .foregroundColor(viewModel.isPushPullBalanced ? .green : .red)
-                            }
-                            .padding()
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.gray.opacity(0.2))
-                            .cornerRadius(12)
+                            TrainingStatCard(
+                                title: "PUSH/PULL RATIO",
+                                value: String(format: "%.2f", analysis.pushPullRatio),
+                                subtitle: viewModel.isPushPullBalanced ? "Well balanced" : "Needs attention",
+                                color: viewModel.isPushPullBalanced ? .green : .orange
+                            )
                             
-                            // Warnings Card
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Warnings:")
-                                    .font(.headline)
-                                ForEach(viewModel.warnings, id: \.self) { warning in
-                                    Text("• \(warning)")
-                                        .foregroundColor(.red)
+                            // Warnings Section
+                            if !viewModel.warnings.isEmpty {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    HStack {
+                                        Image(systemName: "magnifyingglass.circle.fill")
+                                            .foregroundColor(.orange)
+                                        Text("Areas to Watch")
+                                            .font(.headline)
+                                            .foregroundColor(.gymtimeText)
+                                    }
+                                    
+                                    ForEach(viewModel.warnings, id: \.self) { warning in
+                                        HStack(alignment: .top, spacing: 8) {
+                                            Image(systemName: "circle.fill")
+                                                .font(.system(size: 6))
+                                                .foregroundColor(.gray.opacity(0.6))
+                                                .padding(.top, 6)
+                                            
+                                            Text(warning)
+                                                .foregroundColor(.gymtimeTextSecondary)
+                                        }
+                                    }
                                 }
+                                .padding()
+                                .background(Color.black.opacity(0.3))
+                                .cornerRadius(12)
                             }
-                            .padding()
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.gray.opacity(0.2))
-                            .cornerRadius(12)
                             
-                            // Recommendations Card
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Recommendations:")
-                                    .font(.headline)
-                                ForEach(viewModel.recommendations, id: \.self) { recommendation in
-                                    Text("• \(recommendation)")
-                                        .foregroundColor(.blue)
+                            // Recommendations Section
+                            if !viewModel.recommendations.isEmpty {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    HStack {
+                                        Image(systemName: "lightbulb.fill")
+                                            .foregroundColor(.blue)
+                                        Text("Recommendations")
+                                            .font(.headline)
+                                            .foregroundColor(.gymtimeText)
+                                    }
+                                    
+                                    ForEach(viewModel.recommendations, id: \.self) { recommendation in
+                                        HStack(alignment: .top, spacing: 8) {
+                                            Image(systemName: "circle.fill")
+                                                .font(.system(size: 6))
+                                                .foregroundColor(.gray.opacity(0.6))
+                                                .padding(.top, 6)
+                                            
+                                            Text(recommendation)
+                                                .foregroundColor(.gymtimeTextSecondary)
+                                        }
+                                    }
                                 }
+                                .padding()
+                                .background(Color.black.opacity(0.3))
+                                .cornerRadius(12)
                             }
-                            .padding()
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.gray.opacity(0.2))
-                            .cornerRadius(12)
                         } else if !viewModel.isLoading && viewModel.error == nil {
-                            // Welcome message for new users
-                            VStack(alignment: .leading, spacing: 16) {
-                                HStack {
+                            // Welcome Card
+                            VStack(spacing: 24) {
+                                VStack(spacing: 16) {
                                     Image(systemName: "figure.strengthtraining.traditional")
-                                        .font(.system(size: 32))
+                                        .font(.system(size: 48))
                                         .foregroundColor(.gymtimeAccent)
                                     
-                                    Text("Get Started")
-                                        .font(.title2)
-                                        .fontWeight(.semibold)
-                                        .foregroundColor(.gymtimeText)
-                                    
-                                    Spacer()
+                                    VStack(spacing: 8) {
+                                        Text("Get Started")
+                                            .font(.title2.bold())
+                                            .foregroundColor(.gymtimeText)
+                                        
+                                        Text("Log your first workout to receive personalized training insights.")
+                                            .font(.subheadline)
+                                            .foregroundColor(.gymtimeTextSecondary)
+                                            .multilineTextAlignment(.center)
+                                    }
                                 }
-                                
-                                Text("Log your first workout to receive personalized training insights.")
-                                    .foregroundColor(.gymtimeTextSecondary)
                                 
                                 Button(action: {
                                     selectedTab = 0  // Switch to Home tab
@@ -89,26 +121,33 @@ struct PTView: View {
                                         Image(systemName: "plus.circle.fill")
                                         Text("Add Workout")
                                     }
-                                    .padding(.horizontal, 24)
-                                    .padding(.vertical, 12)
-                                    .frame(maxWidth: .infinity)
-                                    .background(Color.gymtimeAccent)
+                                    .font(.headline)
                                     .foregroundColor(.white)
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 16)
+                                    .background(Color.gymtimeAccent)
                                     .cornerRadius(12)
                                 }
                             }
                             .padding(24)
                             .frame(maxWidth: .infinity)
-                            .background(Color.gray.opacity(0.2))
+                            .background(Color.black.opacity(0.3))
                             .cornerRadius(12)
                         }
                     }
                     .padding(.horizontal)
                     
                     if let error = viewModel.error {
-                        Text(error)
-                            .foregroundColor(.red)
-                            .padding()
+                        HStack {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.red)
+                            Text(error)
+                                .foregroundColor(.red)
+                        }
+                        .padding()
+                        .background(Color.red.opacity(0.1))
+                        .cornerRadius(12)
+                        .padding(.horizontal)
                     }
                 }
                 .padding(.top)
@@ -116,7 +155,7 @@ struct PTView: View {
             .refreshable {
                 await viewModel.refreshAnalysis()
             }
-            .background(Color.black)
+            .background(Color.gymtimeBackground)
             .navigationBarTitle("PT", displayMode: .inline)
         }
     }
@@ -172,6 +211,37 @@ struct PTView: View {
         return recommendations.isEmpty ? nil : recommendations
     }
     */
+}
+
+// MARK: - Supporting Views
+
+struct TrainingStatCard: View {
+    let title: String
+    let value: String
+    let subtitle: String
+    let color: Color
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(title)
+                .font(.caption)
+                .foregroundColor(.gymtimeTextSecondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            Text(value)
+                .font(.system(size: 32, weight: .bold))
+                .foregroundColor(color)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            Text(subtitle)
+                .font(.caption)
+                .foregroundColor(.gymtimeTextSecondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(16)
+        .background(Color.black.opacity(0.3))
+        .cornerRadius(12)
+    }
 }
 
 #Preview {
