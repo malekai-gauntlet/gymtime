@@ -11,7 +11,7 @@ struct ContentView: View {
             HomeCoordinator()
                 .environmentObject(coordinator)
         } else {
-            AuthenticationView(viewModel: AuthenticationViewModel(coordinator: coordinator))
+            WelcomeView(viewModel: AuthenticationViewModel(coordinator: coordinator))
                 .environmentObject(coordinator)
         }
     }

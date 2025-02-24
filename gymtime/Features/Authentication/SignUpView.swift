@@ -18,45 +18,37 @@ struct SignUpView: View {
                     .frame(height: isKeyboardVisible ? 0 : 100)
                     
                 // Email field
-                Button(action: {}) {
-                    TextField("Email", text: $viewModel.email)
-                        .textFieldStyle(.plain)
-                        .padding()
-                        .background(Color.black.opacity(0.15))
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(focusedField == .email ? Color.gymtimeAccent : Color.white.opacity(0.1), lineWidth: focusedField == .email ? 2 : 1)
-                                .animation(.easeInOut(duration: 0.2), value: focusedField)
-                        )
-                        .textContentType(.emailAddress)
-                        .autocapitalization(.none)
-                        .foregroundColor(.gymtimeText)
-                        .focused($focusedField, equals: .email)
-                        .disabled(viewModel.isLoading)
-                }
-                .buttonStyle(.plain)
-                .disabled(viewModel.isLoading)
+                TextField("Email", text: $viewModel.email)
+                    .textFieldStyle(.plain)
+                    .padding()
+                    .background(Color.black.opacity(0.15))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(focusedField == .email ? Color.gymtimeAccent : Color.white.opacity(0.1), lineWidth: focusedField == .email ? 2 : 1)
+                            .animation(.easeInOut(duration: 0.1), value: focusedField)
+                    )
+                    .textContentType(.emailAddress)
+                    .autocapitalization(.none)
+                    .foregroundColor(.gymtimeText)
+                    .focused($focusedField, equals: .email)
+                    .disabled(viewModel.isLoading)
                 
                 // Password field
-                Button(action: {}) {
-                    SecureField("Password", text: $viewModel.password)
-                        .textFieldStyle(.plain)
-                        .padding()
-                        .background(Color.black.opacity(0.15))
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(focusedField == .password ? Color.gymtimeAccent : Color.white.opacity(0.1), lineWidth: focusedField == .password ? 2 : 1)
-                                .animation(.easeInOut(duration: 0.2), value: focusedField)
-                        )
-                        .textContentType(.password)
-                        .foregroundColor(.gymtimeText)
-                        .focused($focusedField, equals: .password)
-                        .disabled(viewModel.isLoading)
-                }
-                .buttonStyle(.plain)
-                .disabled(viewModel.isLoading)
+                SecureField("Password", text: $viewModel.password)
+                    .textFieldStyle(.plain)
+                    .padding()
+                    .background(Color.black.opacity(0.15))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(focusedField == .password ? Color.gymtimeAccent : Color.white.opacity(0.1), lineWidth: focusedField == .password ? 2 : 1)
+                            .animation(.easeInOut(duration: 0.1), value: focusedField)
+                    )
+                    .textContentType(.password)
+                    .foregroundColor(.gymtimeText)
+                    .focused($focusedField, equals: .password)
+                    .disabled(viewModel.isLoading)
                 
                 // Error message
                 if let error = viewModel.error {
@@ -71,12 +63,16 @@ struct SignUpView: View {
                         await viewModel.signUp()
                     }
                 }) {
-                    if viewModel.isLoading {
-                        ProgressView()
-                            .tint(.white)
-                    } else {
-                        Text("Sign Up")
-                            .font(.headline)
+                    HStack {
+                        Spacer()
+                        if viewModel.isLoading {
+                            ProgressView()
+                                .tint(.white)
+                        } else {
+                            Text("Sign Up")
+                                .font(.headline)
+                        }
+                        Spacer()
                     }
                 }
                 .frame(maxWidth: .infinity)
