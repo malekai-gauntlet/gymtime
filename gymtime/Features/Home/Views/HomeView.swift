@@ -94,7 +94,7 @@ struct HomeView: View {
                         .frame(height: viewModel.workouts.isEmpty ? 300 : 150)
                         .frame(maxHeight: .infinity, alignment: .bottom)
                         .padding(.bottom, 140)
-                        .allowsHitTesting(!viewModel.isSuggestionsVisible && !isEditing && viewModel.workouts.count < 4)
+                        .allowsHitTesting(!viewModel.isSuggestionsVisible && !isEditing && viewModel.workouts.count < 6)
                         .opacity(viewModel.isSuggestionsVisible ? 0 : 1)
                     }
                 }

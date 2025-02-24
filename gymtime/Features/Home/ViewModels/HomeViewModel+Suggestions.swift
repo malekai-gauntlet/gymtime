@@ -28,7 +28,7 @@ extension HomeViewModel {
                     }
                 }
             } else {
-                // Clear suggestion state
+                // Clear suggestion state when hiding
                 blankWorkoutEntry = nil
                 suggestedWorkouts = []
             }
@@ -48,11 +48,39 @@ extension HomeViewModel {
         // Add to workouts
         addWorkout(entry)
         
-        // Reset suggestion state
+        // Remove the added suggestion from the suggestions list
         withAnimation {
-            isSuggestionsVisible = false
-            blankWorkoutEntry = nil
-            suggestedWorkouts = []
+            if let index = suggestedWorkouts.firstIndex(where: { $0.id == suggestion.id }) {
+                suggestedWorkouts.remove(at: index)
+            }
+        }
+        
+        // Create a new blank workout entry and fetch new suggestions
+        Task {
+            guard let userId = try? await supabase.auth.session.user.id else { return }
+            
+            // Get new suggestions to replace the one we just added
+            let newSuggestions = await getWorkoutSuggestions()
+            
+            await MainActor.run {
+                withAnimation {
+                    // Create new blank entry
+                    blankWorkoutEntry = WorkoutEntry(
+                        userId: userId,
+                        exercise: "",
+                        date: calendarState.selectedDate
+                    )
+                    
+                    // Update suggestions, but avoid duplicates
+                    let existingExercises = Set(suggestedWorkouts.map { $0.exercise })
+                    let filteredNewSuggestions = newSuggestions.filter { !existingExercises.contains($0.exercise) }
+                    
+                    // Add one new suggestion if available
+                    if let newSuggestion = filteredNewSuggestions.first {
+                        suggestedWorkouts.append(newSuggestion)
+                    }
+                }
+            }
         }
     }
     
