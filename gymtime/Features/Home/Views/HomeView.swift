@@ -2,31 +2,40 @@
 
 import SwiftUI
 
-// SwipeArea view to handle horizontal swipes
-struct SwipeArea: View {
+// Horizontal swipe handler
+struct HorizontalSwipeHandler: ViewModifier {
     let onSwipe: (Bool) -> Void // true for right, false for left
-    @GestureState private var translation: CGFloat = 0
-    private let swipeThreshold: CGFloat = 50
-    let isEditing: Bool  // Add isEditing parameter
+    let isEditing: Bool
+    let isSuggestionsVisible: Bool
     
-    var body: some View {
-        Rectangle()
-            .fill(.clear) // No visible tint
-            .contentShape(Rectangle())
-            .gesture(
+    // Minimum distance to trigger a horizontal swipe
+    private let horizontalThreshold: CGFloat = 50
+    
+    func body(content: Content) -> some View {
+        content
+            .simultaneousGesture(
                 DragGesture()
-                    .updating($translation) { value, state, _ in
-                        if !isEditing {  // Only update translation if not editing
-                            state = value.translation.width
-                        }
-                    }
                     .onEnded { gesture in
-                        if !isEditing && abs(gesture.translation.width) > swipeThreshold {
-                            onSwipe(gesture.translation.width > 0)
+                        // Only process horizontal swipes if not editing and suggestions aren't visible
+                        if !isEditing && !isSuggestionsVisible {
+                            let horizontalMovement = abs(gesture.translation.width)
+                            let verticalMovement = abs(gesture.translation.height)
+                            
+                            // Only trigger if primarily horizontal (with bias toward vertical)
+                            if horizontalMovement > verticalMovement * 1.2 && 
+                               horizontalMovement > horizontalThreshold {
+                                print("👉 Horizontal swipe detected: \(gesture.translation.width > 0 ? "RIGHT" : "LEFT")")
+                                onSwipe(gesture.translation.width > 0)
+                            }
                         }
                     }
             )
-            .allowsHitTesting(!isEditing)  // Disable hit testing when editing
+    }
+}
+
+extension View {
+    func horizontalSwipe(onSwipe: @escaping (Bool) -> Void, isEditing: Bool, isSuggestionsVisible: Bool) -> some View {
+        self.modifier(HorizontalSwipeHandler(onSwipe: onSwipe, isEditing: isEditing, isSuggestionsVisible: isSuggestionsVisible))
     }
 }
 
@@ -75,14 +84,10 @@ struct HomeView: View {
                 .padding(.vertical)
                 .background(Color.gymtimeBackground)
                 
-                // Workout Table with SwipeArea
-                ZStack {
-                    WorkoutTableView(workouts: $viewModel.workouts, viewModel: viewModel, isEditing: $isEditing)
-                        .allowsHitTesting(true)
-                    
-                    // SwipeArea fills available space
-                    GeometryReader { geometry in
-                        SwipeArea(onSwipe: { isRight in
+                // Workout Table with horizontal swipe handling
+                WorkoutTableView(workouts: $viewModel.workouts, viewModel: viewModel, isEditing: $isEditing)
+                    .horizontalSwipe(
+                        onSwipe: { isRight in
                             withAnimation(.easeInOut(duration: 0.3)) {
                                 if isRight {
                                     viewModel.selectDate(Calendar.current.date(byAdding: .day, value: -1, to: viewModel.calendarState.selectedDate) ?? Date())
@@ -90,14 +95,10 @@ struct HomeView: View {
                                     viewModel.selectDate(Calendar.current.date(byAdding: .day, value: 1, to: viewModel.calendarState.selectedDate) ?? Date())
                                 }
                             }
-                        }, isEditing: isEditing)
-                        .frame(height: viewModel.workouts.isEmpty ? 300 : 150)
-                        .frame(maxHeight: .infinity, alignment: .bottom)
-                        .padding(.bottom, 140)
-                        .allowsHitTesting(!viewModel.isSuggestionsVisible && !isEditing && viewModel.workouts.count < 6)
-                        .opacity(viewModel.isSuggestionsVisible ? 0 : 1)
-                    }
-                }
+                        },
+                        isEditing: isEditing,
+                        isSuggestionsVisible: viewModel.isSuggestionsVisible
+                    )
             }
             .background(Color.gymtimeBackground)
             .sheet(isPresented: $showingVoiceLogger) {

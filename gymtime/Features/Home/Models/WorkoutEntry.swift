@@ -51,8 +51,6 @@ struct WorkoutEntry: Identifiable, Codable {
         
         // Decode date with timezone information
         let dateString = try container.decode(String.self, forKey: .date)
-        print("\n📅 Decoding date for workout: \(exercise)")
-        print("   Raw date string from Supabase: \(dateString)")
         
         // Create a date formatter for date-only format
         let formatter = DateFormatter()
