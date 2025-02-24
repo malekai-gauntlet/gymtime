@@ -9,13 +9,11 @@
 /* Begin PBXBuildFile section */
 		43552D7526535EC100E97D8D /* Binding+Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43552D7426535EC100E97D8D /* Binding+Utils.swift */; };
 		43552D7A2653603200E97D8D /* EmptyNavigationLink.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43552D792653603200E97D8D /* EmptyNavigationLink.swift */; };
-		43552D892653777800E97D8D /* User.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43552D882653777800E97D8D /* User.swift */; };
 		43552DAA2653B8CF00E97D8D /* Publisher+Utils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43552DA92653B8CF00E97D8D /* Publisher+Utils.swift */; };
 		43736D852652280900CE4368 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 43736D842652280900CE4368 /* Assets.xcassets */; };
 		43736D882652280900CE4368 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 43736D872652280900CE4368 /* Preview Assets.xcassets */; };
 		43736D8B2652280900CE4368 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 43736D892652280900CE4368 /* LaunchScreen.storyboard */; };
 		43A6019E26522CFF00B24B9D /* Alamofire in Frameworks */ = {isa = PBXBuildFile; productRef = 43A6019D26522CFF00B24B9D /* Alamofire */; };
-		43A601C3265257EE00B24B9D /* Repo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43A601C2265257EE00B24B9D /* Repo.swift */; };
 		43A601CD265267C000B24B9D /* SwiftUI_MVVM_CTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43A601CC265267C000B24B9D /* SwiftUI_MVVM_CTests.swift */; };
 		43A601DA2652687F00B24B9D /* repos.json in Resources */ = {isa = PBXBuildFile; fileRef = 43A601D92652687F00B24B9D /* repos.json */; };
 		43A601E0265268BD00B24B9D /* TestUtils.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43A601DF265268BD00B24B9D /* TestUtils.swift */; };
@@ -333,10 +331,8 @@
 			files = (
 				43552D7A2653603200E97D8D /* EmptyNavigationLink.swift in Sources */,
 				43A601FF2652780100B24B9D /* View+Utils.swift in Sources */,
-				43A601C3265257EE00B24B9D /* Repo.swift in Sources */,
 				43552DAA2653B8CF00E97D8D /* Publisher+Utils.swift in Sources */,
 				43552D7526535EC100E97D8D /* Binding+Utils.swift in Sources */,
-				43552D892653777800E97D8D /* User.swift in Sources */,
 				890552752D665F6000FED78D /* Supabase.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

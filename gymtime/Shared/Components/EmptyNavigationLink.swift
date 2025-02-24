@@ -1,9 +1,14 @@
 /*
  * 🚪 What is this file for?
  * -------------------------
- * This is like an invisible door between different screens in your app.
- * A special navigation tool that doesn't show anything but helps move between views.
- * Think of it as a secret passage that connects different rooms in your app.
+ * This is a utility for programmatic navigation that isn't currently being used,
+ * but will be valuable for future features such as:
+ * - Navigating to workout details after completing a workout
+ * - Showing achievement details when a new milestone is reached
+ * - Redirecting to specific screens after authentication
+ * 
+ * Unlike regular NavigationLink, this is invisible and can be triggered
+ * programmatically from anywhere in your code (not just user taps).
  */
 
 //
