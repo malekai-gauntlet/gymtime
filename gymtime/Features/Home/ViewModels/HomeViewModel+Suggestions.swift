@@ -38,15 +38,8 @@ extension HomeViewModel {
         // Add to workouts
         addWorkout(entry)
         
-        // Remove the added suggestion from the suggestions list
-        withAnimation {
-            if let index = suggestedWorkouts.firstIndex(where: { $0.id == suggestion.id }) {
-                suggestedWorkouts.remove(at: index)
-            }
-        }
-        
-        // No need to create a blank entry or fetch new suggestions for the table view
-        // since we're not showing suggestions in the table anymore
+        // No longer remove the suggestion from the list
+        // This allows users to add the same workout multiple times if needed
     }
     
     func updateBlankWorkoutField(field: String, value: String) {
