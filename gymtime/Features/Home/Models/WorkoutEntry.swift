@@ -58,12 +58,9 @@ struct WorkoutEntry: Identifiable, Codable {
         formatter.timeZone = TimeZone.current
         
         if let parsedDate = formatter.date(from: dateString) {
-            print("   Parsed date: \(parsedDate)")
             // Set to start of day in local timezone
             date = Calendar.current.startOfDay(for: parsedDate)
-            print("   Final date (start of day): \(date)\n")
         } else {
-            print("   ⚠️ Failed to parse date string: \(dateString)")
             throw DecodingError.dataCorrupted(DecodingError.Context(
                 codingPath: container.codingPath,
                 debugDescription: "Date string does not match expected format: \(dateString)"

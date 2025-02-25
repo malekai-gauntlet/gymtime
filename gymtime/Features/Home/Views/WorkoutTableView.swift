@@ -106,6 +106,16 @@ struct WorkoutTableView: View {
                                         )
                                         .id(workout.id.uuidString)  // Convert UUID to String
                                         .background(Color.gymtimeBackground)
+                                        .swipeActions(edge: .trailing) {
+                                            Button(role: .destructive) {
+                                                print("🔴 Delete button tapped for workout: \(workout.id)")
+                                                withAnimation(.easeOut(duration: 0.3)) {
+                                                    viewModel.deleteWorkout(id: workout.id)
+                                                }
+                                            } label: {
+                                                Label("Delete", systemImage: "trash")
+                                            }
+                                        }
                                         .contextMenu {
                                             Button(role: .destructive) {
                                                 print("🔴 Delete button tapped for workout: \(workout.id)")
@@ -135,10 +145,6 @@ struct WorkoutTableView: View {
                                         .opacity(0.4)
                                         .overlay(
                                             Button(action: {
-                                                print("👆 Suggestion button tapped:")
-                                                print("   Exercise: \(suggestion.exercise)")
-                                                print("   ID: \(suggestion.id)")
-                                                print("   Position in list: \(viewModel.suggestedWorkouts.firstIndex(where: { $0.id == suggestion.id }) ?? -1)")
                                                 
                                                 withAnimation(.easeInOut(duration: 0.3)) {
                                                     viewModel.addSuggestionToWorkouts(suggestion)
@@ -305,11 +311,6 @@ struct WorkoutTableView: View {
                         let window = windowScene?.windows.first
                         let bounds = window?.bounds ?? .zero
                         
-                        print("🎯 Tap detected in blue overlay")
-                        print("   Screen bounds: \(bounds)")
-                        print("   Tap location: \(location)")
-                        print("   isAnyFieldEditing: \(isAnyFieldEditing)")
-                        
                         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
                                                      to: nil,
                                                      from: nil,
@@ -317,8 +318,7 @@ struct WorkoutTableView: View {
                         
                         // Log after attempting to resign
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            print("   Post-tap isAnyFieldEditing: \(isAnyFieldEditing)")
-                            print("   First responder resigned: \(!isAnyFieldEditing)")
+                            // Empty closure body - this is fine
                         }
                     }
                     .zIndex(1)
@@ -608,15 +608,6 @@ struct WorkoutRow: View {
         }
         .padding(.vertical, 14)
         .contentShape(Rectangle()) // Ensure the entire row is interactive
-        .onAppear {
-            print("🎯 WorkoutRow appeared for workout: \(workout.id)")
-            print("📊 Initial layout - Width parameters:")
-            print("  Exercise: \(exerciseWidth)")
-            print("  Weight: \(weightWidth)")
-            print("  Sets: \(setsWidth)")
-            print("  Reps: \(repsWidth)")
-            print("  Notes: \(notesWidth)")
-        }
         .onChange(of: isExpanded) { oldValue, newValue in
             print("🔄 Expansion state changed for workout \(workout.id): \(oldValue) -> \(newValue)")
         }

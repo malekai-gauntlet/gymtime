@@ -1,0 +1,151 @@
+---
+description: How to navigate the workout table view
+globs: 
+alwaysApply: false
+---
+---
+description: Guidelines for workout table implementation in Gymtime
+applies_to: ["*WorkoutTableView.swift", "*HomeView.swift"]
+version: 0.1.0
+---
+
+# Workout Table Implementation Rules
+
+## Gesture Handling
+<rule>
+name: combined_gestures
+description: Guidelines for handling combined horizontal and vertical gestures
+patterns:
+  - gesture: "DragGesture()"
+  - modifier: "simultaneousGesture"
+
+standards:
+  - Use simultaneousGesture for combining horizontal swipes with vertical scrolling
+  - Apply gesture handlers directly to the view that needs them
+  - Let ScrollView handle vertical scrolling naturally
+  - Only detect and handle horizontal gestures explicitly
+
+examples:
+  good: "Using ViewModifier with simultaneousGesture to add horizontal swipe detection"
+  bad: "Custom overlay view that tries to handle both horizontal and vertical gestures"
+</rule>
+
+## Table Layout
+<rule>
+name: table_layout
+description: Guidelines for workout table layout and structure
+patterns:
+  - view: "ScrollView, LazyVStack"
+  - row: "WorkoutRow"
+
+standards:
+  - Use ScrollView with LazyVStack instead of List for smoother animations
+  - Keep row components modular and reusable
+  - Use consistent spacing and alignment
+  - Handle empty states explicitly
+
+examples:
+  good: "ScrollView with LazyVStack for smooth height animations"
+  bad: "List with complex row layouts that jump during animations"
+</rule>
+
+learned_fixes:
+  - error: "Vertical scrolling not working when using custom gesture handler for horizontal swipes"
+    solution: "Use simultaneousGesture with a ViewModifier instead of a custom overlay view"
+    example: |
+      // Before (error):
+      // Custom view that tries to handle both horizontal and vertical gestures
+      struct CombinedGestureHandler: View {
+          let onHorizontalSwipe: (Bool) -> Void
+          @State private var gestureDirection: GestureDirection = .undetermined
+          
+          var body: some View {
+              Rectangle()
+                  .fill(Color.clear)
+                  .contentShape(Rectangle())
+                  .gesture(
+                      DragGesture()
+                          .updating($translation) { value, state, _ in
+                              // Complex logic to determine gesture direction
+                          }
+                          .onEnded { value in
+                              // Try to handle horizontal swipes only
+                          }
+                  )
+          }
+      }
+      
+      // Usage in ZStack that overlays the ScrollView
+      ZStack {
+          WorkoutTableView(workouts: $viewModel.workouts, viewModel: viewModel)
+          
+          GeometryReader { geometry in
+              CombinedGestureHandler(onHorizontalSwipe: { isRight in
+                  // Handle date change
+              })
+              .frame(width: geometry.size.width, height: geometry.size.height)
+          }
+      }
+      
+      // After (fixed):
+      // ViewModifier that adds horizontal swipe detection
+      struct HorizontalSwipeHandler: ViewModifier {
+          let onSwipe: (Bool) -> Void
+          
+          func body(content: Content) -> some View {
+              content
+                  .simultaneousGesture(
+                      DragGesture()
+                          .onEnded { gesture in
+                              let horizontalMovement = abs(gesture.translation.width)
+                              let verticalMovement = abs(gesture.translation.height)
+                              
+                              // Only trigger if primarily horizontal
+                              if horizontalMovement > verticalMovement * 1.2 && 
+                                 horizontalMovement > horizontalThreshold {
+                                  onSwipe(gesture.translation.width > 0)
+                              }
+                          }
+                  )
+          }
+      }
+      
+      // Extension for easy application
+      extension View {
+          func horizontalSwipe(onSwipe: @escaping (Bool) -> Void, isEditing: Bool, isSuggestionsVisible: Bool) -> some View {
+              self.modifier(HorizontalSwipeHandler(onSwipe: onSwipe, isEditing: isEditing, isSuggestionsVisible: isSuggestionsVisible))
+          }
+      }
+      
+      // Direct application to the WorkoutTableView
+      WorkoutTableView(workouts: $viewModel.workouts, viewModel: viewModel)
+          .horizontalSwipe(
+              onSwipe: { isRight in
+                  // Handle date change
+              },
+              isEditing: isEditing,
+              isSuggestionsVisible: viewModel.isSuggestionsVisible
+          )
+    context: "When implementing combined horizontal and vertical gesture handling in SwiftUI, it's better to let the ScrollView handle vertical scrolling naturally and only add horizontal swipe detection using simultaneousGesture. This approach avoids gesture conflicts and ensures both interactions work smoothly. The ViewModifier pattern is more SwiftUI-idiomatic than creating custom overlay views that try to handle multiple gesture types."
+
+  - error: "Jumpy animations when expanding workout notes in List view"
+    solution: "Replace List with ScrollView + LazyVStack for smoother height animations"
+    example: |
+      // Before (error):
+      List {
+          ForEach(workouts) { workout in
+              WorkoutRow(workout: workout)
+          }
+      }
+      .listStyle(.plain)
+      
+      // After (fixed):
+      ScrollView {
+          LazyVStack(spacing: 0) {
+              ForEach(workouts) { workout in
+                  WorkoutRow(workout: workout)
+              }
+          }
+      }
+    context: "SwiftUI's List component has internal layout constraints that don't always respect animations, especially for height changes. Using ScrollView with LazyVStack gives more direct control over animations and allows for smoother transitions when expanding or collapsing content."
+</rule>
