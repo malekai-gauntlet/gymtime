@@ -185,31 +185,33 @@ class ProfileViewModel: ObservableObject {
             
             var newMilestones: [Milestone] = []
             
-            // First Workout Milestone
-            if !workouts.isEmpty {
-                newMilestones.append(
-                    Milestone(id: 1, title: "First Workout", iconName: "figure.walk", color: .green)
-                )
-            }
+            // First Workout Milestone - Removed as requested
             
             // 10 Workouts Milestone
             if workouts.count >= 10 {
                 newMilestones.append(
-                    Milestone(id: 2, title: "10 Workouts", iconName: "flame.fill", color: .orange)
+                    Milestone(id: 1, title: "10 Workouts", iconName: "flame.fill", color: .orange)
+                )
+            }
+            
+            // 20 Workouts Milestone - For intense gym goers
+            if workouts.count >= 20 {
+                newMilestones.append(
+                    Milestone(id: 5, title: "Iron Warrior", iconName: "dumbbell.fill", color: .red)
                 )
             }
             
             // Streak Milestone
             if currentStreak >= 7 {
                 newMilestones.append(
-                    Milestone(id: 3, title: "1 Week Streak", iconName: "star.fill", color: .yellow)
+                    Milestone(id: 2, title: "1 Week Streak", iconName: "star.fill", color: .yellow)
                 )
             }
             
             // Weight Milestone (100kg/225lbs on any exercise)
             if workouts.contains(where: { $0.weight ?? 0 >= 225 }) {
                 newMilestones.append(
-                    Milestone(id: 4, title: "225lb Club", iconName: "bolt.fill", color: .purple)
+                    Milestone(id: 3, title: "225lb Club", iconName: "bolt.fill", color: .purple)
                 )
             }
             
@@ -217,9 +219,16 @@ class ProfileViewModel: ObservableObject {
             let uniqueExercises = Set(workouts.map { $0.exercise })
             if uniqueExercises.count >= 3 {
                 newMilestones.append(
-                    Milestone(id: 5, title: "Diverse Training", iconName: "figure.mixed.cardio", color: .blue)
+                    Milestone(id: 4, title: "Diverse Training", iconName: "figure.mixed.cardio", color: .blue)
                 )
             }
+            
+            // Debug logging to verify milestone calculation
+            print("Calculated \(newMilestones.count) milestones")
+            print("Workouts count: \(workouts.count)")
+            print("Current streak: \(currentStreak)")
+            print("Has 225+ workout: \(workouts.contains(where: { $0.weight ?? 0 >= 225 }))")
+            print("Unique exercises: \(uniqueExercises.count)")
             
             milestones = newMilestones
             
@@ -232,15 +241,15 @@ class ProfileViewModel: ObservableObject {
         do {
             let userId = try await supabase.auth.session.user.id
             
-            // Get last 7 days of workouts
+            // Get last 14 days of workouts (changed from 7 to show more data like Strava)
             let calendar = Calendar.current
-            let weekStart = calendar.startOfDay(for: calendar.date(byAdding: .day, value: -7, to: Date()) ?? Date())
+            let startDate = calendar.startOfDay(for: calendar.date(byAdding: .day, value: -14, to: Date()) ?? Date())
             
             let workouts: [WorkoutEntry] = try await supabase
                 .from("workouts")
                 .select()
                 .eq("user_id", value: userId)
-                .gte("date", value: weekStart)
+                .gte("date", value: startDate)
                 .order("date")
                 .execute()
                 .value
@@ -256,7 +265,7 @@ class ProfileViewModel: ObservableObject {
             
             // Create progress points
             var points: [ProgressPoint] = []
-            var currentDate = weekStart
+            var currentDate = startDate
             let endDate = calendar.startOfDay(for: Date())
             
             // Find max volume for percentage calculation
@@ -265,7 +274,14 @@ class ProfileViewModel: ObservableObject {
             while currentDate <= endDate {
                 let volume = dailyVolume[currentDate] ?? 0
                 let percentage = (volume / maxVolume) * 100
-                points.append(ProgressPoint(date: currentDate, value: percentage))
+                
+                // Store both the percentage (for scaling the chart) and actual volume (for tooltips/debugging)
+                points.append(ProgressPoint(
+                    date: currentDate, 
+                    value: percentage,
+                    actualVolume: volume  // Store the actual total weight lifted
+                ))
+                
                 currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate) ?? currentDate
             }
             
@@ -292,6 +308,7 @@ struct ProgressPoint: Identifiable {
     let id = UUID()
     let date: Date
     let value: Double // Percentage of max volume
+    let actualVolume: Double // Actual total weight lifted
 }
 
 // MARK: - Profile Model

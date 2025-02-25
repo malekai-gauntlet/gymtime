@@ -123,25 +123,6 @@ struct ProfileView: View {
                         }
                         .padding(.horizontal)
                         
-                        // Milestones Section
-                        if !viewModel.milestones.isEmpty {
-                            VStack(alignment: .leading, spacing: 16) {
-                                Text("MILESTONES")
-                                    .font(.headline)
-                                    .foregroundColor(.gymtimeTextSecondary)
-                                    .padding(.horizontal)
-                                
-                                ScrollView(.horizontal, showsIndicators: false) {
-                                    HStack(spacing: 12) {
-                                        ForEach(viewModel.milestones) { milestone in
-                                            MilestoneCard(milestone: milestone)
-                                        }
-                                    }
-                                    .padding(.horizontal)
-                                }
-                            }
-                        }
-                        
                         // Progress Section
                         if !viewModel.progressData.isEmpty {
                             VStack(alignment: .leading, spacing: 16) {
@@ -153,7 +134,7 @@ struct ProfileView: View {
                                 // Progress Chart
                                 ChartView(data: viewModel.progressData)
                                     .frame(height: 200)
-                                    .padding(.horizontal)
+                                    .padding(.horizontal, 12)
                             }
                         }
                         
@@ -224,51 +205,154 @@ struct StatCard: View {
     }
 }
 
-struct MilestoneCard: View {
-    let milestone: Milestone
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Image(systemName: milestone.iconName)
-                .font(.system(size: 24))
-                .foregroundColor(milestone.color)
-            
-            Text(milestone.title)
-                .font(.caption)
-                .foregroundColor(.gymtimeText)
-                .multilineTextAlignment(.center)
-        }
-        .frame(width: 80, height: 80)
-        .padding(12)
-        .background(Color.black.opacity(0.3))
-        .cornerRadius(12)
-    }
-}
-
 struct ChartView: View {
     let data: [ProgressPoint]
     
+    private let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "M/d"
+        return formatter
+    }()
+    
+    // Find min and max actual volume values
+    private var maxVolume: Double {
+        return data.map { $0.actualVolume }.max() ?? 1000
+    }
+    
+    private var yAxisLabels: [String] {
+        let max = maxVolume
+        let roundedMax = (max / 1000).rounded(.up) * 1000
+        return ["0 lbs", "\(Int(roundedMax/2)) lbs", "\(Int(roundedMax)) lbs"]
+    }
+    
     var body: some View {
-        // Placeholder for actual chart implementation
-        GeometryReader { geometry in
-            Path { path in
-                // Calculate points
-                let points = data.enumerated().map { index, point -> CGPoint in
-                    let x = geometry.size.width * CGFloat(index) / CGFloat(data.count - 1)
-                    let y = geometry.size.height * (1 - CGFloat(point.value) / 100)
-                    return CGPoint(x: x, y: y)
-                }
-                
-                // Draw path
-                if let firstPoint = points.first {
-                    path.move(to: firstPoint)
-                    for point in points.dropFirst() {
-                        path.addLine(to: point)
+        VStack(alignment: .leading, spacing: 12) {
+            GeometryReader { geometry in
+                ZStack(alignment: .topLeading) {
+                    // Y-axis labels (right side)
+                    VStack(alignment: .trailing, spacing: 0) {
+                        ForEach(yAxisLabels, id: \.self) { label in
+                            Text(label)
+                                .font(.caption2)
+                                .foregroundColor(.gymtimeTextSecondary)
+                                .frame(height: geometry.size.height / CGFloat(yAxisLabels.count - 1))
+                        }
+                    }
+                    .frame(width: 60, alignment: .trailing)
+                    .offset(x: geometry.size.width - 60, y: 0)
+                    
+                    // Horizontal grid lines
+                    VStack(spacing: 0) {
+                        ForEach(0..<yAxisLabels.count, id: \.self) { index in
+                            Spacer()
+                            Divider()
+                                .background(Color.gymtimeTextSecondary.opacity(0.1))
+                        }
+                    }
+                    .frame(width: geometry.size.width - 70)
+                    
+                    // Data area (filled)
+                    if data.count > 1 {
+                        Path { path in
+                            // Calculate points for area
+                            let points = data.enumerated().map { index, point -> CGPoint in
+                                let x = (geometry.size.width - 70) * CGFloat(index) / CGFloat(max(1, data.count - 1))
+                                let y = geometry.size.height * (1 - CGFloat(point.actualVolume / maxVolume))
+                                return CGPoint(x: x, y: y)
+                            }
+                            
+                            // Start from bottom left
+                            path.move(to: CGPoint(x: 0, y: geometry.size.height))
+                            
+                            // Add line to first point
+                            if let firstPoint = points.first {
+                                path.addLine(to: CGPoint(x: firstPoint.x, y: firstPoint.y))
+                            }
+                            
+                            // Connect all points
+                            for point in points.dropFirst() {
+                                path.addLine(to: point)
+                            }
+                            
+                            // Complete the shape to bottom right
+                            if let lastPoint = points.last {
+                                path.addLine(to: CGPoint(x: lastPoint.x, y: geometry.size.height))
+                            }
+                            
+                            // Close the path
+                            path.closeSubpath()
+                        }
+                        .fill(
+                            LinearGradient(
+                                gradient: Gradient(
+                                    colors: [Color.gymtimeAccent.opacity(0.7), Color.gymtimeAccent.opacity(0.1)]
+                                ),
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                    }
+                    
+                    // Data line
+                    Path { path in
+                        // Calculate points
+                        let points = data.enumerated().map { index, point -> CGPoint in
+                            let x = (geometry.size.width - 70) * CGFloat(index) / CGFloat(max(1, data.count - 1))
+                            let y = geometry.size.height * (1 - CGFloat(point.actualVolume / maxVolume))
+                            return CGPoint(x: x, y: y)
+                        }
+                        
+                        // Draw path
+                        if let firstPoint = points.first {
+                            path.move(to: firstPoint)
+                            for point in points.dropFirst() {
+                                path.addLine(to: point)
+                            }
+                        }
+                    }
+                    .stroke(Color.gymtimeAccent, lineWidth: 2)
+                    
+                    // "Today" vertical line (if the last date is today)
+                    if let lastDate = data.last?.date, Calendar.current.isDateInToday(lastDate) {
+                        let x = (geometry.size.width - 70)
+                        
+                        Path { path in
+                            path.move(to: CGPoint(x: x, y: 0))
+                            path.addLine(to: CGPoint(x: x, y: geometry.size.height))
+                        }
+                        .stroke(
+                            Color.white.opacity(0.5),
+                            style: StrokeStyle(
+                                lineWidth: 1,
+                                dash: [4]
+                            )
+                        )
                     }
                 }
             }
-            .stroke(Color.gymtimeAccent, lineWidth: 2)
+            
+            // X-axis date labels
+            HStack(spacing: 0) {
+                // Group dates by showing only every other date to avoid crowding
+                ForEach(Array(stride(from: 0, to: data.count, by: max(1, data.count > 7 ? 2 : 1))), id: \.self) { index in
+                    if index < data.count {
+                        Text(dateFormatter.string(from: data[index].date))
+                            .font(.caption2)
+                            .foregroundColor(.gymtimeTextSecondary)
+                            .frame(maxWidth: .infinity)
+                    }
+                }
+            }
+            .padding(.leading, 4)
+            .padding(.trailing, 60) // Match the y-axis label width
         }
+    }
+}
+
+// Extension to safely access array indices
+extension Collection {
+    subscript(safe index: Index) -> Element? {
+        return indices.contains(index) ? self[index] : nil
     }
 }
 
@@ -277,3 +361,4 @@ struct ChartView: View {
         ProfileView()
     }
 }
+
