@@ -152,37 +152,45 @@ extension HomeViewModel {
     func deleteWorkout(id: UUID) {
         print("🗑️ Delete workout requested for id: \(id)")
         
-        // Store the index before deletion for rollback if needed
-        guard let index = workouts.firstIndex(where: { $0.id == id }) else {
-            print("❌ No workout found with id: \(id)")
-            return
-        }
+        // Check if the workout is still in the array (it might have been removed already)
+        let workoutToDelete = workouts.first(where: { $0.id == id })
         
-        let deletedWorkout = workouts[index]
-        print("📍 Found workout at index: \(index)")
-        print("📝 Workout details before deletion: \(deletedWorkout)")
-        
-        // Remove from local state immediately for responsive UI
-        _ = withAnimation {
+        // If the workout is still in the array, remove it
+        if let workoutToDelete = workoutToDelete, let index = workouts.firstIndex(where: { $0.id == id }) {
+            print("📍 Found workout at index: \(index)")
+            print("📝 Workout details before deletion: \(workoutToDelete)")
+            
+            // Remove from local state
             workouts.remove(at: index)
+        } else {
+            print("ℹ️ Workout already removed from local array, proceeding with Supabase deletion")
         }
         
-        // Delete from Supabase
+        // Delete from Supabase regardless of whether it was in the local array
         Task {
             do {
-                try await supabase
+                // Convert UUID to string explicitly
+                let idString = id.uuidString
+                print("🔍 Attempting to delete workout with ID string: \(idString)")
+                
+                // Try with more detailed error handling
+                let response = try await supabase
                     .from("workouts")
                     .delete()
-                    .eq("id", value: id)
+                    .eq("id", value: idString)  // Use string representation
                     .execute()
                 
-                print("✅ Workout successfully deleted from Supabase")
+                print("✅ Workout successfully deleted from Supabase with response: \(response)")
             } catch {
                 print("❌ Failed to delete workout from Supabase: \(error)")
-                // Rollback local state if Supabase deletion fails
-                DispatchQueue.main.async {
-                    self.workouts.insert(deletedWorkout, at: index)
-                    self.error = "Failed to delete workout"
+                print("❌ Error details: \(String(describing: error))")
+                
+                // Only attempt to restore if we had the workout details
+                if let workoutToDelete = workoutToDelete {
+                    DispatchQueue.main.async {
+                        self.workouts.append(workoutToDelete)
+                        self.error = "Failed to delete workout"
+                    }
                 }
             }
         }

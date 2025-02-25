@@ -115,14 +115,7 @@ struct WorkoutTableView: View {
                                                 
                                                 // Use a faster animation for more responsive feel
                                                 withAnimation(.easeOut(duration: 0.2)) {
-                                                    // Immediately remove from local array for instant UI feedback
-                                                    if let index = workouts.firstIndex(where: { $0.id == workout.id }) {
-                                                        // This creates the illusion of instant deletion
-                                                        // while the actual deletion happens in the background
-                                                        viewModel.workouts.remove(at: index)
-                                                    }
-                                                    
-                                                    // Then perform the actual deletion in the view model
+                                                    // Just call deleteWorkout and let it handle both local and remote deletion
                                                     viewModel.deleteWorkout(id: workout.id)
                                                 }
                                             } label: {
