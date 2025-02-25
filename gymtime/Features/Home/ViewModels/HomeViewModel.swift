@@ -59,6 +59,11 @@ class HomeViewModel: ObservableObject {
         // Initialize state
         loadWorkouts()
         
+        // Load workout dates for calendar indicators
+        Task {
+            await loadWorkoutDates()
+        }
+        
         // Set up service observations
         setupServiceObservers()
         

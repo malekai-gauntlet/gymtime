@@ -8,6 +8,9 @@ struct CalendarState {
     private(set) var displayedWeek: Date
     private let calendar = Calendar.current
     
+    // Dates with logged workouts
+    private(set) var datesWithWorkouts: Set<Date> = []
+    
     // Constants for date range
     private let bufferWeeks = 2 // Number of weeks to buffer on each side
     private let visibleWeeks = 5 // Number of weeks to show at once
@@ -61,6 +64,19 @@ struct CalendarState {
         if let newDate = calendar.date(byAdding: .month, value: -1, to: displayedWeek) {
             moveToDate(newDate)
         }
+    }
+    
+    // MARK: - Workout Date Management
+    
+    mutating func updateWorkoutDates(_ dates: Set<Date>) {
+        // Convert all dates to start of day to ensure consistent comparisons
+        self.datesWithWorkouts = Set(dates.map { calendar.startOfDay(for: $0) })
+    }
+    
+    func hasWorkout(for date: Date) -> Bool {
+        // Ensure we compare with start of day
+        let normalizedDate = calendar.startOfDay(for: date)
+        return datesWithWorkouts.contains { calendar.isDate($0, inSameDayAs: normalizedDate) }
     }
     
     // MARK: - Calendar Helpers

@@ -44,6 +44,7 @@ struct CalendarView: View {
             // Scrollable Calendar
             ScrollViewReader { proxy in
                 ScrollView(.horizontal, showsIndicators: false) {
+                    // Day cells
                     HStack(spacing: 0) {
                         // Add padding at start for centering
                         Spacer()
@@ -55,38 +56,57 @@ struct CalendarView: View {
                                     .font(.caption)
                                     .foregroundColor(.gymtimeTextSecondary)
                                 
-                                Text("\(Calendar.current.component(.day, from: item.date))")
-                                    .foregroundColor(textColor(for: item.date))
-                                    .frame(width: 36, height: 36)
-                                    .background(
-                                        Circle()
-                                            .fill(backgroundColor(for: item.date))
-                                            .overlay(
-                                                Circle()
-                                                    .stroke(viewModel.calendarState.isDateToday(item.date) ? Color.gymtimeAccent : Color.clear, lineWidth: 2)
-                                            )
-                                    )
-                                    .onTapGesture {
-                                        withAnimation(smoothScroll) {
-                                            // First hide suggestions if visible
-                                            if viewModel.isSuggestionsVisible {
-                                                viewModel.isSuggestionsVisible = false
-                                                viewModel.suggestedWorkouts = []
-                                                viewModel.blankWorkoutEntry = nil
-                                            }
-                                            
-                                            // Then select the new date
-                                            viewModel.selectDate(item.date)
-                                            proxy.scrollTo(item.date, anchor: .center)
-                                            updateDisplayedMonth(item.date)
-                                        }
+                                // Date circle with fire emoji inside
+                                ZStack {
+                                    // Background circle
+                                    Circle()
+                                        .fill(backgroundColor(for: item.date))
+                                        .overlay(
+                                            Circle()
+                                                .stroke(viewModel.calendarState.isDateToday(item.date) ? Color.gymtimeAccent : Color.clear, lineWidth: 2)
+                                        )
+                                        .frame(width: 36, height: 36)
+                                    
+                                    // Date number - centered in circle
+                                    Text("\(Calendar.current.component(.day, from: item.date))")
+                                        .font(.system(size: 17, weight: .medium))
+                                        .foregroundColor(textColor(for: item.date))
+                                        .frame(width: 36, height: 36, alignment: .center)
+                                    
+                                    // Workout indicator as overlay that doesn't affect layout
+                                    if viewModel.calendarState.hasWorkout(for: item.date) {
+                                        Image(systemName: "checkmark")
+                                            .font(.system(size: 6))
+                                            .foregroundColor(.white)
+                                            .offset(y: 13) // Position below the date with 2px spacing
+                                            .id("workout-\(item.date)")
                                     }
+                                }
+                                
+                                // Empty space where the emoji used to be
+                                Spacer()
+                                    .frame(height: 8)
                             }
                             .frame(width: dayWidth)
                             .id(item.date)
                             .onChange(of: item.date) { oldValue, newValue in
                                 if viewModel.calendarState.isDateInBufferZone(newValue) {
                                     viewModel.moveToDate(newValue)
+                                }
+                            }
+                            .onTapGesture {
+                                withAnimation(smoothScroll) {
+                                    // First hide suggestions if visible
+                                    if viewModel.isSuggestionsVisible {
+                                        viewModel.isSuggestionsVisible = false
+                                        viewModel.suggestedWorkouts = []
+                                        viewModel.blankWorkoutEntry = nil
+                                    }
+                                    
+                                    // Then select the new date
+                                    viewModel.selectDate(item.date)
+                                    proxy.scrollTo(item.date, anchor: .center)
+                                    updateDisplayedMonth(item.date)
                                 }
                             }
                         }

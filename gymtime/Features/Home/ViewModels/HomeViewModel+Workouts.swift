@@ -52,9 +52,75 @@ extension HomeViewModel {
                     }
                 }
                 
+                // Update calendar with workout dates
+                await loadWorkoutDates()
+                
             } catch {
                 print("Error loading workouts: \(error)")
                 self.error = "Failed to load workouts"
+            }
+        }
+    }
+    
+    func loadWorkoutDates() async {
+        do {
+            // Get current user ID
+            guard let userId = try? await supabase.auth.session.user.id else {
+                print("Error: No user ID found when loading workout dates")
+                return
+            }
+            
+            // Query just the dates column to be efficient
+            let response: [WorkoutDateResponse] = try await supabase
+                .from("workouts")
+                .select("date")
+                .eq("user_id", value: userId)
+                .execute()
+                .value
+            
+            // Create a set of unique dates
+            let workoutDates = Set(response.map { $0.date })
+            print("✅ Found workouts on \(workoutDates.count) different dates")
+            
+            // Update the calendar state with these dates
+            await MainActor.run {
+                var updatedState = self.calendarState
+                updatedState.updateWorkoutDates(workoutDates)
+                self.calendarState = updatedState
+            }
+            
+        } catch {
+            print("Error loading workout dates: \(error)")
+        }
+    }
+    
+    // Helper struct for date-only response
+    private struct WorkoutDateResponse: Decodable {
+        let date: Date
+        
+        enum CodingKeys: String, CodingKey {
+            case date
+        }
+        
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            
+            // Decode date with timezone information
+            let dateString = try container.decode(String.self, forKey: .date)
+            
+            // Create a date formatter for date-only format
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd"
+            formatter.timeZone = TimeZone.current
+            
+            if let parsedDate = formatter.date(from: dateString) {
+                // Set to start of day in local timezone
+                date = Calendar.current.startOfDay(for: parsedDate)
+            } else {
+                throw DecodingError.dataCorrupted(DecodingError.Context(
+                    codingPath: container.codingPath,
+                    debugDescription: "Date string does not match expected format: \(dateString)"
+                ))
             }
         }
     }
@@ -77,6 +143,9 @@ extension HomeViewModel {
                 
                 // Generate new summary
                 await generateWorkoutSummary()
+                
+                // Update calendar workout dates
+                await loadWorkoutDates()
                 
             } catch {
                 print("❌ Failed to save workout: \(error)")
@@ -181,6 +250,9 @@ extension HomeViewModel {
                     .execute()
                 
                 print("✅ Workout successfully deleted from Supabase with response: \(response)")
+                
+                // Update calendar workout dates after deletion
+                await loadWorkoutDates()
             } catch {
                 print("❌ Failed to delete workout from Supabase: \(error)")
                 print("❌ Error details: \(String(describing: error))")
