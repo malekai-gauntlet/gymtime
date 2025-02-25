@@ -36,10 +36,67 @@ struct WeightsView: View {
     // Add namespace for scroll position identification
     @Namespace private var muscleGroupNamespace
     
+    // Get today's date for the header
+    private var formattedDate: String {
+        let today = Date()
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        let dateStr = formatter.string(from: today)
+        
+        // Add ordinal suffix (st, nd, rd, th)
+        let day = Calendar.current.component(.day, from: today)
+        let suffix = dayOrdinalSuffix(for: day)
+        
+        return dateStr + suffix
+    }
+    
+    // Helper to get ordinal suffix for day number
+    private func dayOrdinalSuffix(for day: Int) -> String {
+        switch day {
+        case 1, 21, 31: return "st"
+        case 2, 22: return "nd"
+        case 3, 23: return "rd"
+        default: return "th"
+        }
+    }
+    
+    // Helper to format a relative date as "X days ago"
+    private func relativeDateString(from date: Date) -> String {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let workoutDate = calendar.startOfDay(for: date)
+        
+        if let days = calendar.dateComponents([.day], from: workoutDate, to: today).day {
+            switch days {
+            case 0:
+                return "Today"
+            case 1:
+                return "Yesterday"
+            default:
+                return "\(days) days ago"
+            }
+        }
+        return date.formatted(date: .numeric, time: .omitted)
+    }
+    
+    // Helper to format the workout date as "MMM d" (e.g., "Feb 25")
+    private func formatWorkoutDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        return formatter.string(from: date)
+    }
+    
     var body: some View {
         NavigationView {
             ZStack {  // Wrap in ZStack to overlay SwipeArea
                 VStack(spacing: 0) {
+                    // Today's Date
+                    Text(formattedDate)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.gymtimeTextSecondary)
+                        .padding(.top, 4)
+                        .padding(.bottom, 8)
+                    
                     // Muscle Group Toggle Row
                     ScrollViewReader { scrollProxy in
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -73,7 +130,7 @@ struct WeightsView: View {
                             .padding(.horizontal, 16)
                             .padding(.vertical, 12)
                         }
-                        .background(Color.black.opacity(0.3))
+                        .background(Color.black)
                         // Scroll to selected muscle group whenever it changes
                         .onChange(of: viewModel.selectedMuscleGroup) { newGroup in
                             withAnimation(.easeInOut(duration: 0.3)) {
@@ -106,24 +163,38 @@ struct WeightsView: View {
                                         .font(.system(size: 18, weight: .semibold))
                                         .foregroundColor(.white)
                                     
-                                    HStack(alignment: .center, spacing: 16) {
-                                        if let weight = workout.weight {
-                                            Text("\(Int(weight))lbs")
-                                                .font(.system(size: 24, weight: .bold))
-                                                .foregroundColor(.gymtimeAccent)
-                                        }
-                                        
-                                        if let sets = workout.sets, let reps = workout.reps {
-                                            Text("\(sets) sets × \(reps) reps")
-                                                .font(.system(size: 16))
+                                    VStack(spacing: 8) {
+                                        // Top line with date
+                                        HStack {
+                                            if let weight = workout.weight {
+                                                Text("\(Int(weight))lbs")
+                                                    .font(.system(size: 24, weight: .bold))
+                                                    .foregroundColor(.gymtimeAccent)
+                                            }
+                                            
+                                            Spacer()
+                                            
+                                            // Date in top right
+                                            Text(formatWorkoutDate(workout.date))
+                                                .font(.system(size: 14))
                                                 .foregroundColor(.gymtimeTextSecondary)
                                         }
                                         
-                                        Spacer()
-                                        
-                                        Text(workout.date.formatted(date: .numeric, time: .omitted))
-                                            .font(.system(size: 14))
-                                            .foregroundColor(.gymtimeTextSecondary)
+                                        // Bottom line with sets/reps and days ago
+                                        HStack {
+                                            if let sets = workout.sets, let reps = workout.reps {
+                                                Text("\(sets) sets × \(reps) reps")
+                                                    .font(.system(size: 16))
+                                                    .foregroundColor(.gymtimeTextSecondary)
+                                            }
+                                            
+                                            Spacer()
+                                            
+                                            // Relative time (Today, Yesterday, X days ago)
+                                            Text(relativeDateString(from: workout.date))
+                                                .font(.system(size: 14))
+                                                .foregroundColor(.gymtimeTextSecondary)
+                                        }
                                     }
                                 }
                                 .padding(20)
@@ -139,6 +210,7 @@ struct WeightsView: View {
                             }
                         }
                         .listStyle(.plain)
+                        .background(Color.black)
                     }
                 }
                 .background(Color.gymtimeBackground)

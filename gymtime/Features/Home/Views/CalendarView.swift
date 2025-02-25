@@ -78,7 +78,7 @@ struct CalendarView: View {
                                         Image(systemName: "checkmark")
                                             .font(.system(size: 6))
                                             .foregroundColor(.white)
-                                            .offset(y: 13) // Position below the date with 2px spacing
+                                            .offset(y: 12) // Position below the date with 2px spacing
                                             .id("workout-\(item.date)")
                                     }
                                 }
