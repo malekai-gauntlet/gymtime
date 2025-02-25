@@ -56,5 +56,6 @@ struct BottomNavBarView: View {
                 .frame(maxWidth: .infinity)
             , alignment: .top
         )
+        .ignoresSafeArea(.keyboard)
     }
 } 

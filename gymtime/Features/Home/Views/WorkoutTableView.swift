@@ -397,6 +397,10 @@ struct EditableCell: View {
                         Spacer()
                         Button("Done") {
                             isFocused = false
+                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                                         to: nil,
+                                                         from: nil,
+                                                         for: nil)
                         }
                     }
                 }
@@ -423,7 +427,11 @@ struct EditableCell: View {
                     if editValue != value {
                         onChange(editValue)
                     }
-                    // Let onChange(of: isFocused) handle the state reset
+                    // Force keyboard dismissal
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                                 to: nil,
+                                                 from: nil,
+                                                 for: nil)
                     isFocused = false
                 }
                 .overlay(

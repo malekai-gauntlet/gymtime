@@ -8,6 +8,12 @@ enum WorkoutMenuTab {
     case library
 }
 
+// Sort methods for history tab
+enum HistorySortMethod {
+    case mostRecent
+    case alphabetical
+}
+
 struct WorkoutMenuView: View {
     @Environment(\.dismiss) private var dismiss
     @ObservedObject var viewModel: HomeViewModel
@@ -29,8 +35,9 @@ struct WorkoutMenuView: View {
     @State private var isLoadingHistory = true
     @State private var isLoadingLibrary = true
     
-    // Sort method for library
+    // Sort methods
     @State private var librarySortMethod = LibrarySortMethod.alphabetical
+    @State private var historySortMethod = HistorySortMethod.mostRecent
     
     // Track toast timer for proper cancellation
     @State private var toastTimer: DispatchWorkItem?
@@ -96,9 +103,18 @@ struct WorkoutMenuView: View {
                             }
                         }) {
                             VStack(spacing: 8) {
-                                Text("History")
-                                    .font(.headline)
-                                    .foregroundColor(selectedTab == .history ? .gymtimeText : .gymtimeTextSecondary)
+                                HStack(spacing: 5) {
+                                    Text("History")
+                                        .font(.headline)
+                                        .foregroundColor(selectedTab == .history ? .gymtimeText : .gymtimeTextSecondary)
+                                    
+                                    // Show count badge when searching and not on this tab
+                                    if !searchText.isEmpty && selectedTab != .history && !filteredHistoryItems.isEmpty {
+                                        Text("(\(filteredHistoryItems.count))")
+                                            .font(.caption)
+                                            .foregroundColor(.gymtimeAccent)
+                                    }
+                                }
                                 
                                 Rectangle()
                                     .fill(selectedTab == .history ? Color.gymtimeAccent : Color.clear)
@@ -114,9 +130,18 @@ struct WorkoutMenuView: View {
                             }
                         }) {
                             VStack(spacing: 8) {
-                                Text("Library")
-                                    .font(.headline)
-                                    .foregroundColor(selectedTab == .library ? .gymtimeText : .gymtimeTextSecondary)
+                                HStack(spacing: 5) {
+                                    Text("Library")
+                                        .font(.headline)
+                                        .foregroundColor(selectedTab == .library ? .gymtimeText : .gymtimeTextSecondary)
+                                    
+                                    // Show count badge when searching and not on this tab
+                                    if !searchText.isEmpty && selectedTab != .library && !filteredLibraryExercises.isEmpty {
+                                        Text("(\(filteredLibraryExercises.count))")
+                                            .font(.caption)
+                                            .foregroundColor(.gymtimeAccent)
+                                    }
+                                }
                                 
                                 Rectangle()
                                     .fill(selectedTab == .library ? Color.gymtimeAccent : Color.clear)
@@ -130,161 +155,166 @@ struct WorkoutMenuView: View {
                     ScrollView {
                         // HISTORY SECTION (formerly SUGGESTIONS)
                         if selectedTab == .history {
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
+                    VStack(alignment: .leading, spacing: 12) {
+                        HStack {
                                     Text("History")
-                                        .font(.title3)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.gymtimeText)
-                                    
+                                .font(.title3)
+                                .fontWeight(.bold)
+                                .foregroundColor(.gymtimeText)
+                            
                                     if !searchText.isEmpty {
                                         Text("(\(filteredHistoryItems.count))")
                                             .font(.subheadline)
                                             .foregroundColor(.gymtimeTextSecondary)
                                     }
                                     
-                                    Spacer()
-                                    
-                                    Menu {
-                                        Button("Most Recent", action: {})
-                                        Button("Most Used", action: {})
-                                        Button("Alphabetical", action: {})
-                                    } label: {
-                                        HStack {
-                                            Image(systemName: "line.3.horizontal.decrease")
-                                            Text("Most Recent")
-                                        }
-                                        .foregroundColor(.gymtimeTextSecondary)
-                                        .padding(8)
-                                        .background(Color.black.opacity(0.2))
-                                        .cornerRadius(8)
-                                    }
+                            Spacer()
+                            
+                            Menu {
+                                Button("Most Recent", action: {
+                                    historySortMethod = .mostRecent
+                                    sortHistoryItems(by: .mostRecent)
+                                })
+                                Button("Alphabetical", action: {
+                                    historySortMethod = .alphabetical
+                                    sortHistoryItems(by: .alphabetical)
+                                })
+                            } label: {
+                                HStack {
+                                    Image(systemName: "line.3.horizontal.decrease")
+                                    Text(historySortMethodLabel())
                                 }
-                                .padding(.horizontal)
-                                .padding(.top, 20)
-                                
+                                .foregroundColor(.gymtimeTextSecondary)
+                                .padding(8)
+                                .background(Color.black.opacity(0.2))
+                                .cornerRadius(8)
+                            }
+                        }
+                        .padding(.horizontal)
+                        .padding(.top, 20)
+                        
                                 // Workout list - show real history if available, otherwise show placeholders
-                                LazyVStack(spacing: 0) {
+                            LazyVStack(spacing: 0) {
                                     if isLoadingHistory {
-                                        VStack {
-                                            Spacer()
+                                    VStack {
+                                        Spacer()
                                             ProgressView("Loading history...")
-                                            Spacer()
-                                        }
+                                        Spacer()
+                                    }
                                         .frame(height: 100)
-                                    } else if viewModel.suggestedWorkouts.isEmpty {
+                                } else if viewModel.suggestedWorkouts.isEmpty {
                                         // Show placeholders if no history items are available
                                         ForEach(0..<3, id: \.self) { index in
-                                            WorkoutSuggestionRow(index: index)
-                                                .padding(.vertical, 12)
-                                                .padding(.horizontal)
-                                                .background(Color.gymtimeBackground)
-                                            
-                                            Divider()
-                                                .background(Color.gray.opacity(0.3))
-                                                .padding(.horizontal)
-                                        }
+                                        WorkoutSuggestionRow(index: index)
+                                            .padding(.vertical, 12)
+                                            .padding(.horizontal)
+                                            .background(Color.gymtimeBackground)
+                                        
+                                        Divider()
+                                            .background(Color.gray.opacity(0.3))
+                                            .padding(.horizontal)
+                                    }
                                     } else if filteredHistoryItems.isEmpty && !searchText.isEmpty {
                                         // Show no results when searching
-                                        VStack(spacing: 16) {
-                                            Image(systemName: "magnifyingglass")
-                                                .font(.system(size: 40))
-                                                .foregroundColor(.gymtimeTextSecondary)
-                                            
+                                    VStack(spacing: 16) {
+                                        Image(systemName: "magnifyingglass")
+                                            .font(.system(size: 40))
+                                            .foregroundColor(.gymtimeTextSecondary)
+                                        
                                             Text("No history items found matching '\(searchText)'")
-                                                .font(.headline)
-                                                .foregroundColor(.gymtimeTextSecondary)
-                                                .multilineTextAlignment(.center)
-                                        }
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 50)
-                                    } else {
+                                            .font(.headline)
+                                            .foregroundColor(.gymtimeTextSecondary)
+                                            .multilineTextAlignment(.center)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding(.vertical, 50)
+                                } else {
                                         // Show filtered history items
                                         ForEach(filteredHistoryItems) { workout in
-                                            ZStack {
-                                                // Background for the entire row that handles taps
+                                        ZStack {
+                                            // Background for the entire row that handles taps
+                                            Button(action: {
+                                                // No action here - we'll handle it in the plus button
+                                            }) {
+                                                Rectangle()
+                                                    .fill(Color.clear)
+                                                    .contentShape(Rectangle())
+                                            }
+                                            .buttonStyle(PlainButtonStyle())
+                                            
+                                            // Actual row content
+                                            HStack {
+                                                VStack(alignment: .leading, spacing: 4) {
+                                                    Text(workout.exercise)
+                                                        .font(.headline)
+                                                        .foregroundColor(.gymtimeText)
+                                                    
+                                                    HStack(spacing: 8) {
+                                                        if let weight = workout.weight {
+                                                            Text("\(Int(weight)) lbs")
+                                                                .font(.subheadline)
+                                                                .foregroundColor(.gymtimeTextSecondary)
+                                                        }
+                                                        
+                                                        if let sets = workout.sets, let reps = workout.reps {
+                                                            Text("\(sets)×\(reps)")
+                                                                .font(.subheadline)
+                                                                .foregroundColor(.gymtimeTextSecondary)
+                                                        }
+                                                    }
+                                                }
+                                                
+                                                Spacer()
+                                                
+                                                // Simplified button
                                                 Button(action: {
-                                                    // No action here - we'll handle it in the plus button
+                                                    // Capture the workout ID immediately
+                                                    let workoutID = workout.id
+                                                    
+                                                    // Perform haptic feedback immediately
+                                                    let generator = UIImpactFeedbackGenerator(style: .medium)
+                                                    generator.impactOccurred()
+                                                    
+                                                    // Add workout to Supabase
+                                                    viewModel.addSuggestionToWorkouts(workout)
+                                                    
+                                                    // Update UI state with a slight delay to ensure the previous operations complete
+                                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                                        // Update local state
+                                                        addedWorkouts.insert(workoutID)
+                                                        
+                                                        // Show toast
+                                                        toastMessage = "\(workout.exercise) logged!"
+                                                        showToast = true
+                                                        
+                                                        // Schedule toast hiding
+                                                        toastTimer?.cancel()
+                                                        let newTimer = DispatchWorkItem {
+                                                            withAnimation {
+                                                                showToast = false
+                                                            }
+                                                        }
+                                                        toastTimer = newTimer
+                                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: newTimer)
+                                                    }
                                                 }) {
-                                                    Rectangle()
-                                                        .fill(Color.clear)
+                                                    Image(systemName: addedWorkouts.contains(workout.id) ? "checkmark.circle.fill" : "plus.circle.fill")
+                                                        .font(.system(size: 28))
+                                                        .foregroundColor(addedWorkouts.contains(workout.id) ? .green : .gymtimeAccent)
+                                                        .frame(width: 60, height: 60)
                                                         .contentShape(Rectangle())
                                                 }
                                                 .buttonStyle(PlainButtonStyle())
-                                                
-                                                // Actual row content
-                                                HStack {
-                                                    VStack(alignment: .leading, spacing: 4) {
-                                                        Text(workout.exercise)
-                                                            .font(.headline)
-                                                            .foregroundColor(.gymtimeText)
-                                                        
-                                                        HStack(spacing: 8) {
-                                                            if let weight = workout.weight {
-                                                                Text("\(Int(weight)) lbs")
-                                                                    .font(.subheadline)
-                                                                    .foregroundColor(.gymtimeTextSecondary)
-                                                            }
-                                                            
-                                                            if let sets = workout.sets, let reps = workout.reps {
-                                                                Text("\(sets)×\(reps)")
-                                                                    .font(.subheadline)
-                                                                    .foregroundColor(.gymtimeTextSecondary)
-                                                            }
-                                                        }
-                                                    }
-                                                    
-                                                    Spacer()
-                                                    
-                                                    // Simplified button
-                                                    Button(action: {
-                                                        // Capture the workout ID immediately
-                                                        let workoutID = workout.id
-                                                        
-                                                        // Perform haptic feedback immediately
-                                                        let generator = UIImpactFeedbackGenerator(style: .medium)
-                                                        generator.impactOccurred()
-                                                        
-                                                        // Add workout to Supabase
-                                                        viewModel.addSuggestionToWorkouts(workout)
-                                                        
-                                                        // Update UI state with a slight delay to ensure the previous operations complete
-                                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                                                            // Update local state
-                                                            addedWorkouts.insert(workoutID)
-                                                            
-                                                            // Show toast
-                                                            toastMessage = "\(workout.exercise) logged!"
-                                                            showToast = true
-                                                            
-                                                            // Schedule toast hiding
-                                                            toastTimer?.cancel()
-                                                            let newTimer = DispatchWorkItem {
-                                                                withAnimation {
-                                                                    showToast = false
-                                                                }
-                                                            }
-                                                            toastTimer = newTimer
-                                                            DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: newTimer)
-                                                        }
-                                                    }) {
-                                                        Image(systemName: addedWorkouts.contains(workout.id) ? "checkmark.circle.fill" : "plus.circle.fill")
-                                                            .font(.system(size: 28))
-                                                            .foregroundColor(addedWorkouts.contains(workout.id) ? .green : .gymtimeAccent)
-                                                            .frame(width: 60, height: 60)
-                                                            .contentShape(Rectangle())
-                                                    }
-                                                    .buttonStyle(PlainButtonStyle())
-                                                }
-                                                .padding(.vertical, 12)
-                                                .padding(.horizontal)
                                             }
-                                            .background(Color.gymtimeBackground)
-                                            
-                                            Divider()
-                                                .background(Color.gray.opacity(0.3))
-                                                .padding(.horizontal)
-                                            .onAppear {
+                                            .padding(.vertical, 12)
+                                            .padding(.horizontal)
+                                        }
+                                        .background(Color.gymtimeBackground)
+                                        
+                                        Divider()
+                                            .background(Color.gray.opacity(0.3))
+                                            .padding(.horizontal)
+                                        .onAppear {
                                                 print("📍 Row appeared for history item: \(workout.exercise) (ID: \(workout.id))")
                                             }
                                             .id(workout.id) // Ensure each row has a stable identity
@@ -316,10 +346,6 @@ struct WorkoutMenuView: View {
                                         Button("Alphabetical", action: {
                                             librarySortMethod = .alphabetical
                                             viewModel.sortLibraryExercises(by: .alphabetical)
-                                        })
-                                        Button("By Category", action: {
-                                            librarySortMethod = .category
-                                            viewModel.sortLibraryExercises(by: .category)
                                         })
                                         Button("By Muscle Group", action: {
                                             librarySortMethod = .muscleGroup
@@ -550,10 +576,37 @@ struct WorkoutMenuView: View {
         switch librarySortMethod {
         case .alphabetical:
             return "Alphabetical"
-        case .category:
-            return "By Category"
         case .muscleGroup:
             return "By Muscle Group"
+        }
+    }
+    
+    // Helper to get the correct label for the history sort menu
+    private func historySortMethodLabel() -> String {
+        switch historySortMethod {
+        case .mostRecent:
+            return "Most Recent"
+        case .alphabetical:
+            return "Alphabetical"
+        }
+    }
+    
+    // Sort history items
+    private func sortHistoryItems(by sortMethod: HistorySortMethod) {
+        withAnimation {
+            switch sortMethod {
+            case .mostRecent:
+                // We don't need to do anything special since the default order from the API is already most recent
+                // But we'll reload to ensure the order is correct
+                Task {
+                    isLoadingHistory = true
+                    await viewModel.getMoreWorkoutSuggestions()
+                    isLoadingHistory = false
+                }
+            case .alphabetical:
+                // Sort alphabetically by exercise name
+                viewModel.suggestedWorkouts.sort { $0.exercise < $1.exercise }
+            }
         }
     }
 }

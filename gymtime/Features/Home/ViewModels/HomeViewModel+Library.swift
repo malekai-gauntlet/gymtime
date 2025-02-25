@@ -114,8 +114,8 @@ extension HomeViewModel {
                 let matchingChars = targetChars.intersection(wordChars)
                 let matchPercentage = Double(matchingChars.count) / Double(word.count)
                 
-                // Threshold: 80% of characters must match (increased from 60%)
-                if matchPercentage >= 0.8 {
+                // Threshold: 90% of characters must match (increased from 60%)
+                if matchPercentage >= 0.9 {
                     print("📍 Character match: '\(word)' in '\(target)' - \(Int(matchPercentage * 100))%")
                 } else {
                     print("❌ No match for '\(word)' in '\(target)' - \(Int(matchPercentage * 100))%")
@@ -153,8 +153,6 @@ extension HomeViewModel {
             switch sortMethod {
             case .alphabetical:
                 libraryExercises.sort { $0.name < $1.name }
-            case .category:
-                libraryExercises.sort { $0.category == $1.category ? $0.name < $1.name : $0.category < $1.category }
             case .muscleGroup:
                 libraryExercises.sort { $0.muscleGroup == $1.muscleGroup ? $0.name < $1.name : $0.muscleGroup < $1.muscleGroup }
             }
@@ -166,6 +164,5 @@ extension HomeViewModel {
 
 enum LibrarySortMethod {
     case alphabetical
-    case category
     case muscleGroup
 } 
