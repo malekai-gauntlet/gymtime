@@ -116,20 +116,20 @@ struct FeedView: View {
         defer { isLoading = false }
         
         do {
-            // Fetch workouts from Supabase
-            let response: [WorkoutEntry] = try await supabase
-                .from("workouts")
+            // Fetch workouts from workout_profiles view which includes user information
+            let response: [WorkoutProfileEntry] = try await supabase
+                .from("workout_profiles")
                 .select()
                 .order("date", ascending: false)
                 .limit(10)
                 .execute()
                 .value
             
-            // Map WorkoutEntry to WorkoutFeedEntry
+            // Map WorkoutProfileEntry to WorkoutFeedEntry
             workouts = response.map { workout in
                 WorkoutFeedEntry(
                     id: workout.id,
-                    userName: "User \(workout.userId.uuidString.prefix(4))", // Temporary user display
+                    userName: workout.username.isEmpty ? (workout.fullName ?? "User") : workout.username,
                     workoutType: workout.exercise,
                     location: "Gym", // Default location for now
                     achievement: formatAchievement(workout),
@@ -151,7 +151,7 @@ struct FeedView: View {
     }
     
     // Helper function to format the achievement string
-    private func formatAchievement(_ workout: WorkoutEntry) -> String {
+    private func formatAchievement(_ workout: WorkoutProfileEntry) -> String {
         var parts: [String] = []
         
         if let weight = workout.weight {
