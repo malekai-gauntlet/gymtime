@@ -35,8 +35,7 @@ extension HomeViewModel {
             sets: suggestion.sets,
             reps: suggestion.reps,
             notes: suggestion.notes,
-            date: calendarState.selectedDate
-            
+            date: calendarState.selectedDate  // Already using selected date
         )
         
         print("📝 Created new entry with ID: \(entry.id)")

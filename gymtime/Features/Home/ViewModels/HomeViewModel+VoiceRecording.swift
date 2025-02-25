@@ -40,7 +40,8 @@ extension HomeViewModel {
             do {
                 print("📝 Processing transcript: \(transcript)")
                 
-                let entries = try await workoutParser.parse(text: transcript)
+                // Use the selected date from calendar state
+                let entries = try await workoutParser.parse(text: transcript, date: calendarState.selectedDate)
                 
                 // Add workouts in reverse for correct order
                 for entry in entries {

@@ -22,7 +22,7 @@ actor WorkoutParser {
         var notes: String?
     }
     
-    func parse(text: String) async throws -> [WorkoutEntry] {
+    func parse(text: String, date: Date = Date()) async throws -> [WorkoutEntry] {
         // Get JSON response from OpenAI
         let jsonString = try await openAIService.generateCompletion(prompt: text)
         
@@ -39,10 +39,10 @@ actor WorkoutParser {
         }
         
         // Clean and validate each workout
-        return try parsedWorkouts.map { try cleanAndValidate($0, userId: userId) }
+        return try parsedWorkouts.map { try cleanAndValidate($0, userId: userId, date: date) }
     }
     
-    private func cleanAndValidate(_ parsed: ParsedWorkout, userId: UUID) throws -> WorkoutEntry {
+    private func cleanAndValidate(_ parsed: ParsedWorkout, userId: UUID, date: Date) throws -> WorkoutEntry {
         // Clean exercise name
         let exercise = cleanExerciseName(parsed.exercise)
         guard !exercise.isEmpty else {
@@ -78,7 +78,8 @@ actor WorkoutParser {
             weight: weight,
             sets: parsed.sets,
             reps: parsed.reps,
-            notes: notes.isEmpty ? nil : notes
+            notes: notes.isEmpty ? nil : notes,
+            date: date
         )
     }
     
