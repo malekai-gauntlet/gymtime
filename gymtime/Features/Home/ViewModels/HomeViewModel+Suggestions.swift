@@ -11,39 +11,29 @@ extension HomeViewModel {
             isSuggestionsVisible.toggle()
             
             if isSuggestionsVisible {
-                // Create blank entry for new workout
+                // Load suggestions
                 Task {
-                    guard let userId = try? await supabase.auth.session.user.id else { return }
-                    await MainActor.run {
-                        blankWorkoutEntry = WorkoutEntry(
-                            userId: userId,
-                            exercise: "",
-                            date: calendarState.selectedDate
-                        )
-                        
-                        // Load suggestions
-                        Task {
-                            suggestedWorkouts = await getWorkoutSuggestions()
-                        }
-                    }
+                    // Load suggestions
+                    suggestedWorkouts = await getWorkoutSuggestions()
                 }
             } else {
                 // Clear suggestion state when hiding
-                blankWorkoutEntry = nil
                 suggestedWorkouts = []
             }
         }
     }
     
     func addSuggestionToWorkouts(_ suggestion: WorkoutEntry) {
-        guard var entry = blankWorkoutEntry else { return }
-        
-        // Update blank entry with suggestion details
-        entry.exercise = suggestion.exercise
-        entry.weight = suggestion.weight
-        entry.sets = suggestion.sets
-        entry.reps = suggestion.reps
-        entry.notes = suggestion.notes
+        // Create a new workout entry directly from the suggestion
+        let entry = WorkoutEntry(
+            userId: suggestion.userId,
+            exercise: suggestion.exercise,
+            weight: suggestion.weight,
+            sets: suggestion.sets,
+            reps: suggestion.reps,
+            notes: suggestion.notes,
+            date: calendarState.selectedDate
+        )
         
         // Add to workouts
         addWorkout(entry)
@@ -55,33 +45,8 @@ extension HomeViewModel {
             }
         }
         
-        // Create a new blank workout entry and fetch new suggestions
-        Task {
-            guard let userId = try? await supabase.auth.session.user.id else { return }
-            
-            // Get new suggestions to replace the one we just added
-            let newSuggestions = await getWorkoutSuggestions()
-            
-            await MainActor.run {
-                withAnimation {
-                    // Create new blank entry
-                    blankWorkoutEntry = WorkoutEntry(
-                        userId: userId,
-                        exercise: "",
-                        date: calendarState.selectedDate
-                    )
-                    
-                    // Update suggestions, but avoid duplicates
-                    let existingExercises = Set(suggestedWorkouts.map { $0.exercise })
-                    let filteredNewSuggestions = newSuggestions.filter { !existingExercises.contains($0.exercise) }
-                    
-                    // Add one new suggestion if available
-                    if let newSuggestion = filteredNewSuggestions.first {
-                        suggestedWorkouts.append(newSuggestion)
-                    }
-                }
-            }
-        }
+        // No need to create a blank entry or fetch new suggestions for the table view
+        // since we're not showing suggestions in the table anymore
     }
     
     func updateBlankWorkoutField(field: String, value: String) {
@@ -104,6 +69,48 @@ extension HomeViewModel {
         }
         
         blankWorkoutEntry = entry
+    }
+    
+    // Get more workout suggestions for the full-screen menu
+    func getMoreWorkoutSuggestions() async {
+        guard let userId = try? await supabase.auth.session.user.id else { return }
+        
+        do {
+            // Get recent workouts for suggestions
+            let response: [WorkoutEntry] = try await supabase
+                .from("workouts")
+                .select()
+                .eq("user_id", value: userId)
+                .order("created_at", ascending: false)
+                .limit(30)  // Fetch more for the full menu
+                .execute()
+                .value
+            
+            // Remove duplicates based on exercise name
+            var uniqueExercises: Set<String> = []
+            let suggestions = response
+                .filter { workout in
+                    uniqueExercises.insert(workout.exercise).inserted
+                }
+                .prefix(10)  // Show up to 10 suggestions in the full menu
+                .map { $0 }  // Convert ArraySlice back to Array
+            
+            await MainActor.run {
+                withAnimation {
+                    suggestedWorkouts = suggestions
+                }
+            }
+        } catch {
+            print("Error loading suggestions: \(error)")
+        }
+    }
+    
+    // Clear suggestions when the menu is dismissed
+    func clearSuggestions() {
+        withAnimation {
+            suggestedWorkouts = []
+            isSuggestionsVisible = false
+        }
     }
     
     private func getWorkoutSuggestions() async -> [WorkoutEntry] {

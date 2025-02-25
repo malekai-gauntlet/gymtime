@@ -15,7 +15,6 @@ struct WelcomeView: View {
                     .scaledToFit()
                     .frame(width: 120, height: 100)
                     .padding(.bottom)
-                    .background(Color.clear) // Adding this temporarily to debug
                 
                 Text("gymhead")
                     .font(.largeTitle)
@@ -28,7 +27,28 @@ struct WelcomeView: View {
                 Spacer()
                 
                 // Continue with Email button
-                NavigationLink(destination: AuthenticationView(viewModel: viewModel), isActive: $showAuthenticationView) {
+                NavigationLink(
+                    destination: AuthenticationView(viewModel: viewModel)
+                        .onAppear {
+                            // Reset viewModel state when navigating to auth view
+                            viewModel.email = ""
+                            viewModel.password = ""
+                            viewModel.error = nil
+                        },
+                    isActive: $showAuthenticationView
+                ) {
+                    EmptyView()
+                }
+                
+                Button(action: {
+                    // Ensure any active keyboard is dismissed before navigation
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                    
+                    // Slight delay to ensure UI is ready
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        showAuthenticationView = true
+                    }
+                }) {
                     HStack {
                         Spacer()
                         Image(systemName: "envelope")
@@ -67,6 +87,10 @@ struct WelcomeView: View {
             }
             .padding()
             .navigationBarHidden(true)
+        }
+        .onAppear {
+            // Fix for keyboard layout issues
+            UITextField.appearance().keyboardAppearance = .dark
         }
     }
 }

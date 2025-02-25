@@ -36,6 +36,9 @@ struct WorkoutTableView: View {
     @State private var isAnyFieldEditing = false
     @Binding var isEditing: Bool  // Add binding for parent view
     
+    // Add state for showing the workout menu
+    @State private var showingWorkoutMenu = false
+    
     // Column widths (proportional)
     private let exerciseWidth: CGFloat = 0.26  // Increased for longer exercise names
     private let weightWidth: CGFloat = 0.15
@@ -77,7 +80,7 @@ struct WorkoutTableView: View {
                     ScrollViewReader { proxy in
                         ScrollView {
                             LazyVStack(spacing: 0) {
-                                if workouts.isEmpty && viewModel.suggestedWorkouts.isEmpty {
+                                if workouts.isEmpty /* && viewModel.suggestedWorkouts.isEmpty */ {
                                     VStack(spacing: 8) {
                                         Image(systemName: "dumbbell.fill")
                                             .font(.system(size: 24))
@@ -130,6 +133,7 @@ struct WorkoutTableView: View {
                                     }
                                     
                                     // Suggested workouts
+                                    /* Comment out the entire suggestions section
                                     ForEach(viewModel.suggestedWorkouts) { suggestion in
                                         WorkoutRow(
                                             workout: suggestion,
@@ -177,8 +181,10 @@ struct WorkoutTableView: View {
                                             print("📍 Suggestion row appeared: \(suggestion.exercise)")
                                         }
                                     }
+                                    */
                                     
                                     // Add blank workout entry if available
+                                    /* Comment out blank workout entry
                                     if let blankWorkout = viewModel.blankWorkoutEntry {
                                         WorkoutRow(
                                             workout: blankWorkout,
@@ -196,6 +202,7 @@ struct WorkoutTableView: View {
                                         .opacity(0.4)
                                         .transition(.opacity.combined(with: .move(edge: .bottom)))
                                     }
+                                    */
                                     
                                     // Add spacer at bottom to prevent content hiding behind buttons
                                     Color.clear
@@ -204,7 +211,7 @@ struct WorkoutTableView: View {
                             }
                         }
                         .background(Color.gymtimeBackground)
-                        .modifier(BottomFadeModifier(itemCount: workouts.count + (viewModel.blankWorkoutEntry != nil ? 1 : 0) + viewModel.suggestedWorkouts.count))
+                        .modifier(BottomFadeModifier(itemCount: workouts.count /* + (viewModel.blankWorkoutEntry != nil ? 1 : 0) */ /* + viewModel.suggestedWorkouts.count */))
                     }
                 }
                 .background(Color.gymtimeBackground)
@@ -251,8 +258,10 @@ struct WorkoutTableView: View {
                     HStack {
                         Spacer()
                         Button(action: {
-                            print("Plus button tapped")
-                            viewModel.toggleSuggestions()
+                            print("Plus button tapped - Opening full screen menu")
+                            showingWorkoutMenu = true
+                            // Commented out previous functionality - will be replaced with full-screen menu
+                            // viewModel.toggleSuggestions()
                         }) {
                             ZStack {
                                 Circle()
@@ -262,13 +271,21 @@ struct WorkoutTableView: View {
                                         Circle()
                                             .strokeBorder(Color.gymtimeAccent.opacity(0.3), lineWidth: 2)
                                     )
-                                Image(systemName: viewModel.isSuggestionsVisible ? "xmark" : "plus")
+                                // Always show plus icon now, regardless of suggestions state
+                                Image(systemName: "plus")
                                     .font(.system(size: 26, weight: .semibold))
                                     .foregroundColor(.gymtimeAccent)
                             }
                             .shadow(radius: 3, x: 0, y: 1)
                         }
                         .padding(.trailing, 31)
+                        .sheet(isPresented: $showingWorkoutMenu, onDismiss: {
+                            // Clear suggestions when the menu is dismissed
+                            viewModel.clearSuggestions()
+                        }) {
+                            WorkoutMenuView(viewModel: viewModel)
+                                .edgesIgnoringSafeArea(.bottom)
+                        }
                     }
                     
                     if let error = viewModel.error {

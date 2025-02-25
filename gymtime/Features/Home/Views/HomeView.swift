@@ -88,12 +88,12 @@ struct HomeView: View {
                 WorkoutTableView(workouts: $viewModel.workouts, viewModel: viewModel, isEditing: $isEditing)
                     .horizontalSwipe(
                         onSwipe: { isRight in
-                            withAnimation(.easeInOut(duration: 0.3)) {
-                                if isRight {
-                                    viewModel.selectDate(Calendar.current.date(byAdding: .day, value: -1, to: viewModel.calendarState.selectedDate) ?? Date())
-                                } else {
-                                    viewModel.selectDate(Calendar.current.date(byAdding: .day, value: 1, to: viewModel.calendarState.selectedDate) ?? Date())
-                                }
+                            // Don't animate the scroll, just select the new date
+                            // The selection will trigger the color change animations
+                            if isRight {
+                                viewModel.selectDate(Calendar.current.date(byAdding: .day, value: -1, to: viewModel.calendarState.selectedDate) ?? Date())
+                            } else {
+                                viewModel.selectDate(Calendar.current.date(byAdding: .day, value: 1, to: viewModel.calendarState.selectedDate) ?? Date())
                             }
                         },
                         isEditing: isEditing,

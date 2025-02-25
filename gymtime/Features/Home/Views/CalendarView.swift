@@ -67,22 +67,18 @@ struct CalendarView: View {
                                             )
                                     )
                                     .onTapGesture {
-                                        // First hide suggestions if visible
-                                        if viewModel.isSuggestionsVisible {
-                                            viewModel.isSuggestionsVisible = false
-                                            viewModel.suggestedWorkouts = []
-                                            viewModel.blankWorkoutEntry = nil
-                                        }
-                                        
-                                        // First select the new date (changes appearance)
-                                        viewModel.selectDate(item.date)
-                                        updateDisplayedMonth(item.date)
-                                        
-                                        // Then scroll to center it (after a tiny delay)
-                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                                            withAnimation(smoothScroll) {
-                                                proxy.scrollTo(item.date, anchor: .center)
+                                        withAnimation(smoothScroll) {
+                                            // First hide suggestions if visible
+                                            if viewModel.isSuggestionsVisible {
+                                                viewModel.isSuggestionsVisible = false
+                                                viewModel.suggestedWorkouts = []
+                                                viewModel.blankWorkoutEntry = nil
                                             }
+                                            
+                                            // Then select the new date
+                                            viewModel.selectDate(item.date)
+                                            proxy.scrollTo(item.date, anchor: .center)
+                                            updateDisplayedMonth(item.date)
                                         }
                                     }
                             }

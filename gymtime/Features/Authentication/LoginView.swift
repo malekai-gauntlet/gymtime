@@ -5,6 +5,7 @@ struct LoginView: View {
     @ObservedObject var viewModel: AuthenticationViewModel
     @State private var isKeyboardVisible = false
     @FocusState private var focusedField: Field?
+    @State private var isViewAppeared = false
     
     enum Field {
         case email
@@ -29,10 +30,13 @@ struct LoginView: View {
                             .animation(.easeInOut(duration: 0.1), value: focusedField)
                     )
                     .textContentType(.emailAddress)
+                    .keyboardType(.emailAddress)
                     .autocapitalization(.none)
+                    .disableAutocorrection(true)
                     .foregroundColor(.gymtimeText)
                     .focused($focusedField, equals: .email)
                     .disabled(viewModel.isLoading)
+                    .id("login-email-field") // Add stable ID for focus
                 
                 // Password field
                 SecureField("Password", text: $viewModel.password)
@@ -49,6 +53,7 @@ struct LoginView: View {
                     .foregroundColor(.gymtimeText)
                     .focused($focusedField, equals: .password)
                     .disabled(viewModel.isLoading)
+                    .id("login-password-field") // Add stable ID for focus
                 
                 // Error message
                 if let error = viewModel.error {
@@ -101,6 +106,15 @@ struct LoginView: View {
         }
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .onAppear {
+            // Set flag that view has appeared
+            isViewAppeared = true
+            
+            // Set focus after a slight delay to ensure view is fully loaded
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                focusedField = .email
+            }
+            
+            // Set up keyboard notifications
             NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { _ in
                 isKeyboardVisible = true
             }
@@ -108,5 +122,21 @@ struct LoginView: View {
                 isKeyboardVisible = false
             }
         }
+        .onDisappear {
+            // Clean up by removing focus when view disappears
+            focusedField = nil
+            isViewAppeared = false
+        }
+        // Add a tap gesture to handle taps on the view
+        .simultaneousGesture(
+            TapGesture().onEnded { _ in
+                // Only respond if no field is currently focused
+                if focusedField == nil && isViewAppeared {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        focusedField = .email
+                    }
+                }
+            }
+        )
     }
 }
