@@ -1,6 +1,7 @@
 ---
-description: This rule is helpful for code style and structure
+description: This rule is helpful for code style and structurek
 globs: 
+alwaysApply: false
 ---
 ---
 description: Core Swift and SwiftUI coding standards for Gymtime
@@ -101,6 +102,7 @@ learned_fixes:
       3. Use Cursor exclusively
     context: "Multiple Git clients (Xcode, Cursor) trying to manage the same repository causes resource conflicts and lock files"
 
+
   - error: "Cannot find 'Config' in scope when accessing configuration values"
     solution: "Move Config.swift file into the Features directory to make it part of the module's source files"
     example: |
@@ -122,21 +124,9 @@ learned_fixes:
                     └── HomeViewModel.swift
     context: "In Swift modules, source files must be in the correct module directory to be accessible. Files in the project root are not part of the module's source files and cannot be imported or accessed by other files in the module."
 
-  - error: "'system(_:design:weight:)' is only available in iOS 16.0 or newer"
-    solution: "Use iOS 15 compatible font modifiers"
-    example: |
-      // Before (iOS 16+):
-      Text("Example")
-        .font(.system(.subheadline, weight: .medium))  // Error
-        .font(.system(.subheadline))                   // Error
+    learned_fixes:
+  // ... existing fixes ...
 
-      // After (iOS 15 compatible):
-      Text("Example")
-        .font(.subheadline.weight(.medium))           // Works
-        .font(.subheadline)                           // Works
-        .font(.system(.subheadline, design: .monospaced))  // Still works for monospace
-
-    context: "SwiftUI's font API was updated in iOS 16. For better compatibility, use the older style font modifiers which provide the same functionality but work across iOS versions. The .system(_:design:weight:) constructor is only available in iOS 16+, but individual modifiers work fine in iOS 15."
 
   - error: "Argument passed to call that takes no arguments when using TabView navigation"
     solution: "Remove nested NavigationView in tab content and simplify view initialization"

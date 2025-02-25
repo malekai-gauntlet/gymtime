@@ -33,42 +33,60 @@ struct WeightsSwipeArea: View {
 
 struct WeightsView: View {
     @ObservedObject var viewModel: WeightsViewModel
+    // Add namespace for scroll position identification
+    @Namespace private var muscleGroupNamespace
     
     var body: some View {
         NavigationView {
             ZStack {  // Wrap in ZStack to overlay SwipeArea
                 VStack(spacing: 0) {
                     // Muscle Group Toggle Row
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 12) {
-                            ForEach(WeightsViewModel.muscleGroups, id: \.self) { group in
-                                Button(action: {
-                                    withAnimation {
-                                        viewModel.selectMuscleGroup(group)
+                    ScrollViewReader { scrollProxy in
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 12) {
+                                ForEach(WeightsViewModel.muscleGroups, id: \.self) { group in
+                                    Button(action: {
+                                        withAnimation {
+                                            viewModel.selectMuscleGroup(group)
+                                        }
+                                    }) {
+                                        Text(group)
+                                            .font(.system(size: 14, weight: .medium))
+                                            .padding(.horizontal, 16)
+                                            .padding(.vertical, 8)
+                                            .background(
+                                                group == viewModel.selectedMuscleGroup
+                                                ? Color.gymtimeAccent
+                                                : Color.gray.opacity(0.2)
+                                            )
+                                            .foregroundColor(
+                                                group == viewModel.selectedMuscleGroup
+                                                ? .white
+                                                : .gymtimeTextSecondary
+                                            )
+                                            .cornerRadius(20)
                                     }
-                                }) {
-                                    Text(group)
-                                        .font(.system(size: 14, weight: .medium))
-                                        .padding(.horizontal, 16)
-                                        .padding(.vertical, 8)
-                                        .background(
-                                            group == viewModel.selectedMuscleGroup
-                                            ? Color.gymtimeAccent
-                                            : Color.gray.opacity(0.2)
-                                        )
-                                        .foregroundColor(
-                                            group == viewModel.selectedMuscleGroup
-                                            ? .white
-                                            : .gymtimeTextSecondary
-                                        )
-                                        .cornerRadius(20)
+                                    // Add ID for ScrollViewReader to target
+                                    .id(group)
                                 }
                             }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 12)
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 12)
+                        .background(Color.black.opacity(0.3))
+                        // Scroll to selected muscle group whenever it changes
+                        .onChange(of: viewModel.selectedMuscleGroup) { newGroup in
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                scrollProxy.scrollTo(newGroup, anchor: .center)
+                            }
+                        }
+                        // Also scroll on initial appearance
+                        .onAppear {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                scrollProxy.scrollTo(viewModel.selectedMuscleGroup, anchor: .center)
+                            }
+                        }
                     }
-                    .background(Color.black.opacity(0.3))
                     
                     // Workout List
                     if viewModel.isLoading {

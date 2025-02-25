@@ -162,10 +162,6 @@ struct FeedView: View {
             parts.append("\(sets)×\(reps)")
         }
         
-        if let notes = workout.notes {
-            parts.append(notes)
-        }
-        
         return parts.isEmpty ? "Completed workout" : parts.joined(separator: " • ")
     }
 }

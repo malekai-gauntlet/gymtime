@@ -244,21 +244,6 @@ struct WorkoutMenuView: View {
             .navigationTitle("New Workout")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: {
-                        print("🔙 Cancel button tapped")
-                        // Add a small delay to ensure the action completes
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            dismiss()
-                        }
-                    }) {
-                        Text("Cancel")
-                            .foregroundColor(.blue)
-                            .frame(minWidth: 60, minHeight: 44) // Increase tap target
-                            .contentShape(Rectangle())
-                    }
-                }
-                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: {
                         print("✅ Done button tapped")
