@@ -106,26 +106,27 @@ struct WorkoutTableView: View {
                                         )
                                         .id(workout.id.uuidString)  // Convert UUID to String
                                         .background(Color.gymtimeBackground)
-                                        .swipeActions(edge: .trailing) {
+                                        .contextMenu {
                                             Button(role: .destructive) {
                                                 print("🔴 Delete button tapped for workout: \(workout.id)")
-                                                withAnimation(.easeOut(duration: 0.3)) {
+                                                
+                                                // Use a faster animation for more responsive feel
+                                                withAnimation(.easeOut(duration: 0.2)) {
+                                                    // Immediately remove from local array for instant UI feedback
+                                                    if let index = workouts.firstIndex(where: { $0.id == workout.id }) {
+                                                        // This creates the illusion of instant deletion
+                                                        // while the actual deletion happens in the background
+                                                        viewModel.workouts.remove(at: index)
+                                                    }
+                                                    
+                                                    // Then perform the actual deletion in the view model
                                                     viewModel.deleteWorkout(id: workout.id)
                                                 }
                                             } label: {
                                                 Label("Delete", systemImage: "trash")
                                             }
                                         }
-                                        .contextMenu {
-                                            Button(role: .destructive) {
-                                                print("🔴 Delete button tapped for workout: \(workout.id)")
-                                                withAnimation(.easeOut(duration: 0.3)) {
-                                                    viewModel.deleteWorkout(id: workout.id)
-                                                }
-                                            } label: {
-                                                Label("Delete", systemImage: "minus.circle")
-                                            }
-                                        }
+                                        .transition(.opacity.combined(with: .move(edge: .trailing)))
                                     }
                                     
                                     // Suggested workouts
@@ -596,14 +597,23 @@ struct WorkoutRow: View {
             
             // Expanded notes view
             if isExpanded && (workout.notes?.count ?? 0) > notesThreshold {
-                Text(workout.notes ?? "")
-                    .font(.subheadline)
-                    .foregroundColor(.gymtimeTextSecondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 24)
-                    .padding(.vertical, 8)
-                    .background(Color.black.opacity(0.2))
-                    .transition(.opacity.combined(with: .scale(scale: 0.95, anchor: .top)))
+                EditableCell(
+                    value: workout.notes ?? "",
+                    onChange: { value in
+                        viewModel.updateWorkoutField(id: workout.id, field: "notes", value: value)
+                    },
+                    isNumeric: false,
+                    scrollProxy: scrollProxy,
+                    workoutId: workout.id.uuidString,
+                    isAnyFieldEditing: $isAnyFieldEditing
+                )
+                .font(.subheadline)
+                .foregroundColor(.gymtimeTextSecondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 24)
+                .padding(.vertical, 8)
+                .background(Color.black.opacity(0.2))
+                .transition(.opacity.combined(with: .scale(scale: 0.95, anchor: .top)))
             }
         }
         .padding(.vertical, 14)
