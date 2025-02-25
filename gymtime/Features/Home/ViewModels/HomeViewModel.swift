@@ -28,6 +28,10 @@ class HomeViewModel: ObservableObject {
     @Published var suggestedWorkouts: [WorkoutEntry] = []
     @Published var blankWorkoutEntry: WorkoutEntry?
     
+    // UI State - Library
+    @Published var libraryExercises: [Exercise] = []
+    @Published var isLoadingLibrary: Bool = false
+    
     // Error Handling
     @Published var error: String?
     

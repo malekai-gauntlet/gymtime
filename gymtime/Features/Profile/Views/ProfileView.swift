@@ -291,7 +291,7 @@ struct ChartView: View {
                     .padding(.top, 4)
                 
                 HStack(spacing: 6) {
-                    Text("Total weight:")
+                    Text("Total weight lifted:")
                         .font(.subheadline)
                         .foregroundColor(.gymtimeTextSecondary)
                     

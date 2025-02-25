@@ -21,12 +21,14 @@ struct BottomNavBarView: View {
             )
             .onTapGesture { selectedTab = 1 }
             
+            /* PT View - Commented out
             NavBarItem(
                 icon: "dumbbell.fill",
                 text: "PT", 
                 isSelected: selectedTab == 2
             )
             .onTapGesture { selectedTab = 2 }
+            */
             
             NavBarItem(
                 icon: "list.bullet",
