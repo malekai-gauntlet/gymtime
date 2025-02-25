@@ -42,6 +42,10 @@ class HomeViewModel: ObservableObject {
     var summaryCache: [Date: String] = [:]
     private var cancellables = Set<AnyCancellable>()
     
+    // MARK: - Additional Properties
+    
+    @Published var menuAddedWorkouts: Set<UUID> = []
+    
     // MARK: - Initialization
     
     init() {

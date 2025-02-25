@@ -24,8 +24,11 @@ extension HomeViewModel {
     }
     
     func addSuggestionToWorkouts(_ suggestion: WorkoutEntry) {
-        // Create a new workout entry directly from the suggestion
+        print("➕ addSuggestionToWorkouts called for: \(suggestion.exercise) (ID: \(suggestion.id))")
+        
+        // Create a new entry from the suggestion
         let entry = WorkoutEntry(
+            id: UUID(),  // Generate a new ID
             userId: suggestion.userId,
             exercise: suggestion.exercise,
             weight: suggestion.weight,
@@ -33,13 +36,17 @@ extension HomeViewModel {
             reps: suggestion.reps,
             notes: suggestion.notes,
             date: calendarState.selectedDate
+            
         )
+        
+        print("📝 Created new entry with ID: \(entry.id)")
         
         // Add to workouts
         addWorkout(entry)
+        print("✅ Added to workouts array")
         
-        // No longer remove the suggestion from the list
-        // This allows users to add the same workout multiple times if needed
+        // No longer removing the suggestion from the list
+        print("ℹ️ Suggestion remains in list for potential reuse")
     }
     
     func updateBlankWorkoutField(field: String, value: String) {
@@ -66,6 +73,7 @@ extension HomeViewModel {
     
     // Get more workout suggestions for the full-screen menu
     func getMoreWorkoutSuggestions() async {
+        print("🔄 getMoreWorkoutSuggestions started")
         guard let userId = try? await supabase.auth.session.user.id else { return }
         
         do {
@@ -93,6 +101,9 @@ extension HomeViewModel {
                     suggestedWorkouts = suggestions
                 }
             }
+            
+            // Add before returning suggestions
+            print("✅ getMoreWorkoutSuggestions completed, returning \(suggestions.count) suggestions")
         } catch {
             print("Error loading suggestions: \(error)")
         }

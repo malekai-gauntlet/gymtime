@@ -124,81 +124,93 @@ struct WorkoutMenuView: View {
                                 } else {
                                     // Show filtered suggestions
                                     ForEach(filteredSuggestions) { workout in
-                                        HStack {
-                                            VStack(alignment: .leading, spacing: 4) {
-                                                Text(workout.exercise)
-                                                    .font(.headline)
-                                                    .foregroundColor(.gymtimeText)
-                                                
-                                                HStack(spacing: 8) {
-                                                    if let weight = workout.weight {
-                                                        Text("\(Int(weight)) lbs")
-                                                            .font(.subheadline)
-                                                            .foregroundColor(.gymtimeTextSecondary)
-                                                    }
-                                                    
-                                                    if let sets = workout.sets, let reps = workout.reps {
-                                                        Text("\(sets)×\(reps)")
-                                                            .font(.subheadline)
-                                                            .foregroundColor(.gymtimeTextSecondary)
-                                                    }
-                                                }
-                                            }
-                                            
-                                            Spacer()
-                                            
+                                        ZStack {
+                                            // Background for the entire row that handles taps
                                             Button(action: {
-                                                // Cancel any previous timer
-                                                toastTimer?.cancel()
-                                                
-                                                // Create new timer
-                                                let newTimer = DispatchWorkItem {
-                                                    withAnimation {
-                                                        showToast = false
+                                                // No action here - we'll handle it in the plus button
+                                            }) {
+                                                Rectangle()
+                                                    .fill(Color.clear)
+                                                    .contentShape(Rectangle())
+                                            }
+                                            .buttonStyle(PlainButtonStyle())
+                                            
+                                            // Actual row content
+                                            HStack {
+                                                VStack(alignment: .leading, spacing: 4) {
+                                                    Text(workout.exercise)
+                                                        .font(.headline)
+                                                        .foregroundColor(.gymtimeText)
+                                                    
+                                                    HStack(spacing: 8) {
+                                                        if let weight = workout.weight {
+                                                            Text("\(Int(weight)) lbs")
+                                                                .font(.subheadline)
+                                                                .foregroundColor(.gymtimeTextSecondary)
+                                                        }
+                                                        
+                                                        if let sets = workout.sets, let reps = workout.reps {
+                                                            Text("\(sets)×\(reps)")
+                                                                .font(.subheadline)
+                                                                .foregroundColor(.gymtimeTextSecondary)
+                                                        }
                                                     }
                                                 }
-                                                toastTimer = newTimer
                                                 
-                                                // Show toast
-                                                withAnimation {
-                                                    toastMessage = "\(workout.exercise) logged!"
-                                                    showToast = true
-                                                }
+                                                Spacer()
                                                 
-                                                // Schedule hiding
-                                                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: newTimer)
-                                                
-                                                // Add haptic feedback
-                                                let generator = UIImpactFeedbackGenerator(style: .medium)
-                                                generator.impactOccurred()
-                                                
-                                                // Add workout without dismissing the menu
-                                                viewModel.addSuggestionToWorkouts(workout)
-                                                
-                                                // Mark this workout as added
-                                                addedWorkouts.insert(workout.id)
-                                            }) {
-                                                // Wrap in ZStack to create larger tap area
-                                                ZStack {
-                                                    // Invisible larger tap area
-                                                    Color.clear
-                                                        .frame(width: 60, height: 60)
+                                                // Simplified button
+                                                Button(action: {
+                                                    // Capture the workout ID immediately
+                                                    let workoutID = workout.id
                                                     
-                                                    // The actual button image
+                                                    // Perform haptic feedback immediately
+                                                    let generator = UIImpactFeedbackGenerator(style: .medium)
+                                                    generator.impactOccurred()
+                                                    
+                                                    // Add workout to Supabase
+                                                    viewModel.addSuggestionToWorkouts(workout)
+                                                    
+                                                    // Update UI state with a slight delay to ensure the previous operations complete
+                                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                                        // Update local state
+                                                        addedWorkouts.insert(workoutID)
+                                                        
+                                                        // Show toast
+                                                        toastMessage = "\(workout.exercise) logged!"
+                                                        showToast = true
+                                                        
+                                                        // Schedule toast hiding
+                                                        toastTimer?.cancel()
+                                                        let newTimer = DispatchWorkItem {
+                                                            withAnimation {
+                                                                showToast = false
+                                                            }
+                                                        }
+                                                        toastTimer = newTimer
+                                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: newTimer)
+                                                    }
+                                                }) {
                                                     Image(systemName: addedWorkouts.contains(workout.id) ? "checkmark.circle.fill" : "plus.circle.fill")
                                                         .font(.system(size: 28))
                                                         .foregroundColor(addedWorkouts.contains(workout.id) ? .green : .gymtimeAccent)
+                                                        .frame(width: 60, height: 60)
+                                                        .contentShape(Rectangle())
                                                 }
+                                                .buttonStyle(PlainButtonStyle())
                                             }
-                                            .buttonStyle(ScaleButtonStyle())
+                                            .padding(.vertical, 12)
+                                            .padding(.horizontal)
                                         }
-                                        .padding(.vertical, 12)
-                                        .padding(.horizontal)
                                         .background(Color.gymtimeBackground)
                                         
                                         Divider()
                                             .background(Color.gray.opacity(0.3))
                                             .padding(.horizontal)
+                                        .onAppear {
+                                            print("📍 Row appeared for: \(workout.exercise) (ID: \(workout.id))")
+                                        }
+                                        .id(workout.id) // Ensure each row has a stable identity
                                     }
                                 }
                             }
@@ -233,34 +245,63 @@ struct WorkoutMenuView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        dismiss()
+                    Button(action: {
+                        print("🔙 Cancel button tapped")
+                        // Add a small delay to ensure the action completes
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            dismiss()
+                        }
+                    }) {
+                        Text("Cancel")
+                            .foregroundColor(.blue)
+                            .frame(minWidth: 60, minHeight: 44) // Increase tap target
+                            .contentShape(Rectangle())
                     }
-                    .foregroundColor(.blue)
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Done") {
-                        dismiss()
+                    Button(action: {
+                        print("✅ Done button tapped")
+                        // Add a small delay to ensure the action completes
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            dismiss()
+                        }
+                    }) {
+                        Text("Done")
+                            .foregroundColor(.blue)
+                            .frame(minWidth: 60, minHeight: 44) // Increase tap target
+                            .contentShape(Rectangle())
                     }
-                    .foregroundColor(.blue)
                 }
             }
             .onAppear {
+                print("📱 WorkoutMenuView appeared")
                 Task {
+                    print("🔄 Starting to load suggestions")
                     isLoading = true
                     await viewModel.getMoreWorkoutSuggestions()
+                    print("✅ Finished loading suggestions, count: \(viewModel.suggestedWorkouts.count)")
                     isLoading = false
                 }
             }
             .onDisappear {
-                // Cancel any pending toast timer
+                print("📱 WorkoutMenuView disappeared")
                 toastTimer?.cancel()
             }
+            .onChange(of: filteredSuggestions.count) { oldCount, newCount in
+                print("📋 Filtered suggestions changed: \(oldCount) -> \(newCount)")
+            }
+            .onChange(of: searchText) { oldText, newText in
+                print("🔍 Search text changed: '\(oldText)' -> '\(newText)'")
+                print("🔍 Filtered count after search: \(filteredSuggestions.count)")
+            }
+            .onTapGesture {
+                // Dismiss keyboard when tapping outside of a text field
+                isSearchFocused = false
+            }
         }
-        .onTapGesture {
-            // Dismiss keyboard when tapping outside of a text field
-            isSearchFocused = false
+        .onChange(of: isLoading) { wasLoading, isNowLoading in
+            print("⏳ Loading state changed: \(wasLoading) -> \(isNowLoading)")
         }
     }
 }
