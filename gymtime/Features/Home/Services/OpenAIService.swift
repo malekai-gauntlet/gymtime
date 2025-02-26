@@ -4,7 +4,11 @@ import Foundation
 
 class OpenAIService {
     private let apiKey: String
-    private let endpoint = "https://api.openai.com/v1/chat/completions"
+    // OpenAI endpoint (commented out)
+    // private let endpoint = "https://api.openai.com/v1/chat/completions"
+    
+    // Groq endpoint (OpenAI-compatible)
+    private let endpoint = "https://api.groq.com/openai/v1/chat/completions"
     
     init(apiKey: String) {
         self.apiKey = apiKey
@@ -33,21 +37,57 @@ class OpenAIService {
     func generateCompletion(prompt: String) async throws -> String {
         return try await makeRequest(
             prompt: prompt,
-            model: "gpt-3.5-turbo",
+            // OpenAI model (commented out)
+            // model: "gpt-3.5-turbo",
+            
+            // Groq model - Llama 3.1 for fast processing
+            model: "llama-3.1-8b-instant",
             systemPrompt: """
             You are a fitness tracking assistant. Parse the workout description into one or more exercises.
-            Return a JSON array where each exercise contains:
-            - exercise: (required) name of the exercise
-            - muscle_group: (required) primary muscle group targeted (one of: Chest, Back, Shoulders, Biceps, Triceps, Legs, Core, Cardio)
-            - duration: time spent (e.g. '10 minutes', '30 seconds')
-            - weight: any weight/resistance used
-            - sets: number of sets
-            - reps: reps per set
-            - notes: all additional details or context, format these notes cleanly
-
-            Return as a JSON array even for single exercises. Examples:
-            "10 minutes of abs" → [{"exercise": "Ab Workout", "muscle_group": "Core", "duration": "10 mins"}]
-            "Bench press 185lbs 3x5" → [{"exercise": "Bench Press", "muscle_group": "Chest", "weight": "185", "sets": 3, "reps": 5}]
+            
+            IMPORTANT: Return a valid JSON array that strictly follows this format:
+            ```json
+            [
+              {
+                "exercise": "Exercise Name",
+                "muscle_group": "Primary Muscle Group",
+                "duration": "Time spent (optional)",
+                "weight": "Weight used (optional)",
+                "sets": integer_value_not_string,
+                "reps": integer_value_not_string,
+                "notes": "Additional details (optional)"
+              }
+            ]
+            ```
+            
+            Field requirements:
+            - exercise: (REQUIRED) Name of the exercise as a string
+            - muscle_group: (REQUIRED) One of: Chest, Back, Shoulders, Biceps, Triceps, Legs, Core, Cardio
+            - duration: (OPTIONAL) Time spent as a string (e.g. "10 minutes", "30 seconds")
+            - weight: (OPTIONAL) Weight/resistance used as a string (e.g. "185 lbs", "50 kg")
+            - sets: (OPTIONAL) Number of sets as an INTEGER (not a string)
+            - reps: (OPTIONAL) Reps per set as an INTEGER (not a string)
+            - notes: (OPTIONAL) Additional details as a string, always include the warmup weight if it was used and any other details
+            
+            Rules for JSON formatting:
+            1. Always use double quotes for strings, never single quotes
+            2. Include only fields that are mentioned or can be reasonably inferred
+            3. For missing optional fields, omit them entirely (don't include null values)
+            4. SETS and REPS must be integers without quotes (e.g., 3 not "3")
+            5. Always return a well-formed JSON array, even for a single exercise
+            
+            Examples:
+            
+            Input: "10 minutes of abs"
+            Output: [{"exercise": "Ab Workout", "muscle_group": "Core", "duration": "10 mins"}]
+            
+            Input: "Bench press 185lbs 3x5"
+            Output: [{"exercise": "Bench Press", "muscle_group": "Chest", "weight": "185 lbs", "sets": 3, "reps": 5}]
+            
+            Input: "Tricep push downs, 4 sets of 10 reps, did 70 pounds for the warmup then 3 sets at 85 pounds, felt strong"
+            Output: [{"exercise": "Tricep Pushdown", "muscle_group": "Triceps", "weight": "85 lbs", "sets": 4, "reps": 10, "notes": "70 pounds for warmup, then 3 sets at 85 pounds. Felt strong."}]
+            
+            Remember to ensure your response is valid JSON that can be parsed by a JSON decoder. Never include backticks, markdown formatting, or explanatory text.
             """
         )
     }
@@ -55,7 +95,11 @@ class OpenAIService {
     func generateSummary(prompt: String) async throws -> String {
         return try await makeRequest(
             prompt: prompt,
-            model: "gpt-4",
+            // OpenAI model (commented out)
+            // model: "gpt-4",
+            
+            // Groq model - using the larger model for better summaries
+            model: "llama-3.3-70b-versatile",
             systemPrompt: """
             You are a fitness tracking assistant that creates concise, natural workout summaries.
             Summarize the workout in 3-4 words using common fitness terminology.
