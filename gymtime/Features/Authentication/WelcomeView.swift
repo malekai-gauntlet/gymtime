@@ -21,6 +21,11 @@ struct WelcomeView: View {
     @State private var subtitleOffset: CGFloat = 15 // Subtitle starts below final position
     @State private var buttonsOffset: CGFloat = 30 // Buttons start below final position
     
+    // Exit animation offsets and scales
+    @State private var logoExitOffset: CGFloat = 0
+    @State private var titleExitOffset: CGFloat = 0
+    @State private var buttonsExitOffset: CGFloat = 0
+    
     // Animation control
     @State private var hasAppeared = false
     @State private var showLogoGlow = true
@@ -59,20 +64,21 @@ struct WelcomeView: View {
                         }
                         .scaleEffect(logoScale)
                         .opacity(logoOpacity)
+                        .offset(y: logoExitOffset)
                         
                         // App title
                         Text("gymhead")
                             .font(.largeTitle)
                             .fontWeight(.bold)
                             .opacity(titleOpacity)
-                            .offset(y: titleOffset)
+                            .offset(y: isTransitioning ? titleExitOffset : titleOffset)
                         
                         // Subtitle
                         Text("Log workouts faster with Voice AI")
                             .font(.subheadline)
                             .foregroundColor(.gray)
                             .opacity(subtitleOpacity)
-                            .offset(y: subtitleOffset)
+                            .offset(y: isTransitioning ? titleExitOffset : subtitleOffset)
                     }
                     
                     Spacer()
@@ -129,29 +135,8 @@ struct WelcomeView: View {
                                 scale = 0.97 // Slight scale down for button press effect
                             }
                             
-                            // Start the staggered fade-out animation sequence immediately after
-                            // Step 1: Fade out the logo area first
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-                                withAnimation(.easeInOut(duration: 0.6)) {
-                                    logoOpacity = 0.0
-                                }
-                            }
-                            
-                            // Step 2: Then fade out the title area
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
-                                withAnimation(.easeInOut(duration: 0.7)) {
-                                    titleOpacity = 0.0
-                                    subtitleOpacity = 0.0
-                                }
-                            }
-                            
-                            // Step 3: Finally fade out the buttons while scaling up slightly
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-                                withAnimation(.easeInOut(duration: 0.8)) {
-                                    buttonOpacity = 0.0
-                                    scale = 1.03 // Subtle zoom effect during fade out
-                                }
-                            }
+                            // Start the coordinated exit animation sequence
+                            playExitAnimation()
                             
                             // Start authentication in the background immediately
                             Task {
@@ -182,7 +167,7 @@ struct WelcomeView: View {
                         .scaleEffect(scale)
                     }
                     .opacity(buttonOpacity)
-                    .offset(y: buttonsOffset)
+                    .offset(y: isTransitioning ? buttonsExitOffset : buttonsOffset)
                 }
                 .padding()
                 .navigationBarHidden(true)
@@ -253,6 +238,37 @@ struct WelcomeView: View {
         }
     }
     
+    // MARK: - Exit Animation Sequence
+    
+    private func playExitAnimation() {
+        // Phase 1: Move buttons down and fade out
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.7)) {
+                buttonsExitOffset = 60 // Move buttons down
+                buttonOpacity = 0.0 // Fade out
+                scale = 1.05 // Slight scale up effect
+            }
+        }
+        
+        // Phase 2: Float logo up and fade
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            withAnimation(.spring(response: 0.6)) {
+                logoExitOffset = -40 // Move logo up
+                logoOpacity = 0.0 // Fade out
+                logoScale = 1.1 // Slightly expand while fading
+            }
+        }
+        
+        // Phase 3: Slide title and subtitle sideways
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+            withAnimation(.spring(response: 0.55)) {
+                titleExitOffset = 60 // Move title to the right
+                titleOpacity = 0.0 // Fade out
+                subtitleOpacity = 0.0 // Fade out subtitle
+            }
+        }
+    }
+    
     // Helper function to calculate overlay opacity based on other elements
     private func calculateOverlayOpacity() -> Double {
         // Creates a smooth transition from 0 to 1 as other elements fade out
@@ -271,6 +287,9 @@ struct WelcomeView: View {
         titleOffset = 0
         subtitleOffset = 0
         buttonsOffset = 0
+        logoExitOffset = 0
+        titleExitOffset = 0
+        buttonsExitOffset = 0
         scale = 1.0
         buttonText = "Skip Signup"
     }

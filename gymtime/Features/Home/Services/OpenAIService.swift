@@ -43,7 +43,7 @@ class OpenAIService {
             - weight: any weight/resistance used
             - sets: number of sets
             - reps: reps per set
-            - notes: any additional details or context
+            - notes: all additional details or context, format these notes cleanly
 
             Return as a JSON array even for single exercises. Examples:
             "10 minutes of abs" → [{"exercise": "Ab Workout", "muscle_group": "Core", "duration": "10 mins"}]
