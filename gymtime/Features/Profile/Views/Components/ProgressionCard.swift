@@ -7,21 +7,6 @@ struct ProgressionCard: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            // Header
-            HStack {
-                Text("STRENGTH PROGRESSION")
-                    .font(.headline)
-                    .foregroundColor(.gymtimeTextSecondary)
-                
-                Spacer()
-                
-                NavigationLink(destination: ProgressionView()) {
-                    Text("View All")
-                        .font(.caption.bold())
-                        .foregroundColor(.gymtimeAccent)
-                }
-            }
-            
             if viewModel.isLoading {
                 HStack {
                     Spacer()
@@ -50,33 +35,30 @@ struct ProgressionCard: View {
                         .foregroundColor(.gymtimeTextSecondary)
                         .padding(.vertical, 8)
                 } else {
-                    VStack(spacing: 12) {
-                        ForEach(topExercises, id: \.exerciseName) { exercise in
-                            HStack {
-                                Text(exercise.exerciseName)
-                                    .font(.subheadline)
-                                    .foregroundColor(.gymtimeText)
-                                    .lineLimit(1)
-                                
-                                Spacer()
-                                
-                                if let weight = exercise.maxWeight {
-                                    Text("\(Int(weight))lbs")
-                                        .font(.subheadline.bold())
-                                        .foregroundColor(exercise.isImprovement ? .green : .gymtimeText)
-                                }
-                                
-                                if exercise.isImprovement, exercise.improvementPercentage > 0 {
-                                    Text("+\(Int(exercise.improvementPercentage))%")
-                                        .font(.caption.bold())
-                                        .foregroundColor(.green)
-                                        .padding(.horizontal, 6)
-                                        .padding(.vertical, 2)
-                                        .background(Color.green.opacity(0.15))
-                                        .cornerRadius(4)
-                                }
-                            }
+                    // Call-to-action styled like a StatCard
+                    NavigationLink(destination: ProgressionView()) {
+                        VStack(spacing: 8) {
+                            // Title - matching StatCard title format
+                            Text("YOUR WORKOUT CHART")
+                                .font(.caption)
+                                .foregroundColor(.gymtimeTextSecondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            
+                            // Chart icon - matching StatCard value size
+                            Image(systemName: "chart.bar.fill")
+                                .font(.system(size: 32, weight: .bold))
+                                .foregroundColor(.gymtimeText)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                            
+                            // Subtitle - matching StatCard subtitle format
+                            Text("Tap to view your workout progression.")
+                                .font(.caption)
+                                .foregroundColor(.gymtimeTextSecondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                        .padding(16)
+                        .background(Color.black.opacity(0.3))
+                        .cornerRadius(12)
                     }
                 }
             }

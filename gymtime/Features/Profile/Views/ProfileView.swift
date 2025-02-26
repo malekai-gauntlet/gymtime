@@ -54,7 +54,7 @@ struct ProfileView: View {
                     }
                 } else {
                     VStack(spacing: 24) {
-                        // Profile Header
+                        // Profile Header - Restore vertical layout
                         VStack(spacing: 16) {
                             // Profile Image
                             Circle()
@@ -89,22 +89,7 @@ struct ProfileView: View {
                         }
                         .padding(.top)
                         
-                        // Progress Section - Moved up above the Stats Grid
-                        if !viewModel.progressData.isEmpty {
-                            VStack(alignment: .leading, spacing: 16) {
-                                Text("RECENT PROGRESS")
-                                    .font(.headline)
-                                    .foregroundColor(.gymtimeTextSecondary)
-                                    .padding(.horizontal)
-                                
-                                // Progress Chart
-                                ChartView(data: viewModel.progressData)
-                                    .frame(height: 200)
-                                    .padding(.horizontal, 19)
-                            }
-                        }
-                        
-                        // Stats Grid - Now below the Progress Section
+                        // Stats Grid - Reduced to 2-card layout
                         LazyVGrid(columns: [
                             GridItem(.flexible()),
                             GridItem(.flexible())
@@ -125,9 +110,42 @@ struct ProfileView: View {
                         }
                         .padding(.horizontal)
                         
-                        // Add Strength Progression Card
-                        ProgressionCard(viewModel: progressionViewModel)
+                        // Strength Progression Section (in place of Milestones)
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                Text("STRENGTH PROGRESSION")
+                                    .font(.headline)
+                                    .foregroundColor(.gymtimeTextSecondary)
+                                
+                                Spacer()
+                                
+                                NavigationLink(destination: ProgressionView()) {
+                                    Text("View All")
+                                        .font(.caption.bold())
+                                        .foregroundColor(.gymtimeAccent)
+                                }
+                            }
                             .padding(.horizontal)
+                            
+                            // Use the ProgressionCard here
+                            ProgressionCard(viewModel: progressionViewModel)
+                                .padding(.horizontal)
+                        }
+                        
+                        // Progress Section - Keep current chart functionality with original aesthetic spacing
+                        if !viewModel.progressData.isEmpty {
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("RECENT PROGRESS")
+                                    .font(.headline)
+                                    .foregroundColor(.gymtimeTextSecondary)
+                                    .padding(.horizontal)
+                                
+                                // Progress Chart - Keep the current implementation
+                                ChartView(data: getLastWeekData(data: viewModel.progressData), dateRange: getLastWeekDateRange(data: viewModel.progressData) ?? "")
+                                    .frame(height: 200)
+                                    .padding(.horizontal)
+                            }
+                        }
                         
                         Spacer(minLength: 32)
                     }
@@ -199,9 +217,11 @@ struct StatCard: View {
 struct ChartView: View {
     // Chart data
     var data: [ProgressPoint]
+    var dateRange: String
     
     // Selected day
     @State private var selectedDayIndex: Int? = nil
+    @State private var isDateRangeVisible: Bool = true
     
     // Date formatters
     private let dateFormatter: DateFormatter = {
@@ -216,10 +236,16 @@ struct ChartView: View {
         return formatter
     }()
     
-    // Calculate the maximum volume for the scale
+    // Calculate the maximum volume for the scale based on actual data
     private var maxVolume: Double {
-        // Either use the actual max + some padding or use 15,000 as suggested
-        return 15000 // Using a fixed max of 15k as requested
+        // Find maximum volume in the data
+        let dataMax = data.map { $0.actualVolume }.max() ?? 0
+        
+        // Add 20% padding to the maximum
+        let maxWithPadding = dataMax * 1.2
+        
+        // Return either the calculated max or a default value if too small
+        return max(maxWithPadding, 5000)
     }
     
     // Y-axis labels (weight values)
@@ -235,6 +261,11 @@ struct ChartView: View {
         }
     }
     
+    // Get the total weight lifted for the entire week
+    private var weeklyTotalWeight: Int {
+        return Int(data.reduce(0) { $0 + $1.actualVolume })
+    }
+    
     // Get the selected point and compute stats
     private var selectedPoint: ProgressPoint? {
         guard let index = selectedDayIndex, index >= 0, index < data.count else {
@@ -247,16 +278,22 @@ struct ChartView: View {
         return data[index]
     }
     
-    // Format the stats for display
-    private var selectedDayStats: (date: String, weight: String) {
-        guard let point = selectedPoint else {
-            return ("No data", "0 lbs")
+    // Format the stats for display - now handles both week and day views
+    private var displayStats: (date: String, weight: String) {
+        if isDateRangeVisible {
+            // Weekly stats
+            return (dateRange, "\(weeklyTotalWeight) lbs")
+        } else {
+            // Daily stats
+            guard let point = selectedPoint else {
+                return ("No data", "0 lbs")
+            }
+            
+            let dateString = fullDateFormatter.string(from: point.date)
+            let weightString = "\(Int(point.actualVolume)) lbs"
+            
+            return (dateString, weightString)
         }
-        
-        let dateString = fullDateFormatter.string(from: point.date)
-        let weightString = "\(Int(point.actualVolume)) lbs"
-        
-        return (dateString, weightString)
     }
     
     // Handle day selection based on x position
@@ -269,31 +306,35 @@ struct ChartView: View {
         // Ensure index is within bounds
         if index >= 0 && index < data.count {
             selectedDayIndex = index
+            isDateRangeVisible = false // Switch to showing selected day instead of date range
         }
     }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Daily stats section
+            // Date information section - consistent styling between week and day views
             VStack(alignment: .leading, spacing: 4) {
-                Text(selectedDayStats.date)
-                    .font(.headline)
-                    .foregroundColor(.gymtimeText)
-                    .padding(.top, 4)
+                Text(displayStats.date)
+                    .font(isDateRangeVisible ? .subheadline : .headline)
+                    .foregroundColor(isDateRangeVisible ? .gymtimeTextSecondary : .gymtimeText)
+                    .padding(.top, isDateRangeVisible ? 0 : 4)
                 
                 HStack(spacing: 6) {
                     Text("Total weight lifted:")
                         .font(.subheadline)
                         .foregroundColor(.gymtimeTextSecondary)
                     
-                    Text(selectedDayStats.weight)
+                    Text(displayStats.weight)
                         .font(.subheadline.bold())
                         .foregroundColor(.gymtimeAccent)
                 }
-                .padding(.vertical, 5)
             }
             .padding(.horizontal, 8)
-            .padding(.bottom, 4)
+            .padding(.vertical, 5)
+            .onTapGesture {
+                // Toggle between date range and selected day when tapped
+                isDateRangeVisible.toggle()
+            }
             
             GeometryReader { geometry in
                 ZStack(alignment: .topLeading) {
@@ -381,7 +422,7 @@ struct ChartView: View {
                     .stroke(Color.gymtimeAccent, lineWidth: 2)
                     
                     // Selected day indicator
-                    if let index = selectedDayIndex, index >= 0, index < data.count {
+                    if let index = selectedDayIndex, index >= 0, index < data.count, !isDateRangeVisible {
                         let x = (geometry.size.width - 50) * CGFloat(index) / CGFloat(max(1, data.count - 1))
                         
                         // Vertical line at selected point
@@ -438,31 +479,63 @@ struct ChartView: View {
                 }
             }
             
-            // X-axis date labels
+            // X-axis date labels - Keep the structure but hide the text
             HStack(spacing: 0) {
-                // Group dates by showing only every other date to avoid crowding
-                ForEach(Array(stride(from: 0, to: data.count, by: max(1, data.count > 7 ? 2 : 1))), id: \.self) { index in
-                    if index < data.count {
-                        Text(dateFormatter.string(from: data[index].date))
-                            .font(.caption2)
-                            .foregroundColor(.gymtimeTextSecondary)
-                            .frame(maxWidth: .infinity)
-                    }
+                // We'll keep the structure but not display any text
+                ForEach(Array(stride(from: 0, to: data.count, by: 1)), id: \.self) { _ in
+                    Text("")
+                        .frame(maxWidth: .infinity)
                 }
             }
             .padding(.leading, 4)
             .padding(.trailing, 40) // Match the y-axis label width
         }
         .onAppear {
-            // Find the most recent day with actual data
+            // Find the most recent day with actual data for when detail is shown
             if selectedDayIndex == nil {
                 if let index = data.indices.last(where: { data[$0].actualVolume > 0 }) {
                     selectedDayIndex = index
                 } else {
                     selectedDayIndex = data.indices.last
                 }
+                // Start with date range visible
+                isDateRangeVisible = true
             }
         }
+    }
+}
+
+// MARK: - Helper Functions
+extension ProfileView {
+    // Filter data to show only the last 7 days
+    private func getLastWeekData(data: [ProgressPoint]) -> [ProgressPoint] {
+        let calendar = Calendar.current
+        let endDate = calendar.startOfDay(for: Date())
+        let startDate = calendar.date(byAdding: .day, value: -6, to: endDate) ?? endDate
+        
+        return data.filter { 
+            let dayDate = calendar.startOfDay(for: $0.date)
+            return dayDate >= startDate && dayDate <= endDate
+        }
+    }
+    
+    // Create a string representation of the date range (e.g., "Feb 20 - Feb 26, 2025")
+    private func getLastWeekDateRange(data: [ProgressPoint]) -> String? {
+        let calendar = Calendar.current
+        let endDate = calendar.startOfDay(for: Date())
+        let startDate = calendar.date(byAdding: .day, value: -6, to: endDate) ?? endDate
+        
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMM d"
+        
+        let yearFormatter = DateFormatter()
+        yearFormatter.dateFormat = "yyyy"
+        
+        let startDateStr = dateFormatter.string(from: startDate)
+        let endDateStr = dateFormatter.string(from: endDate)
+        let yearStr = yearFormatter.string(from: endDate)
+        
+        return "\(startDateStr) - \(endDateStr), \(yearStr)"
     }
 }
 
