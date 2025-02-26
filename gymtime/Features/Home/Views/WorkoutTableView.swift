@@ -2,6 +2,27 @@
 
 import SwiftUI
 
+// Define field types for navigation
+enum FieldType: Int, CaseIterable {
+    case exercise = 0
+    case weight = 1
+    case sets = 2
+    case reps = 3
+    case notes = 4
+    
+    var next: FieldType? {
+        let allCases = FieldType.allCases
+        let nextIndex = self.rawValue + 1
+        return nextIndex < allCases.count ? allCases[nextIndex] : nil
+    }
+    
+    var previous: FieldType? {
+        let allCases = FieldType.allCases
+        let prevIndex = self.rawValue - 1
+        return prevIndex >= 0 ? allCases[prevIndex] : nil
+    }
+}
+
 // Custom view modifier for bottom fade effect
 struct BottomFadeModifier: ViewModifier {
     let itemCount: Int
@@ -362,6 +383,8 @@ struct EditableCell: View {
     let scrollProxy: ScrollViewProxy
     let workoutId: String
     @Binding var isAnyFieldEditing: Bool
+    let fieldType: FieldType
+    let onNavigate: ((FieldType) -> Void)?
     
     @State private var isEditing = false
     @State private var editValue: String
@@ -372,7 +395,9 @@ struct EditableCell: View {
          isNumeric: Bool = false, 
          scrollProxy: ScrollViewProxy,
          workoutId: String,
-         isAnyFieldEditing: Binding<Bool>) {
+         isAnyFieldEditing: Binding<Bool>,
+         fieldType: FieldType,
+         onNavigate: ((FieldType) -> Void)? = nil) {
         self.value = value
         self.onChange = onChange
         self.isNumeric = isNumeric
@@ -380,80 +405,135 @@ struct EditableCell: View {
         self.workoutId = workoutId
         self._editValue = State(initialValue: value)
         self._isAnyFieldEditing = isAnyFieldEditing
+        self.fieldType = fieldType
+        self.onNavigate = onNavigate
     }
     
     var body: some View {
-        if isEditing {
-            TextField("", text: $editValue)
-                .keyboardType(isNumeric ? .numberPad : .default)
-                .textFieldStyle(PlainTextFieldStyle())
-                .padding(4)
-                .frame(maxWidth: .infinity)
-                .background(Color.white.opacity(0.1))
-                .cornerRadius(4)
-                .focused($isFocused)
-                .toolbar {
-                    ToolbarItemGroup(placement: .keyboard) {
-                        Spacer()
-                        Button("Done") {
-                            isFocused = false
-                            UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
-                                                         to: nil,
-                                                         from: nil,
-                                                         for: nil)
+        Group {
+            if isEditing {
+                TextField("", text: $editValue)
+                    .keyboardType(isNumeric ? .numberPad : .default)
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .padding(4)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.white.opacity(0.1))
+                    .cornerRadius(4)
+                    .focused($isFocused)
+                    .toolbar {
+                        ToolbarItemGroup(placement: .keyboard) {
+                            // Previous button
+                            Button(action: {
+                                if let previous = fieldType.previous {
+                                    // We need to commit the current value first
+                                    if editValue != value {
+                                        onChange(editValue)
+                                    }
+                                    onNavigate?(previous)
+                                }
+                            }) {
+                                Image(systemName: "chevron.left")
+                                    .foregroundColor(fieldType.previous != nil ? .gymtimeAccent : .gray)
+                            }
+                            .disabled(fieldType.previous == nil)
+                            
+                            Spacer()
+                            
+                            // Next button
+                            Button(action: {
+                                if let next = fieldType.next {
+                                    // We need to commit the current value first
+                                    if editValue != value {
+                                        onChange(editValue)
+                                    }
+                                    onNavigate?(next)
+                                }
+                            }) {
+                                Image(systemName: "chevron.right")
+                                    .foregroundColor(fieldType.next != nil ? .gymtimeAccent : .gray)
+                            }
+                            .disabled(fieldType.next == nil)
+                            
+                            Spacer()
+                            
+                            // Done button
+                            Button("Done") {
+                                if editValue != value {
+                                    onChange(editValue)
+                                }
+                                isFocused = false
+                                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                                             to: nil,
+                                                             from: nil,
+                                                             for: nil)
+                            }
                         }
                     }
-                }
-                .onAppear { 
-                    isFocused = true
-                    isAnyFieldEditing = true
-                    withAnimation {
-                        scrollProxy.scrollTo(workoutId, anchor: .top)
+                    .toolbarRole(.editor)
+                    .onAppear { 
+                        isFocused = true
+                        isAnyFieldEditing = true
+                        withAnimation {
+                            scrollProxy.scrollTo(workoutId, anchor: .top)
+                        }
                     }
-                }
-                .onChange(of: isFocused) { _, focused in
-                    if !focused {
+                    .onChange(of: isFocused) { _, focused in
+                        if !focused {
+                            if editValue != value {
+                                onChange(editValue)
+                            }
+                            // Ensure state is fully reset after a short delay
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                isEditing = false
+                                isAnyFieldEditing = false
+                            }
+                        }
+                    }
+                    .onSubmit {
                         if editValue != value {
                             onChange(editValue)
                         }
-                        // Ensure state is fully reset after a short delay
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                            isEditing = false
-                            isAnyFieldEditing = false
-                        }
+                        // Force keyboard dismissal
+                        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
+                                                     to: nil,
+                                                     from: nil,
+                                                     for: nil)
+                        isFocused = false
                     }
-                }
-                .onSubmit {
-                    if editValue != value {
-                        onChange(editValue)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(Color.gymtimeAccent, lineWidth: 1)
+                    )
+            } else {
+                Text(value)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(4)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        editValue = value == "-" ? "" : value
+                        isEditing = true
                     }
-                    // Force keyboard dismissal
-                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder),
-                                                 to: nil,
-                                                 from: nil,
-                                                 for: nil)
-                    isFocused = false
-                }
-                .overlay(
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(Color.gymtimeAccent, lineWidth: 1)
-                )
-        } else {
-            Text(value)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(4)
-                .contentShape(Rectangle())
-                .onTapGesture {
+                    .foregroundColor(value == "-" ? .gymtimeTextSecondary : .gymtimeText)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(Color.gymtimeAccent.opacity(0.2), lineWidth: 1)
+                            .opacity(0)
+                            .opacity(isEditing ? 1 : 0)
+                    )
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: Notification.Name("FocusField"))) { notification in
+            if let rowId = notification.userInfo?["rowId"] as? String,
+               let fieldTypeRaw = notification.userInfo?["fieldType"] as? Int,
+               rowId == workoutId,
+               let notificationFieldType = FieldType(rawValue: fieldTypeRaw),
+               notificationFieldType == fieldType {
+                // This notification is for us - focus this field
+                DispatchQueue.main.async {
                     editValue = value == "-" ? "" : value
                     isEditing = true
                 }
-                .foregroundColor(value == "-" ? .gymtimeTextSecondary : .gymtimeText)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 4)
-                        .stroke(Color.gymtimeAccent.opacity(0.2), lineWidth: 1)
-                        .opacity(0)
-                        .opacity(isEditing ? 1 : 0)
-                )
+            }
         }
     }
 }
@@ -471,6 +551,7 @@ struct WorkoutRow: View {
     @ObservedObject var viewModel: HomeViewModel
     @Binding var isAnyFieldEditing: Bool
     @State private var isExpanded = false
+    @State private var currentlyFocusedField: FieldType?
     private let notesThreshold = 8
     let isBlankEntry: Bool
     
@@ -496,6 +577,29 @@ struct WorkoutRow: View {
         self.isBlankEntry = isBlankEntry
     }
     
+    // Function to handle field navigation
+    func navigateToField(_ field: FieldType) {
+        currentlyFocusedField = field
+        
+        // If we're navigating away from notes, close any expanded notes
+        if field != .notes && isExpanded {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                isExpanded = false
+            }
+        }
+        
+        // Simulate a tap on the appropriate field to focus it
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            // This ensures the previous field has time to save its value
+            // before we focus the new field
+            NotificationCenter.default.post(
+                name: Notification.Name("FocusField"),
+                object: nil,
+                userInfo: ["rowId": workout.id.uuidString, "fieldType": field.rawValue]
+            )
+        }
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             // Main row content
@@ -512,7 +616,9 @@ struct WorkoutRow: View {
                     isNumeric: false,
                     scrollProxy: scrollProxy,
                     workoutId: workout.id.uuidString,
-                    isAnyFieldEditing: $isAnyFieldEditing
+                    isAnyFieldEditing: $isAnyFieldEditing,
+                    fieldType: .exercise,
+                    onNavigate: navigateToField
                 )
                 .frame(width: UIScreen.main.bounds.width * exerciseWidth, alignment: .leading)
                 .font(.subheadline.weight(.medium))
@@ -534,7 +640,9 @@ struct WorkoutRow: View {
                     isNumeric: true,
                     scrollProxy: scrollProxy,
                     workoutId: workout.id.uuidString,
-                    isAnyFieldEditing: $isAnyFieldEditing
+                    isAnyFieldEditing: $isAnyFieldEditing,
+                    fieldType: .weight,
+                    onNavigate: navigateToField
                 )
                 .frame(width: UIScreen.main.bounds.width * weightWidth, alignment: .center)
                 .foregroundColor(workout.weight == nil ? .gymtimeTextSecondary : .gymtimeText)
@@ -551,7 +659,9 @@ struct WorkoutRow: View {
                     isNumeric: true,
                     scrollProxy: scrollProxy,
                     workoutId: workout.id.uuidString,
-                    isAnyFieldEditing: $isAnyFieldEditing
+                    isAnyFieldEditing: $isAnyFieldEditing,
+                    fieldType: .sets,
+                    onNavigate: navigateToField
                 )
                 .frame(width: UIScreen.main.bounds.width * setsWidth, alignment: .center)
                 .foregroundColor(workout.sets == nil ? .gymtimeTextSecondary : .gymtimeText)
@@ -568,7 +678,9 @@ struct WorkoutRow: View {
                     isNumeric: true,
                     scrollProxy: scrollProxy,
                     workoutId: workout.id.uuidString,
-                    isAnyFieldEditing: $isAnyFieldEditing
+                    isAnyFieldEditing: $isAnyFieldEditing,
+                    fieldType: .reps,
+                    onNavigate: navigateToField
                 )
                 .frame(width: UIScreen.main.bounds.width * repsWidth, alignment: .center)
                 .foregroundColor(workout.reps == nil ? .gymtimeTextSecondary : .gymtimeText)
@@ -594,7 +706,9 @@ struct WorkoutRow: View {
                             isNumeric: false,
                             scrollProxy: scrollProxy,
                             workoutId: workout.id.uuidString,
-                            isAnyFieldEditing: $isAnyFieldEditing
+                            isAnyFieldEditing: $isAnyFieldEditing,
+                            fieldType: .notes,
+                            onNavigate: navigateToField
                         )
                         .lineLimit(1)
                     }
@@ -623,7 +737,9 @@ struct WorkoutRow: View {
                     isNumeric: false,
                     scrollProxy: scrollProxy,
                     workoutId: workout.id.uuidString,
-                    isAnyFieldEditing: $isAnyFieldEditing
+                    isAnyFieldEditing: $isAnyFieldEditing,
+                    fieldType: .notes,
+                    onNavigate: navigateToField
                 )
                 .font(.subheadline)
                 .foregroundColor(.gymtimeTextSecondary)
