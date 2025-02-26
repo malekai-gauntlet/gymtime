@@ -1,12 +1,6 @@
----
-description: How to navigate the workout table view
-globs: 
-alwaysApply: false
----
----
 description: Guidelines for workout table implementation in Gymtime
-applies_to: ["*WorkoutTableView.swift", "*HomeView.swift"]
-version: 0.1.0
+applies_to: ["*WorkoutTableView.swift", "*HomeView.swift", "*WorkoutMenuView.swift"]
+version: 0.2.0
 ---
 
 # Workout Table Implementation Rules
@@ -47,6 +41,26 @@ standards:
 examples:
   good: "ScrollView with LazyVStack for smooth height animations"
   bad: "List with complex row layouts that jump during animations"
+</rule>
+
+## Button Implementation
+<rule>
+name: button_implementation
+description: Guidelines for implementing reliable, responsive buttons in workout views
+patterns:
+  - view: "Button"
+  - modifier: "contentShape, buttonStyle"
+
+standards:
+  - Avoid nested buttons within ZStack or other container views
+  - Use contentShape(Rectangle()) to ensure the entire button area is tappable
+  - Prefer PlainButtonStyle() for custom buttons to prevent animation conflicts
+  - Add appropriate frame size to ensure adequate tap targets (minimum 44x44)
+  - Separate visual appearance from tap area for better touch response
+
+examples:
+  good: "Button with explicit frame and contentShape for reliable tap handling"
+  bad: "Nested buttons in ZStack with overlapping tap areas"
 </rule>
 
 learned_fixes:
@@ -148,4 +162,68 @@ learned_fixes:
           }
       }
     context: "SwiftUI's List component has internal layout constraints that don't always respect animations, especially for height changes. Using ScrollView with LazyVStack gives more direct control over animations and allows for smoother transitions when expanding or collapsing content."
-</rule>
+
+  - error: "Inconsistent button tap response in WorkoutMenuView"
+    solution: "Simplify button implementation by removing nested ZStack structure and using direct Button with proper sizing"
+    example: |
+      // Before (error):
+      ZStack {
+          // Background for the entire row that handles taps
+          Button(action: {
+              // No action here - we'll handle it in the plus button
+          }) {
+              Rectangle()
+                  .fill(Color.clear)
+                  .contentShape(Rectangle())
+          }
+          .buttonStyle(PlainButtonStyle())
+          
+          // Actual row content
+          HStack {
+              // Content...
+              
+              // Plus/Checkmark button with larger tap area
+              Button(action: {
+                  // Button action
+              }) {
+                  Circle()
+                      .fill(Color.clear)
+                      .frame(width: 60, height: 60)
+                      .overlay(
+                          Image(systemName: "plus.circle.fill")
+                              .font(.system(size: 28))
+                      )
+              }
+              .buttonStyle(PlainButtonStyle())
+          }
+      }
+      
+      // After (fixed):
+      HStack {
+          // Content...
+          
+          Spacer()
+          
+          // Simplified button
+          Button(action: {
+              // Button action with immediate haptic feedback
+              let generator = UIImpactFeedbackGenerator(style: .medium)
+              generator.impactOccurred()
+              
+              // Rest of action with slight delay for UI updates
+              DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                  // UI updates
+              }
+          }) {
+              Image(systemName: "plus.circle.fill")
+                  .font(.system(size: 28))
+                  .foregroundColor(.gymtimeAccent)
+                  .frame(width: 60, height: 60)
+                  .contentShape(Rectangle())
+          }
+          .buttonStyle(PlainButtonStyle())
+      }
+      .padding(.vertical, 12)
+      .padding(.horizontal)
+    context: "Nested interactive elements in SwiftUI (especially buttons within ZStack containing other buttons) can cause hit-testing conflicts where taps aren't consistently registered. Simplifying the view hierarchy by using a single button with proper sizing and explicit contentShape improves tap reliability. Adding a small delay between immediate feedback (haptics) and UI state updates helps ensure smooth operation."
+</rule> 
