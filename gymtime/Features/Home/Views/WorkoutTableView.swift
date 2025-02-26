@@ -101,7 +101,7 @@ struct WorkoutTableView: View {
                     ScrollViewReader { proxy in
                         ScrollView {
                             LazyVStack(spacing: 0) {
-                                if workouts.isEmpty /* && viewModel.suggestedWorkouts.isEmpty */ {
+                                if workouts.isEmpty {
                                     VStack(spacing: 8) {
                                         Image(systemName: "dumbbell.fill")
                                             .font(.system(size: 24))
@@ -146,78 +146,6 @@ struct WorkoutTableView: View {
                                         .transition(.opacity.combined(with: .move(edge: .trailing)))
                                     }
                                     
-                                    // Suggested workouts
-                                    /* Comment out the entire suggestions section
-                                    ForEach(viewModel.suggestedWorkouts) { suggestion in
-                                        WorkoutRow(
-                                            workout: suggestion,
-                                            scrollProxy: proxy,
-                                            exerciseWidth: exerciseWidth,
-                                            weightWidth: weightWidth,
-                                            setsWidth: setsWidth,
-                                            repsWidth: repsWidth,
-                                            notesWidth: notesWidth,
-                                            viewModel: viewModel,
-                                            isAnyFieldEditing: $isAnyFieldEditing
-                                        )
-                                        .background(Color.gymtimeBackground)
-                                        .opacity(0.4)
-                                        .overlay(
-                                            Button(action: {
-                                                
-                                                withAnimation(.easeInOut(duration: 0.3)) {
-                                                    viewModel.addSuggestionToWorkouts(suggestion)
-                                                }
-                                            }) {
-                                                ZStack {
-                                                    // Invisible larger tap area
-                                                    Color.clear
-                                                        .frame(width: 60, height: 60)
-                                                        .onTapGesture {
-                                                            print("🎯 Tap area hit for \(suggestion.exercise)")
-                                                        }
-                                                    
-                                                    // Visual checkmark remains the same size
-                                                    Image(systemName: "checkmark.circle")
-                                                        .foregroundColor(.gymtimeAccent)
-                                                        .font(.system(size: 24))
-                                                }
-                                            }
-                                            .contentShape(Rectangle())
-                                            .onAppear {
-                                                print("🔲 Suggestion button appeared: \(suggestion.exercise)")
-                                            }
-                                            .padding(.trailing, 24),
-                                            alignment: .trailing
-                                        )
-                                        .transition(.opacity.combined(with: .move(edge: .bottom)))
-                                        .onAppear {
-                                            print("📍 Suggestion row appeared: \(suggestion.exercise)")
-                                        }
-                                    }
-                                    */
-                                    
-                                    // Add blank workout entry if available
-                                    /* Comment out blank workout entry
-                                    if let blankWorkout = viewModel.blankWorkoutEntry {
-                                        WorkoutRow(
-                                            workout: blankWorkout,
-                                            scrollProxy: proxy,
-                                            exerciseWidth: exerciseWidth,
-                                            weightWidth: weightWidth,
-                                            setsWidth: setsWidth,
-                                            repsWidth: repsWidth,
-                                            notesWidth: notesWidth,
-                                            viewModel: viewModel,
-                                            isAnyFieldEditing: $isAnyFieldEditing,
-                                            isBlankEntry: true
-                                        )
-                                        .background(Color.gymtimeBackground)
-                                        .opacity(0.4)
-                                        .transition(.opacity.combined(with: .move(edge: .bottom)))
-                                    }
-                                    */
-                                    
                                     // Add spacer at bottom to prevent content hiding behind buttons
                                     Color.clear
                                         .frame(height: 180)  // Adjust based on bottom UI height
@@ -225,7 +153,7 @@ struct WorkoutTableView: View {
                             }
                         }
                         .background(Color.gymtimeBackground)
-                        .modifier(BottomFadeModifier(itemCount: workouts.count /* + (viewModel.blankWorkoutEntry != nil ? 1 : 0) */ /* + viewModel.suggestedWorkouts.count */))
+                        .modifier(BottomFadeModifier(itemCount: workouts.count))
                     }
                 }
                 .background(Color.gymtimeBackground)
@@ -274,8 +202,6 @@ struct WorkoutTableView: View {
                         Button(action: {
                             print("Plus button tapped - Opening full screen menu")
                             showingWorkoutMenu = true
-                            // Commented out previous functionality - will be replaced with full-screen menu
-                            // viewModel.toggleSuggestions()
                         }) {
                             ZStack {
                                 Circle()
@@ -285,7 +211,6 @@ struct WorkoutTableView: View {
                                         Circle()
                                             .strokeBorder(Color.gymtimeAccent.opacity(0.3), lineWidth: 2)
                                     )
-                                // Always show plus icon now, regardless of suggestions state
                                 Image(systemName: "plus")
                                     .font(.system(size: 26, weight: .semibold))
                                     .foregroundColor(.gymtimeAccent)
@@ -294,7 +219,6 @@ struct WorkoutTableView: View {
                         }
                         .padding(.trailing, 31)
                         .sheet(isPresented: $showingWorkoutMenu, onDismiss: {
-                            // Clear suggestions when the menu is dismissed
                             viewModel.clearSuggestions()
                         }) {
                             WorkoutMenuView(viewModel: viewModel)

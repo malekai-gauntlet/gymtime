@@ -519,7 +519,7 @@ struct WorkoutMenuView: View {
                     .zIndex(1)
                 }
             }
-            .navigationTitle("New Workout")
+            .navigationTitle("Log Workout")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {

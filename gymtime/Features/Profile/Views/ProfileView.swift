@@ -9,6 +9,7 @@ import SwiftUI
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
+    @StateObject private var progressionViewModel = ProgressionViewModel()
     @State private var showingEditProfile = false
     @EnvironmentObject private var coordinator: AppCoordinator
     @State private var showingAuth = false
@@ -99,7 +100,7 @@ struct ProfileView: View {
                                 // Progress Chart
                                 ChartView(data: viewModel.progressData)
                                     .frame(height: 200)
-                                    .padding(.horizontal, 12)
+                                    .padding(.horizontal, 19)
                             }
                         }
                         
@@ -115,28 +116,18 @@ struct ProfileView: View {
                                 subtitle: "All time"
                             )
                             
-                            // Weekly Goal
-                            StatCard(
-                                title: "WEEKLY GOAL",
-                                value: "\(viewModel.workoutsThisWeek)/\(viewModel.weeklyGoal)",
-                                subtitle: "This week"
-                            )
-                            
                             // Current Streak
                             StatCard(
                                 title: "CURRENT STREAK",
                                 value: "\(viewModel.currentStreak)",
                                 subtitle: "days"
                             )
-                            
-                            // Personal Records
-                            StatCard(
-                                title: "PERSONAL RECORDS",
-                                value: "\(viewModel.personalRecords)",
-                                subtitle: "All time"
-                            )
                         }
                         .padding(.horizontal)
+                        
+                        // Add Strength Progression Card
+                        ProgressionCard(viewModel: progressionViewModel)
+                            .padding(.horizontal)
                         
                         Spacer(minLength: 32)
                     }
@@ -315,8 +306,8 @@ struct ChartView: View {
                                 .frame(height: geometry.size.height / CGFloat(yAxisLabels.count - 1))
                         }
                     }
-                    .frame(width: 60, alignment: .trailing)
-                    .offset(x: geometry.size.width - 60, y: 0)
+                    .frame(width: 40, alignment: .trailing)
+                    .offset(x: geometry.size.width - 40, y: 0)
                     
                     // Horizontal grid lines
                     VStack(spacing: 0) {
@@ -326,14 +317,14 @@ struct ChartView: View {
                                 .background(Color.gymtimeTextSecondary.opacity(0.1))
                         }
                     }
-                    .frame(width: geometry.size.width - 70)
+                    .frame(width: geometry.size.width - 50)
                     
                     // Data area (filled)
                     if data.count > 1 {
                         Path { path in
                             // Calculate points for area
                             let points = data.enumerated().map { index, point -> CGPoint in
-                                let x = (geometry.size.width - 70) * CGFloat(index) / CGFloat(max(1, data.count - 1))
+                                let x = (geometry.size.width - 50) * CGFloat(index) / CGFloat(max(1, data.count - 1))
                                 let y = geometry.size.height * (1 - CGFloat(point.actualVolume / maxVolume))
                                 return CGPoint(x: x, y: y)
                             }
@@ -374,7 +365,7 @@ struct ChartView: View {
                     Path { path in
                         // Calculate points
                         let points = data.enumerated().map { index, point -> CGPoint in
-                            let x = (geometry.size.width - 70) * CGFloat(index) / CGFloat(max(1, data.count - 1))
+                            let x = (geometry.size.width - 50) * CGFloat(index) / CGFloat(max(1, data.count - 1))
                             let y = geometry.size.height * (1 - CGFloat(point.actualVolume / maxVolume))
                             return CGPoint(x: x, y: y)
                         }
@@ -391,7 +382,7 @@ struct ChartView: View {
                     
                     // Selected day indicator
                     if let index = selectedDayIndex, index >= 0, index < data.count {
-                        let x = (geometry.size.width - 70) * CGFloat(index) / CGFloat(max(1, data.count - 1))
+                        let x = (geometry.size.width - 50) * CGFloat(index) / CGFloat(max(1, data.count - 1))
                         
                         // Vertical line at selected point
                         Path { path in
@@ -420,7 +411,7 @@ struct ChartView: View {
                     
                     // "Today" vertical line (if the last date is today)
                     if let lastDate = data.last?.date, Calendar.current.isDateInToday(lastDate) {
-                        let x = (geometry.size.width - 70)
+                        let x = (geometry.size.width - 50)
                         
                         Path { path in
                             path.move(to: CGPoint(x: x, y: 0))
@@ -441,7 +432,7 @@ struct ChartView: View {
                         .gesture(
                             DragGesture(minimumDistance: 0)
                                 .onChanged { value in
-                                    daySelected(at: min(value.location.x, geometry.size.width - 70), width: geometry.size.width - 70)
+                                    daySelected(at: min(value.location.x, geometry.size.width - 50), width: geometry.size.width - 50)
                                 }
                         )
                 }
@@ -460,7 +451,7 @@ struct ChartView: View {
                 }
             }
             .padding(.leading, 4)
-            .padding(.trailing, 60) // Match the y-axis label width
+            .padding(.trailing, 40) // Match the y-axis label width
         }
         .onAppear {
             // Find the most recent day with actual data
