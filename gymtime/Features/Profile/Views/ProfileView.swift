@@ -54,8 +54,8 @@ struct ProfileView: View {
                     }
                 } else {
                     VStack(spacing: 24) {
-                        // Profile Header - Restore vertical layout
-                        VStack(spacing: 16) {
+                        // Profile Header - Horizontal layout with proper centering
+                        HStack(spacing: 20) {
                             // Profile Image
                             Circle()
                                 .fill(Color.gray.opacity(0.2))
@@ -66,8 +66,18 @@ struct ProfileView: View {
                                         .foregroundColor(.gymtimeText)
                                 )
                             
-                            // Name and Username with Edit Button
-                            VStack(spacing: 8) {
+                            // Name, Username, and Edit Button
+                            VStack(alignment: .leading, spacing: 8) {
+                                // Name and Username
+                                Text(viewModel.displayName ?? "")
+                                    .font(.title2.bold())
+                                    .foregroundColor(.gymtimeText)
+                                
+                                Text("@\(viewModel.username ?? "")")
+                                    .font(.subheadline)
+                                    .foregroundColor(.gymtimeTextSecondary)
+                                
+                                // Edit Button
                                 Button {
                                     showingEditProfile = true
                                 } label: {
@@ -75,18 +85,14 @@ struct ProfileView: View {
                                         .font(.title2)
                                         .foregroundColor(.gymtimeAccent)
                                 }
-                                
-                                VStack(spacing: 4) {
-                                    Text(viewModel.displayName ?? "")
-                                        .font(.title2.bold())
-                                        .foregroundColor(.gymtimeText)
-                                    
-                                    Text("@\(viewModel.username ?? "")")
-                                        .font(.subheadline)
-                                        .foregroundColor(.gymtimeTextSecondary)
-                                }
                             }
+                            
+                            // Add a spacer with equal width to the profile image to balance centering
+                            Spacer()
+                                .frame(width: 80)
                         }
+                        .fixedSize(horizontal: true, vertical: false)
+                        .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.top)
                         
                         // Stats Grid - Reduced to 2-card layout
@@ -315,9 +321,9 @@ struct ChartView: View {
             // Date information section - consistent styling between week and day views
             VStack(alignment: .leading, spacing: 4) {
                 Text(displayStats.date)
-                    .font(isDateRangeVisible ? .subheadline : .headline)
-                    .foregroundColor(isDateRangeVisible ? .gymtimeTextSecondary : .gymtimeText)
-                    .padding(.top, isDateRangeVisible ? 0 : 4)
+                    .font(.headline)
+                    .foregroundColor(.gymtimeText)
+                    .padding(.top, 4)
                 
                 HStack(spacing: 6) {
                     Text("Total weight lifted:")

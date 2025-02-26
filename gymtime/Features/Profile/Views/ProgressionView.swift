@@ -18,14 +18,76 @@ struct ProgressionView: View {
                 .padding(.top)
             
             if viewModel.isLoading {
-                Spacer()
-                ProgressView()
-                    .tint(.gymtimeText)
-                    .scaleEffect(1.5)
-                    .padding()
-                Text("Loading progression data...")
-                    .foregroundColor(.gymtimeTextSecondary)
-                Spacer()
+                // Enhanced loading view
+                VStack {
+                    Spacer()
+                    
+                    // Loading card with gradient background
+                    VStack(spacing: 20) {
+                        // Animated dumbbell icon
+                        ZStack {
+                            // Pulse animation for icon background
+                            Circle()
+                                .fill(Color.gymtimeAccent.opacity(0.2))
+                                .frame(width: 80, height: 80)
+                                .scaleEffect(1.0)
+                                .animation(
+                                    Animation.easeInOut(duration: 1.2)
+                                        .repeatForever(autoreverses: true),
+                                    value: UUID() // Force animation to run
+                                )
+                            
+                            // Dumbbell icon
+                            Image(systemName: "dumbbell.fill")
+                                .font(.system(size: 30))
+                                .foregroundColor(.gymtimeAccent)
+                                .rotationEffect(.degrees(viewModel.isLoading ? 15 : -15))
+                                .animation(
+                                    Animation.easeInOut(duration: 0.8)
+                                        .repeatForever(autoreverses: true),
+                                    value: viewModel.isLoading
+                                )
+                        }
+                        
+                        // Progress indicator
+                        ProgressView()
+                            .tint(.gymtimeText)
+                            .scaleEffect(1.2)
+                            .padding(.top, 5)
+                        
+                        // Loading text
+                        Text("Loading progression data...")
+                            .font(.headline)
+                            .foregroundColor(.gymtimeText)
+                        
+                        Text("Analyzing your strength gains")
+                            .font(.subheadline)
+                            .foregroundColor(.gymtimeTextSecondary)
+                            .padding(.top, -5)
+                    }
+                    .frame(width: 280)
+                    .padding(.vertical, 30)
+                    .padding(.horizontal, 25)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(
+                                LinearGradient(
+                                    gradient: Gradient(colors: [
+                                        Color.black.opacity(0.5),
+                                        Color.black.opacity(0.3)
+                                    ]),
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 20)
+                            .stroke(Color.gymtimeAccent.opacity(0.3), lineWidth: 1)
+                    )
+                    
+                    Spacer()
+                }
             } else if let error = viewModel.error {
                 Spacer()
                 Image(systemName: "exclamationmark.triangle")
