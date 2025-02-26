@@ -33,6 +33,11 @@ class AudioRecordingService: ObservableObject {
     func startRecording() {
         guard let audioSession = audioSession else { return }
         
+        // Set an initial audio level value immediately so the waveform appears
+        DispatchQueue.main.async {
+            self.audioLevel = 0.05 // Small non-zero value for initial waveform display
+        }
+        
         // Create the audio file URL in tmp directory
         let audioFilename = getDocumentsDirectory().appendingPathComponent("recording.m4a")
         

@@ -184,7 +184,8 @@ struct WorkoutTableView: View {
                                     .multilineTextAlignment(.center)
                                     .padding(.horizontal)
                                     .opacity(viewModel.transcript.isEmpty ? 0 : 1)
-                                    .animation(.easeIn(duration: 0.1), value: viewModel.transcript)
+                                    // Remove animation
+                                    // .animation(.easeIn(duration: 0.1), value: viewModel.transcript)
                                 
                                 // Waveform
                                 WaveformView(audioLevel: viewModel.audioLevel)
@@ -194,6 +195,11 @@ struct WorkoutTableView: View {
                         .padding(.vertical)
                         .background(Color.black.opacity(0.3))
                         .cornerRadius(16)
+                        .transition(.identity) // Use identity transition
+                        // Disable any container animations
+                        .transaction { transaction in
+                            transaction.animation = nil  
+                        }
                     }
                     
                     // Plus Button
@@ -229,7 +235,7 @@ struct WorkoutTableView: View {
                     if let error = viewModel.error {
                         Text(error)
                             .font(.caption)
-                            .foregroundColor(.red)
+                            .foregroundColor(.gymtimeAccent)
                             .padding(.horizontal)
                             .multilineTextAlignment(.center)
                             .transition(.opacity)
@@ -238,19 +244,26 @@ struct WorkoutTableView: View {
                     Button(action: {
                         viewModel.toggleRecording()
                     }) {
-                        HStack {
-                            Image(systemName: viewModel.isRecording ? "stop.circle.fill" : "mic.circle.fill")
-                                .font(.system(size: 20))
-                            Text(viewModel.isRecording ? "Stop Recording" : "Record Workout")
-                                .font(.headline)
+                        // Use AnimationDisabled to prevent animation of button contents
+                        ZStack {  // Use ZStack to avoid layout shifts
+                            HStack {
+                                Image(systemName: viewModel.isRecording ? "stop.circle.fill" : "mic.circle.fill")
+                                    .font(.system(size: 20))
+                                Text(viewModel.isRecording ? "Stop Recording" : "Record Workout")
+                                    .font(.headline)
+                            }
+                            .foregroundColor(.white)
+                            .frame(width: UIScreen.main.bounds.width - 40)
+                            .padding(.vertical, 16)
+                            .background(viewModel.isRecording ? Color.red : Color.gymtimeAccent)
+                            .cornerRadius(12)
                         }
-                        .foregroundColor(.white)
-                        .frame(width: UIScreen.main.bounds.width - 40)
-                        .padding(.vertical, 16)
-                        .background(viewModel.isRecording ? Color.red : Color.gymtimeAccent)
-                        .cornerRadius(12)
                     }
                     .disabled(viewModel.isProcessing)
+                    // Explicitly disable animations for this button
+                    .transaction { transaction in
+                        transaction.animation = nil
+                    }
                 }
                 .padding(.bottom, 25)
             }
@@ -285,14 +298,19 @@ struct WorkoutTableView: View {
                 Color.black
                     .opacity(0.5)
                     .edgesIgnoringSafeArea(.all)
-                    .transition(.opacity)
+                    .transition(.identity)
                     .onTapGesture {
                         viewModel.toggleRecording()
                     }
                     .zIndex(2)  // Topmost layer
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: viewModel.isRecording)
+        // Disable ALL animations throughout the entire view when recording state changes
+        .transaction { transaction in
+            if viewModel.isRecording != viewModel.audioRecordingService.isRecording {
+                transaction.animation = nil
+            }
+        }
         .ignoresSafeArea(.keyboard)  // Add this modifier to ignore keyboard adjustments
         .onChange(of: isAnyFieldEditing) { _, newValue in
             isEditing = newValue  // Update parent's editing state

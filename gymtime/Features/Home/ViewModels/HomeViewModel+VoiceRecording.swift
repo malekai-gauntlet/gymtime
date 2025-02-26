@@ -10,11 +10,32 @@ extension HomeViewModel {
         if isRecording {
             stopRecording()
         } else {
-            startRecording()
+            // Update UI state IMMEDIATELY
+            isRecording = true
+            transcript = ""
+            error = nil
+            isProcessing = false
+            audioLevel = 0.5  // Keep at 0.5 as requested
+            
+            // Defer audio setup to happen AFTER UI updates
+            Task { @MainActor in
+                // Give UI time to update - reduced from 10ms to 1ms for faster response
+                try? await Task.sleep(nanoseconds: 1_000_000) // 1ms pause
+                startRecordingServices()
+            }
         }
     }
     
+    private func startRecordingServices() {
+        print("🎤 Starting voice recording")
+        // Start both services
+        audioRecordingService.startRecording()
+        speechRecognitionService.startRecording()
+    }
+    
     private func startRecording() {
+        // This method is kept for backward compatibility but isn't used directly anymore
+        isRecording = true
         print("🎤 Starting voice recording")
         
         // Reset state
