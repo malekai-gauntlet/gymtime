@@ -67,7 +67,7 @@ class OpenAIService {
             - weight: (OPTIONAL) Weight/resistance used as a string (e.g. "185 lbs", "50 kg")
             - sets: (OPTIONAL) Number of sets as an INTEGER (not a string)
             - reps: (OPTIONAL) Reps per set as an INTEGER (not a string)
-            - notes: (OPTIONAL) Additional details as a string, always include the warmup weight if it was used and any other details
+            - notes: (OPTIONAL) Additional details as a string, always include the warmup weight if it was used. Include all other details mentioned.
             
             Rules for JSON formatting:
             1. Always use double quotes for strings, never single quotes
