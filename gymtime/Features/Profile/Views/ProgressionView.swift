@@ -262,11 +262,17 @@ struct ProgressDataCell: View {
                     .foregroundColor(.gymtimeTextSecondary)
             }
             
-            // Sets/Reps - Show only the reps since sets info isn't available
+            // Sets/Reps - Display both sets and reps when available
             if let bestSet = exercise.bestSet {
-                Text("\(bestSet.reps)r")
-                    .font(.caption)
-                    .foregroundColor(.gymtimeTextSecondary)
+                if let sets = bestSet.sets {
+                    Text("\(sets)x\(bestSet.reps)")
+                        .font(.caption)
+                        .foregroundColor(.gymtimeTextSecondary)
+                } else {
+                    Text("\(bestSet.reps)r")
+                        .font(.caption)
+                        .foregroundColor(.gymtimeTextSecondary)
+                }
             }
         }
         .frame(width: width)

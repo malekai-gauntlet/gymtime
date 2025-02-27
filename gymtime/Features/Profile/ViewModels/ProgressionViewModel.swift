@@ -24,7 +24,7 @@ struct ExerciseProgress: Identifiable {
     let id = UUID()
     let exerciseName: String
     let maxWeight: Double?
-    let bestSet: (weight: Double, reps: Int)?
+    let bestSet: (weight: Double, reps: Int, sets: Int?)?
     
     // Calculate if this is an improvement over the previous data
     var isImprovement: Bool = false
@@ -123,15 +123,15 @@ class ProgressionViewModel: ObservableObject {
             let maxWeight = entries.compactMap { $0.weight }.max()
             
             // Find best set (weight × reps)
-            let bestSet = entries.compactMap { entry -> (weight: Double, reps: Int, value: Double)? in
+            let bestSet = entries.compactMap { entry -> (weight: Double, reps: Int, sets: Int?, value: Double)? in
                 guard let weight = entry.weight, let reps = entry.reps else { return nil }
-                return (weight: weight, reps: reps, value: weight * Double(reps))
+                return (weight: weight, reps: reps, sets: entry.sets, value: weight * Double(reps))
             }.max { $0.value < $1.value }
             
             return ExerciseProgress(
                 exerciseName: exerciseName,
                 maxWeight: maxWeight,
-                bestSet: bestSet.map { (weight: $0.weight, reps: $0.reps) }
+                bestSet: bestSet.map { (weight: $0.weight, reps: $0.reps, sets: $0.sets) }
             )
         }.sorted { $0.exerciseName < $1.exerciseName }
     }
