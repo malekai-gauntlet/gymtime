@@ -4,25 +4,25 @@ import SwiftUI
 
 struct ProgressionView: View {
     @StateObject private var viewModel = ProgressionViewModel()
+    // Add state for animation control
+    @State private var appearAnimation = false
     
     // Column width constraints
     private let exerciseColumnWidth: CGFloat = 120
     private let dataColumnWidth: CGFloat = 80
+    // Fixed height for all cells to ensure consistency
+    private let cellHeight: CGFloat = 60
+    // Fixed padding for all cells
+    private let cellVerticalPadding: CGFloat = 12
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            Text("Strength Progression")
-                .font(.title2.bold())
-                .foregroundColor(.gymtimeText)
-                .padding(.top)
-            
             if viewModel.isLoading {
                 // Enhanced loading view
                 VStack {
                     Spacer()
                     
-                    // Loading card with gradient background
+                    // Loading card with gradient background - now full width
                     VStack(spacing: 20) {
                         // Animated dumbbell icon
                         ZStack {
@@ -65,29 +65,26 @@ struct ProgressionView: View {
                             .foregroundColor(.gymtimeTextSecondary)
                             .padding(.top, -5)
                     }
-                    .frame(width: 280)
                     .padding(.vertical, 30)
                     .padding(.horizontal, 25)
                     .background(
-                        RoundedRectangle(cornerRadius: 20)
-                            .fill(
-                                LinearGradient(
-                                    gradient: Gradient(colors: [
-                                        Color.black.opacity(0.5),
-                                        Color.black.opacity(0.3)
-                                    ]),
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.black.opacity(0.5),
+                                Color.black.opacity(0.3)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
                     .overlay(
-                        RoundedRectangle(cornerRadius: 20)
+                        Rectangle()
                             .stroke(Color.gymtimeAccent.opacity(0.3), lineWidth: 1)
                     )
                     
                     Spacer()
                 }
+                .transition(.opacity)
             } else if let error = viewModel.error {
                 Spacer()
                 Image(systemName: "exclamationmark.triangle")
@@ -108,6 +105,7 @@ struct ProgressionView: View {
                 .foregroundColor(.white)
                 .cornerRadius(12)
                 Spacer()
+                .transition(.opacity)
             } else if viewModel.weeklyProgressions.isEmpty {
                 Spacer()
                 Image(systemName: "dumbbell")
@@ -119,55 +117,96 @@ struct ProgressionView: View {
                     .multilineTextAlignment(.center)
                     .padding()
                 Spacer()
+                .transition(.opacity)
             } else {
-                // Scrollable table
-                ScrollView(.vertical) {
-                    VStack(spacing: 0) {
-                        // Table header row
+                // Column-based table with synchronized scrolling
+                VStack(spacing: 0) {
+                    // FIXED HEADER ROW - outside the ScrollView
+                    HStack(spacing: 0) {
+                        // Fixed exercise header
+                        Text("Exercise")
+                            .font(.caption.bold())
+                            .foregroundColor(.gymtimeTextSecondary)
+                            .frame(width: exerciseColumnWidth, alignment: .leading)
+                            .frame(height: cellHeight)
+                            .padding(.horizontal, 8)
+                            .background(Color.black.opacity(0.3))
+                        
+                        // Horizontal scrollable week headers
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 0) {
+                                ForEach(viewModel.weeklyProgressions) { week in
+                                    Text(week.weekLabel)
+                                        .font(.caption.bold())
+                                        .foregroundColor(.gymtimeTextSecondary)
+                                        .frame(width: dataColumnWidth)
+                                        .frame(height: cellHeight)
+                                        .background(Color.black.opacity(0.3))
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Add vertical ScrollView for main content
+                    ScrollView(.vertical, showsIndicators: true) {
+                        // MAIN CONTENT AREA with fixed exercise column and scrollable data
                         HStack(spacing: 0) {
-                            // Exercise column header
-                            Text("Exercise")
-                                .font(.caption.bold())
-                                .foregroundColor(.gymtimeTextSecondary)
-                                .frame(width: exerciseColumnWidth, alignment: .leading)
-                                .padding(.vertical, 12)
-                                .padding(.horizontal, 8)
-                                .background(Color.black.opacity(0.3))
+                            // Fixed exercise names column
+                            VStack(spacing: 0) {
+                                ForEach(getUniqueExercises(), id: \.self) { exerciseName in
+                                    Text(exerciseName)
+                                        .font(.subheadline)
+                                        .foregroundColor(.gymtimeText)
+                                        .frame(width: exerciseColumnWidth, alignment: .leading)
+                                        .frame(height: cellHeight)
+                                        .padding(.horizontal, 8)
+                                        .background(Color.black.opacity(0.15))
+                                }
+                            }
                             
-                            // Week column headers
+                            // SINGLE HORIZONTAL SCROLLVIEW for all data columns
                             ScrollView(.horizontal, showsIndicators: false) {
+                                // HStack of week columns
                                 HStack(spacing: 0) {
+                                    // Each week gets a column of exercise data
                                     ForEach(viewModel.weeklyProgressions) { week in
-                                        Text(week.weekLabel)
-                                            .font(.caption.bold())
-                                            .foregroundColor(.gymtimeTextSecondary)
-                                            .frame(width: dataColumnWidth)
-                                            .padding(.vertical, 12)
-                                            .background(Color.black.opacity(0.3))
+                                        // Column of cells for this week
+                                        VStack(spacing: 0) {
+                                            // Row for each exercise
+                                            ForEach(getUniqueExercises(), id: \.self) { exerciseName in
+                                                if let exercise = findExercise(week: week, exerciseName: exerciseName) {
+                                                    ProgressDataCell(
+                                                        exercise: exercise,
+                                                        width: dataColumnWidth,
+                                                        height: cellHeight
+                                                    )
+                                                } else {
+                                                    // No data for this week/exercise
+                                                    Text("-")
+                                                        .font(.subheadline)
+                                                        .foregroundColor(.gymtimeTextSecondary)
+                                                        .frame(width: dataColumnWidth)
+                                                        .frame(height: cellHeight)
+                                                        .background(Color.black.opacity(0.1))
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
-                        
-                        // Get unique exercises from all weeks
-                        let allExercises = getUniqueExercises()
-                        
-                        // Table data rows
-                        ForEach(allExercises, id: \.self) { exerciseName in
-                            ExerciseProgressionRow(
-                                exerciseName: exerciseName,
-                                weeklyProgressions: viewModel.weeklyProgressions,
-                                exerciseColumnWidth: exerciseColumnWidth,
-                                dataColumnWidth: dataColumnWidth
-                            )
-                        }
                     }
                 }
+                .opacity(appearAnimation ? 1 : 0)
+                .animation(.easeIn(duration: 0.6), value: appearAnimation)
+                .transition(.opacity.combined(with: .move(edge: .bottom)))
             }
         }
         .background(Color.gymtimeBackground)
         .navigationBarTitle("Progression", displayMode: .inline)
         .navigationBarItems(trailing: Button(action: {
+            // Reset appear animation when refreshing
+            appearAnimation = false
             Task {
                 await viewModel.fetchWorkoutProgression()
             }
@@ -175,6 +214,13 @@ struct ProgressionView: View {
             Image(systemName: "arrow.clockwise")
                 .foregroundColor(.gymtimeAccent)
         })
+        .animation(.easeInOut(duration: 0.3), value: viewModel.isLoading)
+        .onAppear {
+            // Trigger the appear animation after a short delay
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                appearAnimation = true
+            }
+        }
     }
     
     // Helper to get unique exercises across all weeks
@@ -189,57 +235,19 @@ struct ProgressionView: View {
         
         return exercises.sorted()
     }
-}
-
-// MARK: - Supporting Views
-
-struct ExerciseProgressionRow: View {
-    let exerciseName: String
-    let weeklyProgressions: [WeeklyProgression]
-    let exerciseColumnWidth: CGFloat
-    let dataColumnWidth: CGFloat
     
-    var body: some View {
-        HStack(spacing: 0) {
-            // Exercise name
-            Text(exerciseName)
-                .font(.subheadline)
-                .foregroundColor(.gymtimeText)
-                .frame(width: exerciseColumnWidth, alignment: .leading)
-                .padding(.vertical, 12)
-                .padding(.horizontal, 8)
-                .background(Color.black.opacity(0.15))
-            
-            // Weekly data
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 0) {
-                    ForEach(weeklyProgressions) { week in
-                        if let exercise = findExercise(week: week) {
-                            ProgressDataCell(exercise: exercise, width: dataColumnWidth)
-                        } else {
-                            // No data for this week
-                            Text("-")
-                                .font(.subheadline)
-                                .foregroundColor(.gymtimeTextSecondary)
-                                .frame(width: dataColumnWidth)
-                                .padding(.vertical, 12)
-                                .background(Color.black.opacity(0.1))
-                        }
-                    }
-                }
-            }
-        }
-    }
-    
-    // Find exercise data for a specific week
-    private func findExercise(week: WeeklyProgression) -> ExerciseProgress? {
+    // Find exercise data for a specific week and exercise name
+    private func findExercise(week: WeeklyProgression, exerciseName: String) -> ExerciseProgress? {
         return week.exercises.first { $0.exerciseName == exerciseName }
     }
 }
 
+// MARK: - Supporting Views
+
 struct ProgressDataCell: View {
     let exercise: ExerciseProgress
     let width: CGFloat
+    let height: CGFloat
     
     var body: some View {
         VStack(spacing: 2) {
@@ -254,7 +262,7 @@ struct ProgressDataCell: View {
                     .foregroundColor(.gymtimeTextSecondary)
             }
             
-            // Sets/Reps
+            // Sets/Reps - Show only the reps since sets info isn't available
             if let bestSet = exercise.bestSet {
                 Text("\(bestSet.reps)r")
                     .font(.caption)
@@ -262,7 +270,7 @@ struct ProgressDataCell: View {
             }
         }
         .frame(width: width)
-        .padding(.vertical, 8)
+        .frame(height: height)
         .background(cellBackgroundColor)
     }
     
@@ -281,4 +289,4 @@ struct ProgressDataCell: View {
         }
         return .gymtimeText
     }
-} 
+}
