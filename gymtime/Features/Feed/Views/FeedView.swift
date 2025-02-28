@@ -214,8 +214,8 @@ struct FeedView: View {
             }
         }
         .sheet(isPresented: $showingActivityView, onDismiss: {
-            // Update our state with the saved last read time
-            lastActivityReadTime = UserDefaults.standard.object(forKey: "lastActivityReadTime") as? Date
+            // Reset the unread count when activity view is dismissed
+            unreadActivityCount = 0
         }) {
             ActivityView(unreadCount: $unreadActivityCount)
         }
@@ -439,7 +439,7 @@ struct FeedView: View {
                         id: sessionData.id, // Use string ID directly
                         userId: sessionData.user_id, // Use string ID directly
                         userName: sessionData.username?.isEmpty == true ? (sessionData.full_name ?? "User") : sessionData.username ?? "User",
-                        date: ISO8601DateFormatter().date(from: sessionData.date) ?? Date(),
+                        date: createISO8601DateFormatter().date(from: sessionData.date) ?? Date(),
                         location: sessionData.location ?? "Gym",
                         exercises: exercises,
                         propsCount: 0,
@@ -744,9 +744,7 @@ struct FeedView: View {
             // If we have a last read time, only count newer activities
             if let lastRead = lastActivityReadTime {
                 // Format date to ISO8601 for Supabase query
-                let formatter = ISO8601DateFormatter()
-                formatter.formatOptions = [.withInternetDateTime]
-                let dateString = formatter.string(from: lastRead)
+                let dateString = createISO8601DateFormatter().string(from: lastRead)
                 
                 // Add filter for newer activities
                 query = query.gt("created_at", value: dateString)
@@ -774,6 +772,13 @@ struct FeedView: View {
     private func loadMoreSessions() async {
         sessionsOffset += 10
         await loadWorkouts()
+    }
+    
+    // Add a helper function for consistent ISO8601 date formatting
+    private func createISO8601DateFormatter() -> ISO8601DateFormatter {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
     }
 }
 
@@ -906,8 +911,8 @@ struct ActivityView: View {
             }
             .navigationBarTitle("Activity", displayMode: .inline)
             .navigationBarItems(trailing: Button("Done") {
-                // Mark all as read when dismissing
-                markAllAsRead()
+                // Since we're not tracking read status in this simplified version,
+                // we just dismiss the view
                 presentationMode.wrappedValue.dismiss()
             })
             .background(Color(white: 0.08))
@@ -924,18 +929,7 @@ struct ActivityView: View {
         }
     }
     
-    private func markAllAsRead() {
-        // Reset the counter
-        unreadCount = 0
-        
-        // Save the current time as the last time activities were read
-        let now = Date()
-        UserDefaults.standard.set(now, forKey: "lastActivityReadTime")
-        
-        // We need to update the parent's state variable too, since it's initialized from UserDefaults
-        // This will be done when the sheet is dismissed through the binding
-    }
-    
+    // Modified to implement the simplified approach with enhanced logging
     private func loadActivity() async {
         isLoading = true
         defer { isLoading = false }
@@ -943,151 +937,199 @@ struct ActivityView: View {
         do {
             // Get current user's ID
             let session = await supabase.auth.session
-            let userId = session.user.id
-            print("🔎 Activity Debug: User ID = \(userId.uuidString)")
+            let currentUserId = session.user.id.uuidString.lowercased()
             
-            // Define data structures for our queries
-            struct PropActivity: Decodable {
-                let workout_id: String
-                let user_id: String
-                let username: String?
-                let full_name: String?
-                let exercise: String
-                let created_at: String
+            print("🔍 Loading activity: Getting sessions for user \(currentUserId)")
+            
+            // STEP 1: Get all sessions owned by current user (no time filter)
+            struct SessionInfo: Decodable {
+                let id: String
+                let primary_exercise: String?
+                let exercise_count: Int?
+                let date: String // Include the date field
             }
             
-            print("🔎 Activity Debug: Starting to fetch props with query:")
-            print("🔎 Activity Debug: SELECT workout_id, user_id, username, full_name, exercise, created_at")
-            print("🔎 Activity Debug: FROM workout_props_with_users")
-            print("🔎 Activity Debug: WHERE workout_user_id = '\(userId.uuidString)'")
-            
-            // Fetch props given to my workouts
-            let receivedProps: [PropActivity] = try await supabase
-                .from("workout_props_with_users")
-                .select("workout_id, user_id, username, full_name, exercise, created_at")
-                .eq("workout_user_id", value: userId.uuidString.lowercased())
-                .order("created_at", ascending: false)
-                .limit(20)
+            let userSessions: [SessionInfo] = try await supabase
+                .from("workout_sessions")
+                .select("id, primary_exercise, exercise_count, date")
+                .eq("user_id", value: currentUserId)
                 .execute()
                 .value
             
-            print("🔎 Activity Debug: Received \(receivedProps.count) props")
+            // Get just the IDs for the next query
+            let sessionIds = userSessions.map { $0.id }
+            print("🔍 Found \(sessionIds.count) sessions for this user")
             
-            // Log the first few props for debugging
-            if !receivedProps.isEmpty {
-                print("🔎 Activity Debug: First prop details:")
-                let firstProp = receivedProps[0]
-                print("🔎 Activity Debug: - workout_id: \(firstProp.workout_id)")
-                print("🔎 Activity Debug: - user_id: \(firstProp.user_id)")
-                print("🔎 Activity Debug: - username: \(String(describing: firstProp.username))")
-                print("🔎 Activity Debug: - exercise: \(firstProp.exercise)")
-                print("🔎 Activity Debug: - created_at: \(firstProp.created_at)")
-            } else {
-                print("🔎 Activity Debug: No props received from query")
-                
-                // Let's run a simplified query to check if the view has data
-                let testQuery: [PropActivity] = try await supabase
-                    .from("workout_props_with_users")
-                    .select("workout_id, user_id, username, full_name, exercise, created_at")
-                    .limit(5)
-                    .execute()
-                    .value
-                
-                print("🔎 Activity Debug: Test query without filters returned \(testQuery.count) results")
-                
-                // Check if our SQL view is properly formed
-                print("🔎 Activity Debug: Checking view structure:")
-                let countResult = try await supabase
-                    .from("workout_props_with_users")
-                    .select("*", count: .exact)
-                    .execute()
-                
-                print("🔎 Activity Debug: Total rows in view: \(countResult.count ?? 0)")
-            }
-            
-            // Convert to activity items
-            var allActivities: [ActivityItem] = []
-            
-            // Group props by workout for more condensed view
-            var workoutProps: [String: [PropActivity]] = [:]
-            
-            for prop in receivedProps {
-                let workoutId = prop.workout_id
-                if workoutProps[workoutId] == nil {
-                    workoutProps[workoutId] = []
-                }
-                workoutProps[workoutId]?.append(prop)
-            }
-            
-            print("🔎 Activity Debug: Grouped props into \(workoutProps.count) workouts")
-            
-            // Create activity items from grouped props
-            for (workoutId, props) in workoutProps {
-                print("🔎 Activity Debug: Processing workout ID \(workoutId) with \(props.count) props")
-                
-                if let firstProp = props.first {
-                    print("🔎 Activity Debug: First prop created_at: \(firstProp.created_at)")
-                    
-                    // Create a properly configured date formatter
-                    let dateFormatter = ISO8601DateFormatter()
-                    dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-                    
-                    if let date = dateFormatter.date(from: firstProp.created_at) {
-                        let exercise = firstProp.exercise
-                        
-                        // Format the content based on number of props
-                        var content = ""
-                        if props.count == 1 {
-                            // Single prop
-                            let propUser = firstProp.username?.isEmpty ?? true ? (firstProp.full_name ?? "User") : firstProp.username ?? "User"
-                            content = "\(propUser) gave you props on \(exercise)"
-                        } else {
-                            // Multiple props for same workout
-                            let propUser = firstProp.username?.isEmpty ?? true ? (firstProp.full_name ?? "User") : firstProp.username ?? "User"
-                            content = "\(propUser) and \(props.count - 1) others gave you props on \(exercise)"
-                        }
-                        
-                        print("🔎 Activity Debug: Created content: \(content)")
-                        
-                        // Create activity item
-                        let item = ActivityItem(
-                            id: UUID(),
-                            type: .receivedProps,
-                            userName: firstProp.username?.isEmpty ?? true ? (firstProp.full_name ?? "User") : firstProp.username ?? "User",
-                            userAvatar: String(firstProp.username?.prefix(1).uppercased() ?? "U"),
-                            content: content,
-                            timestamp: date,
-                            isRead: false,
-                            relatedId: workoutId
-                        )
-                        
-                        allActivities.append(item)
-                        print("🔎 Activity Debug: Added activity item for \(exercise)")
-                    } else {
-                        print("❌ Activity Debug: Failed to parse date from \(firstProp.created_at)")
-                    }
+            if !sessionIds.isEmpty {
+                print("🔍 First few session IDs:")
+                for (index, id) in sessionIds.prefix(3).enumerated() {
+                    print("🔍   Session [\(index)]: \(id)")
                 }
             }
             
-            // Update state
-            self.activities = allActivities
-            print("🔎 Activity Debug: Final activities count: \(allActivities.count)")
-            
-            // Update unread count
-            if allActivities.count > 0 {
-                unreadCount = allActivities.count
-                print("🔎 Activity Debug: Updated unread count to \(unreadCount)")
+            if sessionIds.isEmpty {
+                // No sessions, no notifications
+                print("🔍 No sessions found, skipping prop check")
+                self.activities = []
+                unreadCount = 0
+                return
             }
+            
+            // STEP 2: Get all props for those sessions
+            struct SessionProp: Decodable {
+                let session_id: String
+                let user_id: String
+                let created_at: String
+            }
+            
+            let sessionProps: [SessionProp] = try await supabase
+                .from("workout_session_props")
+                .select("session_id, user_id, created_at")
+                .in("session_id", values: sessionIds)
+                .order("created_at", ascending: false) // Newest first
+                .execute()
+                .value
+            
+            print("🔍 Found \(sessionProps.count) props for these sessions")
+            
+            if !sessionProps.isEmpty {
+                print("🔍 First few props details:")
+                for (index, prop) in sessionProps.prefix(3).enumerated() {
+                    print("🔍   Prop [\(index)]: session_id=\(prop.session_id), user_id=\(prop.user_id), created_at=\(prop.created_at)")
+                }
+            }
+            
+            if sessionProps.isEmpty {
+                // No props, no notifications
+                self.activities = []
+                unreadCount = 0
+                return
+            }
+            
+            // STEP 3: Get user info for prop givers
+            let propUserIds = Array(Set(sessionProps.map { $0.user_id }))
+            print("🔍 Unique user IDs giving props: \(propUserIds)")
+            
+            struct UserInfo: Decodable {
+                let id: String
+                let username: String?
+                let full_name: String?
+            }
+            
+            let userInfos: [UserInfo] = try await supabase
+                .from("profiles") // Using profiles table
+                .select("id, username, full_name")
+                .in("id", values: propUserIds)
+                .execute()
+                .value
+            
+            print("🔍 Found user info for \(userInfos.count) users")
+            
+            if !userInfos.isEmpty {
+                print("🔍 User info details:")
+                for (index, user) in userInfos.prefix(4).enumerated() {
+                    print("🔍   User [\(index)]: id=\(user.id), username=\(user.username ?? "nil"), full_name=\(user.full_name ?? "nil")")
+                }
+            }
+            
+            // Create dictionaries for faster lookups
+            let sessionDetailsDict = Dictionary(uniqueKeysWithValues: 
+                userSessions.map { ($0.id, $0) })
+            let userInfoDict = Dictionary(uniqueKeysWithValues: 
+                userInfos.map { ($0.id.lowercased(), $0) }) // Use lowercase keys for case-insensitive lookup
+            
+            print("🔍 Created lookup dictionaries: sessions=\(sessionDetailsDict.count), users=\(userInfoDict.count)")
+            
+            // STEP 4: Create activity items directly (no grouping in this simplified version)
+            var activityItems: [ActivityItem] = []
+            
+            // Track the success/failure for each prop processing
+            var successfulProps = 0
+            var dateParsingFailures = 0
+            var userInfoMissing = 0
+            var sessionInfoMissing = 0
+            
+            for (index, prop) in sessionProps.enumerated() {
+                print("🔍 Processing prop \(index): session_id=\(prop.session_id), user_id=\(prop.user_id)")
+                
+                // Check date parsing
+                // Create a properly configured ISO8601DateFormatter that handles fractional seconds
+                let dateFormatter = ISO8601DateFormatter()
+                dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                
+                guard let propDate = dateFormatter.date(from: prop.created_at) else {
+                    print("❌ Failed to parse date: \(prop.created_at)")
+                    dateParsingFailures += 1
+                    continue
+                }
+                
+                // Check user info
+                let userInfoLookupId = prop.user_id.lowercased()
+                guard let userInfo = userInfoDict[userInfoLookupId] else {
+                    print("❌ No user info found for ID: \(userInfoLookupId)")
+                    print("❌ Available user IDs in dict: \(userInfoDict.keys.joined(separator: ", "))")
+                    userInfoMissing += 1
+                    continue
+                }
+                
+                let propUserName = userInfo.username?.isEmpty == true ? 
+                                  (userInfo.full_name ?? "User") : 
+                                  userInfo.username ?? "User"
+                
+                // Check session info
+                guard let sessionInfo = sessionDetailsDict[prop.session_id] else {
+                    print("⚠️ No session info found for ID: \(prop.session_id)")
+                    sessionInfoMissing += 1
+                    continue
+                }
+                
+                // Format the date for display
+                var formattedDate = "workout"
+                if let sessionDate = createISO8601DateFormatter().date(from: sessionInfo.date) {
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateStyle = .short
+                    dateFormatter.timeStyle = .none
+                    formattedDate = dateFormatter.string(from: sessionDate)
+                }
+                
+                // Create the activity item with the date in the message
+                let activityItem = ActivityItem(
+                    id: UUID(),
+                    type: .receivedProps,
+                    userName: propUserName,
+                    userAvatar: String(propUserName.prefix(1).uppercased()),
+                    content: "\(propUserName) gave props for your \(formattedDate) workout",
+                    timestamp: propDate,
+                    isRead: false, // Not using this in the simplified version
+                    relatedId: prop.session_id
+                )
+                
+                activityItems.append(activityItem)
+                successfulProps += 1
+                print("✅ Created activity item: \(activityItem.content)")
+            }
+            
+            print("🔍 Processing summary: Total props=\(sessionProps.count), Successful=\(successfulProps), Date failures=\(dateParsingFailures), Missing user info=\(userInfoMissing), Missing session info=\(sessionInfoMissing)")
+            
+            // STEP 5: Update UI state
+            self.activities = activityItems
+            
+            // In this simplified version, we'll just set the unread count
+            // to the total number of activities for the badge in the main view
+            unreadCount = activityItems.count
+            
+            print("🔍 Displaying \(activityItems.count) activity items")
             
         } catch {
             showingError = true
             errorMessage = "Failed to load activities: \(error.localizedDescription)"
             print("❌ Error loading activities: \(error)")
-            
-            // Log the full error details
-            print("❌ Activity Debug: Detailed error: \(String(describing: error))")
+            print("❌ Detailed error: \(String(describing: error))")
         }
     }
+    
+    // Since we're not tracking read status in this simplified version,
+    // we've removed the markAllAsRead function
 }
 
 // Activity row component for the notification list
