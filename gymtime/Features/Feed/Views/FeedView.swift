@@ -1085,7 +1085,12 @@ struct ActivityView: View {
                 
                 // Format the date for display
                 var formattedDate = "workout"
-                if let sessionDate = createISO8601DateFormatter().date(from: sessionInfo.date) {
+                if let sessionDate = {
+                    // Create a properly configured ISO8601DateFormatter
+                    let iso8601Formatter = ISO8601DateFormatter()
+                    iso8601Formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+                    return iso8601Formatter.date(from: sessionInfo.date)
+                }() {
                     let dateFormatter = DateFormatter()
                     dateFormatter.dateStyle = .short
                     dateFormatter.timeStyle = .none
