@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 /// FeedEntryView displays a single workout entry in the feed
 /// with user information, workout details, and social interactions

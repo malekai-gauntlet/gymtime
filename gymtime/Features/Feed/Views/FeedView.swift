@@ -1,116 +1,170 @@
 import SwiftUI
+import Foundation
 
 /// FeedView displays a feed of workouts from the user's network
 /// Similar to Fitbod's clean, dark interface
 struct FeedView: View {
     // MARK: - Properties
-    @State private var workouts: [WorkoutFeedEntry] = []
+    @State private var workouts: [WorkoutFeedEntry] = [] // Keep for backward compatibility during transition
+    @State private var sessions: [WorkoutSessionEntry] = [] // New session-based model
     @State private var isLoading = false
     @State private var showingError = false
     @State private var errorMessage = ""
     @State private var proppedWorkouts: Set<UUID> = []
+    @State private var proppedSessions: Set<String> = [] // Changed from Set<UUID> to Set<String>
     @State private var showingActivityView = false
     @State private var unreadActivityCount = 0 // Default to 0, will be updated when fetching from backend
     @State private var lastActivityReadTime: Date? = UserDefaults.standard.object(forKey: "lastActivityReadTime") as? Date
+    @State private var useSessionView = true // Toggle between old and new UI during development
+    @State private var sessionsOffset = 0 // Track how many sessions we've loaded
     
     // MARK: - Body
     var body: some View {
         NavigationView {
             ScrollView {
                 LazyVStack(spacing: 16) {
-                    ForEach(workouts) { workout in
-                        VStack(alignment: .leading, spacing: 0) {
-                            // User Info Section
-                            HStack(alignment: .center) {
-                                // User Avatar
-                                Circle()
-                                    .fill(Color.gymtimeAccent.opacity(0.2))
-                                    .frame(width: 40, height: 40)
-                                    .overlay(
-                                        Text(workout.userName.prefix(1))
-                                            .font(.system(size: 16, weight: .medium))
-                                            .foregroundColor(.gymtimeAccent)
-                                    )
-                                
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text(workout.userName)
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(.white)
-                                    
-                                    Text(workout.location)
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.gymtimeTextSecondary)
-                                }
-                                
-                                Spacer()
-                                
-                                Text(workout.timestamp.formatted(date: .numeric, time: .omitted))
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.gymtimeTextSecondary)
+                    // Show session-based UI (new)
+                    if useSessionView {
+                        if sessions.isEmpty && !isLoading {
+                            // Placeholder when empty
+                            Text("No workout sessions to display")
+                                .foregroundColor(.gymtimeTextSecondary)
+                                .padding(.top, 40)
+                        } else {
+                            // Display sessions
+                            ForEach(sessions) { session in
+                                SessionFeedEntryView(
+                                    session: session,
+                                    onPropToggle: { sessionId in
+                                        Task {
+                                            do {
+                                                try await toggleSessionProps(for: sessionId)
+                                            } catch {
+                                                showingError = true
+                                                errorMessage = "Failed to update props: \(error.localizedDescription)"
+                                                print("❌ Error toggling session props: \(error)")
+                                            }
+                                        }
+                                    }
+                                )
+                                .padding(.horizontal, 16)
                             }
-                            .padding(.bottom, 12)
                             
-                            // Workout Info Section
-                            VStack(alignment: .leading, spacing: 8) {
+                            // Load More Button
+                            if !isLoading {
+                                Button(action: {
+                                    Task {
+                                        await loadMoreSessions()
+                                    }
+                                }) {
+                                    Text("Load More")
+                                        .font(.system(size: 16, weight: .medium))
+                                        .foregroundColor(.white)
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 12)
+                                        .background(Color.gymtimeAccent.opacity(0.2))
+                                        .cornerRadius(8)
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.top, 8)
+                            }
+                        }
+                    } else {
+                        // Original individual workout UI (keep for now)
+                        ForEach(workouts) { workout in
+                            VStack(alignment: .leading, spacing: 0) {
+                                // User Info Section
                                 HStack(alignment: .center) {
-                                    VStack(alignment: .leading, spacing: 8) {
-                                        Text(workout.workoutType)
-                                            .font(.system(size: 20, weight: .bold))
+                                    // User Avatar
+                                    Circle()
+                                        .fill(Color.gymtimeAccent.opacity(0.2))
+                                        .frame(width: 40, height: 40)
+                                        .overlay(
+                                            Text(workout.userName.prefix(1))
+                                                .font(.system(size: 16, weight: .medium))
+                                                .foregroundColor(.gymtimeAccent)
+                                        )
+                                    
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(workout.userName)
+                                            .font(.system(size: 16, weight: .semibold))
                                             .foregroundColor(.white)
                                         
-                                        Text(workout.achievement)
-                                            .font(.system(size: 16))
-                                            .foregroundColor(.white.opacity(0.8))
-                                            .lineSpacing(4)
+                                        Text(workout.location)
+                                            .font(.system(size: 14))
+                                            .foregroundColor(.gymtimeTextSecondary)
                                     }
                                     
                                     Spacer()
                                     
-                                    // Props Button (formerly Like Button)
-                                    HStack(spacing: 4) {
-                                        if workout.propsCount > 0 {
-                                            Text("\(workout.propsCount)")
-                                                .font(.system(size: 14))
-                                                .foregroundColor(.gymtimeTextSecondary)
+                                    Text(workout.timestamp.formatted(date: .numeric, time: .omitted))
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.gymtimeTextSecondary)
+                                }
+                                .padding(.bottom, 12)
+                                
+                                // Workout Info Section
+                                VStack(alignment: .leading, spacing: 8) {
+                                    HStack(alignment: .center) {
+                                        VStack(alignment: .leading, spacing: 8) {
+                                            Text(workout.workoutType)
+                                                .font(.system(size: 20, weight: .bold))
+                                                .foregroundColor(.white)
+                                            
+                                            Text(workout.achievement)
+                                                .font(.system(size: 16))
+                                                .foregroundColor(.white.opacity(0.8))
+                                                .lineSpacing(4)
                                         }
                                         
-                                        Button(action: {
-                                            Task {
-                                                do {
-                                                    try await toggleProps(for: workout.id)
-                                                } catch {
-                                                    // Revert local state if database operation failed
-                                                    if proppedWorkouts.contains(workout.id) {
-                                                        proppedWorkouts.remove(workout.id)
-                                                    } else {
-                                                        proppedWorkouts.insert(workout.id)
-                                                    }
-                                                    
-                                                    showingError = true
-                                                    errorMessage = "Failed to update props: \(error.localizedDescription)"
-                                                    print("❌ Error toggling props: \(error)")
-                                                }
+                                        Spacer()
+                                        
+                                        // Props Button (formerly Like Button)
+                                        HStack(spacing: 4) {
+                                            if workout.propsCount > 0 {
+                                                Text("\(workout.propsCount)")
+                                                    .font(.system(size: 14))
+                                                    .foregroundColor(.gymtimeTextSecondary)
                                             }
-                                        }) {
-                                            Image(systemName: proppedWorkouts.contains(workout.id) ? "hand.thumbsup.fill" : "hand.thumbsup")
-                                                .font(.system(size: 20))
-                                                .foregroundColor(proppedWorkouts.contains(workout.id) ? .gymtimeAccent : .gymtimeTextSecondary)
+                                            
+                                            Button(action: {
+                                                Task {
+                                                    do {
+                                                        try await toggleProps(for: workout.id)
+                                                    } catch {
+                                                        // Revert local state if database operation failed
+                                                        if proppedWorkouts.contains(workout.id) {
+                                                            proppedWorkouts.remove(workout.id)
+                                                        } else {
+                                                            proppedWorkouts.insert(workout.id)
+                                                        }
+                                                        
+                                                        showingError = true
+                                                        errorMessage = "Failed to update props: \(error.localizedDescription)"
+                                                        print("❌ Error toggling props: \(error)")
+                                                    }
+                                                }
+                                            }) {
+                                                Image(systemName: proppedWorkouts.contains(workout.id) ? "hand.thumbsup.fill" : "hand.thumbsup")
+                                                    .font(.system(size: 20))
+                                                    .foregroundColor(proppedWorkouts.contains(workout.id) ? .gymtimeAccent : .gymtimeTextSecondary)
+                                            }
                                         }
                                     }
                                 }
                             }
+                            .padding(16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(Color.white.opacity(0.08))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.white.opacity(0.1), lineWidth: 1)
+                            )
+                            .padding(.horizontal, 16)
                         }
-                        .padding(16)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(
-                            RoundedRectangle(cornerRadius: 12)
-                                .fill(Color.white.opacity(0.08))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.white.opacity(0.1), lineWidth: 1)
-                        )
-                        .padding(.horizontal, 16)
                     }
                     
                     if isLoading {
@@ -146,6 +200,17 @@ struct FeedView: View {
                         }
                     }
                 }
+                
+                // For development: Toggle between old and new UI
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        useSessionView.toggle()
+                    } label: {
+                        Image(systemName: useSessionView ? "list.bullet" : "list.bullet.rectangle")
+                            .font(.system(size: 18))
+                            .foregroundColor(.white)
+                    }
+                }
             }
         }
         .sheet(isPresented: $showingActivityView, onDismiss: {
@@ -167,6 +232,130 @@ struct FeedView: View {
             }
         }
     }
+    
+    // MARK: - Temporary Development Methods 
+    
+    // Create mock data for testing
+    private func createMockSessions() {
+        print("📱 Creating mock session data")
+        
+        // Create session 1 with multiple exercises
+        let session1 = WorkoutSessionEntry(
+            id: "mock-session-1", // Use string ID directly
+            userId: "mock-user-1", // Use string ID directly
+            userName: "John Smith",
+            date: Date(),
+            location: "Gym",
+            exercises: [
+                ExerciseEntry(
+                    id: UUID(),
+                    exerciseName: "Bench Press",
+                    weight: 225,
+                    sets: 4,
+                    reps: 8,
+                    achievement: "225lbs • 4×8",
+                    originalWorkoutId: UUID()
+                ),
+                ExerciseEntry(
+                    id: UUID(),
+                    exerciseName: "Incline DB Press",
+                    weight: 70,
+                    sets: 3,
+                    reps: 10,
+                    achievement: "70lbs • 3×10",
+                    originalWorkoutId: UUID()
+                )
+            ],
+            propsCount: 4,
+            isProppedByCurrentUser: true
+        )
+        
+        // Create session 2 with a single exercise
+        let session2 = WorkoutSessionEntry(
+            id: "mock-session-2", // Use string ID directly
+            userId: "mock-user-2", // Use string ID directly
+            userName: "Emma Johnson",
+            date: Calendar.current.date(byAdding: .day, value: -1, to: Date())!,
+            location: "Home Gym",
+            exercises: [
+                ExerciseEntry(
+                    id: UUID(),
+                    exerciseName: "Pullups",
+                    weight: nil,
+                    sets: 3,
+                    reps: 12,
+                    achievement: "3×12",
+                    originalWorkoutId: UUID()
+                )
+            ],
+            propsCount: 2,
+            isProppedByCurrentUser: false
+        )
+        
+        // Add sessions to the state
+        self.sessions = [session1, session2]
+    }
+    
+    // MARK: - Session Props Logic
+    
+    /// Toggles props for a workout session and saves to Supabase
+    private func toggleSessionProps(for sessionId: String) async throws {
+        // Update local state first for responsive UI
+        let isRemoving = proppedSessions.contains(sessionId)
+        
+        if isRemoving {
+            proppedSessions.remove(sessionId)
+            // Find and update the session in our list
+            if let index = sessions.firstIndex(where: { $0.id == sessionId }) {
+                sessions[index].propsCount = max(0, sessions[index].propsCount - 1)
+                sessions[index].isProppedByCurrentUser = false
+            }
+        } else {
+            proppedSessions.insert(sessionId)
+            // Find and update the session in our list
+            if let index = sessions.firstIndex(where: { $0.id == sessionId }) {
+                sessions[index].propsCount += 1
+                sessions[index].isProppedByCurrentUser = true
+            }
+        }
+        
+        // Check if user is logged in and get their ID
+        let authSession = await supabase.auth.session
+        let userId = authSession.user.id.uuidString.lowercased() // Always store lowercase user IDs for consistency
+        
+        // Define the structure for session props
+        struct SessionProp: Codable {
+            let session_id: String
+            let user_id: String
+        }
+        
+        if isRemoving {
+            // Remove prop from database
+            _ = try await supabase
+                .from("workout_session_props")
+                .delete()
+                .eq("session_id", value: sessionId)
+                .eq("user_id", value: userId)
+                .execute()
+            
+            print("📱 Removed props for session: \(sessionId)")
+        } else {
+            // Add prop to database
+            _ = try await supabase
+                .from("workout_session_props")
+                .insert(
+                    SessionProp(
+                        session_id: sessionId,
+                        user_id: userId
+                    )
+                )
+                .execute()
+            
+            print("📱 Added props for session: \(sessionId)")
+        }
+    }
+    
+    // MARK: - Existing Methods (unchanged)
     
     // Verify the database view is working correctly
     private func checkViewStructure() async {
@@ -194,6 +383,195 @@ struct FeedView: View {
         isLoading = true
         defer { isLoading = false }
         
+        // Fetch workout sessions if we're using the new UI
+        if useSessionView {
+            do {
+                print("🔍 Loading workout sessions from database")
+                
+                // Define decodable struct to match the database structure
+                struct WorkoutSessionData: Decodable {
+                    let id: String
+                    let user_id: String
+                    let username: String?
+                    let full_name: String?
+                    let date: String  // We'll parse this into Date later
+                    let location: String?
+                    let exercise_count: Int
+                    let exercises: [ExerciseData]
+                    let primary_exercise: String?
+                    
+                    struct ExerciseData: Decodable, Identifiable {
+                        let id: String
+                        let exercise: String
+                        let weight: Double?
+                        let sets: Int?
+                        let reps: Int?
+                    }
+                }
+                
+                // 1. Fetch sessions from the workout_sessions table
+                let response: [WorkoutSessionData] = try await supabase
+                    .from("workout_sessions")
+                    .select()
+                    .order("date", ascending: false)
+                    .range(from: sessionsOffset, to: sessionsOffset + 9)
+                    .execute()
+                    .value
+                
+                print("🔍 Fetched \(response.count) workout sessions")
+                
+                // 2. Convert to our UI model
+                var sessionEntries = response.map { sessionData in
+                    // Create exercise entries
+                    let exercises = sessionData.exercises.map { exerciseData in
+                        ExerciseEntry(
+                            id: UUID(uuidString: exerciseData.id) ?? UUID(),
+                            exerciseName: exerciseData.exercise,
+                            weight: exerciseData.weight,
+                            sets: exerciseData.sets,
+                            reps: exerciseData.reps,
+                            achievement: formatExerciseAchievement(weight: exerciseData.weight, sets: exerciseData.sets, reps: exerciseData.reps),
+                            originalWorkoutId: UUID(uuidString: exerciseData.id) ?? UUID()
+                        )
+                    }
+                    
+                    return WorkoutSessionEntry(
+                        id: sessionData.id, // Use string ID directly
+                        userId: sessionData.user_id, // Use string ID directly
+                        userName: sessionData.username?.isEmpty == true ? (sessionData.full_name ?? "User") : sessionData.username ?? "User",
+                        date: ISO8601DateFormatter().date(from: sessionData.date) ?? Date(),
+                        location: sessionData.location ?? "Gym",
+                        exercises: exercises,
+                        propsCount: 0,
+                        isProppedByCurrentUser: false
+                    )
+                }
+                
+                // 3. Fetch prop counts for these sessions
+                if !sessionEntries.isEmpty {
+                    // Get current user ID to check if they've propped any sessions
+                    let authSession = await supabase.auth.session
+                    let currentUserId = authSession.user.id.uuidString
+                    
+                    // Get all session IDs
+                    let sessionIds = sessionEntries.map { $0.id }
+                    print("🔍 Fetching props for \(sessionIds.count) sessions")
+                    
+                    // Fetch props for these sessions
+                    struct SessionPropData: Decodable {
+                        let session_id: String
+                        let user_id: String
+                    }
+                    
+                    do {
+                        let sessionProps: [SessionPropData] = try await supabase
+                            .from("workout_session_props")
+                            .select("session_id, user_id")
+                            .execute()
+                            .value
+                        
+                        print("🔍 Found \(sessionProps.count) total session props")
+                        
+                        // Add extensive debug logging
+                        print("🔎 DEBUG: ---- ID FORMAT COMPARISON ----")
+                        if let firstProp = sessionProps.first {
+                            print("🔎 DEBUG: DB Prop session_id: \"\(firstProp.session_id)\"")
+                            print("🔎 DEBUG: DB Prop user_id: \"\(firstProp.user_id)\"")
+                        }
+                        
+                        if let firstSessionId = sessionIds.first {
+                            print("🔎 DEBUG: UI session_id: \"\(firstSessionId)\"")
+                            print("🔎 DEBUG: UI current user_id: \"\(currentUserId)\"")
+                        }
+                        
+                        print("🔎 DEBUG: All session IDs in UI:")
+                        for (index, id) in sessionIds.enumerated() {
+                            print("🔎 DEBUG:   [\(index)]: \"\(id)\"")
+                        }
+                        
+                        print("🔎 DEBUG: All prop session IDs from DB:")
+                        for (index, prop) in sessionProps.enumerated() {
+                            if index < 5 { // Just show first 5 to avoid log spam
+                                print("🔎 DEBUG:   [\(index)]: \"\(prop.session_id)\"")
+                            }
+                        }
+                        print("🔎 DEBUG: Session ID direct matches test:")
+                        for prop in sessionProps.prefix(3) {
+                            print("🔎 DEBUG:   Prop \(prop.session_id) exists in UI sessions: \(sessionIds.contains(prop.session_id))")
+                        }
+                        print("🔎 DEBUG: ---- END ID FORMAT COMPARISON ----")
+                        
+                        // SIMPLIFIED APPROACH: Work directly with the string IDs without normalization
+                        var propCountsBySession: [String: Int] = [:]
+                        var sessionsProppedByUser: Set<String> = []
+                        
+                        // Process each prop
+                        for prop in sessionProps {
+                            // Check if this prop's session ID matches any of our sessions directly
+                            if sessionIds.contains(prop.session_id) {
+                                // Found a match - increment count
+                                propCountsBySession[prop.session_id, default: 0] += 1
+                                
+                                // Check if current user has propped this session
+                                // Use case-insensitive comparison for user IDs
+                                if prop.user_id.lowercased() == currentUserId.lowercased() {
+                                    sessionsProppedByUser.insert(prop.session_id)
+                                    print("🔎 DEBUG: Session \(prop.session_id) is propped by current user (matched \(prop.user_id) with \(currentUserId))")
+                                } else {
+                                    print("🔎 DEBUG: User ID comparison - DB: \(prop.user_id.lowercased()) vs Current: \(currentUserId.lowercased())")
+                                }
+                            }
+                        }
+                        
+                        print("🔍 Counted props for \(propCountsBySession.count) sessions")
+                        if propCountsBySession.count > 0 {
+                            print("🔎 DEBUG: Found props for these sessions:")
+                            for (sessionId, count) in propCountsBySession {
+                                print("🔎 DEBUG:   Session \(sessionId): \(count) props")
+                            }
+                        }
+                        
+                        // Update session entries with prop counts
+                        for i in 0..<sessionEntries.count {
+                            let sessionId = sessionEntries[i].id
+                            
+                            // Direct lookup using the original session ID
+                            if let count = propCountsBySession[sessionId] {
+                                sessionEntries[i].propsCount = count
+                                print("🔎 DEBUG: Updated session \(sessionId) with \(count) props")
+                            }
+                            
+                            // Check if user has propped this session
+                            sessionEntries[i].isProppedByCurrentUser = sessionsProppedByUser.contains(sessionId)
+                            
+                            // Update local tracking state to match database
+                            if sessionEntries[i].isProppedByCurrentUser {
+                                proppedSessions.insert(sessionId)
+                                print("🔎 DEBUG: Session \(sessionId) is propped by current user")
+                            }
+                        }
+                    } catch {
+                        print("❌ Error fetching session props: \(error)")
+                        // Continue with the sessions we have, just without accurate prop counts
+                    }
+                }
+                
+                // Update state - append new sessions if we're loading more, otherwise replace
+                if sessionsOffset > 0 {
+                    sessions.append(contentsOf: sessionEntries)
+                } else {
+                    sessions = sessionEntries
+                }
+                
+            } catch {
+                showingError = true
+                errorMessage = "Failed to load workout sessions: \(error.localizedDescription)"
+                print("❌ Error loading workout sessions: \(error)")
+            }
+            return
+        }
+        
+        // Original code for individual workouts below
         do {
             // Fetch workouts from workout_profiles view which includes user information
             let response: [WorkoutProfileEntry] = try await supabase
@@ -310,8 +688,8 @@ struct FeedView: View {
                 .from("workout_props")
                 .insert(
                     WorkoutProp(
-                        workoutId: workoutId,
-                        userId: userId
+                        workoutId: workoutId.uuidString,
+                        userId: userId.uuidString
                     )
                 )
                 .execute()
@@ -333,6 +711,21 @@ struct FeedView: View {
         }
         
         return parts.isEmpty ? "Completed workout" : parts.joined(separator: " • ")
+    }
+    
+    // Helper function to format exercise achievement
+    private func formatExerciseAchievement(weight: Double?, sets: Int?, reps: Int?) -> String {
+        var parts: [String] = []
+        
+        if let weight = weight {
+            parts.append("\(Int(weight))lbs")
+        }
+        
+        if let sets = sets, let reps = reps {
+            parts.append("\(sets)×\(reps)")
+        }
+        
+        return parts.isEmpty ? "Completed exercise" : parts.joined(separator: " • ")
     }
     
     private func fetchUnreadActivityCount() async {
@@ -377,6 +770,11 @@ struct FeedView: View {
             print("❌ UnreadCount Debug: Detailed error: \(String(describing: error))")
         }
     }
+    
+    private func loadMoreSessions() async {
+        sessionsOffset += 10
+        await loadWorkouts()
+    }
 }
 
 // MARK: - Preview
@@ -384,7 +782,9 @@ struct FeedView: View {
     FeedView()
 }
 
-// MARK: - Supporting Types
+// MARK: - Models
+
+// MARK: - Current Individual Workout Model
 /// Model representing a single workout entry in the feed
 struct WorkoutFeedEntry: Identifiable {
     let id: UUID
@@ -396,14 +796,77 @@ struct WorkoutFeedEntry: Identifiable {
     var propsCount: Int = 0 // Count of props for this workout
 }
 
+// MARK: - New Session-Based Models
+
+/// Model representing a single exercise within a workout session
+struct ExerciseEntry: Identifiable {
+    let id: UUID
+    let exerciseName: String
+    let weight: Double?
+    let sets: Int?
+    let reps: Int?
+    let achievement: String // Formatted achievement text (e.g. "200lbs • 3×10")
+    let originalWorkoutId: UUID // Reference to the original workout entry
+    
+    // Computed property to display formatted stats
+    var displayStats: String {
+        var parts: [String] = []
+        
+        if let weight = weight {
+            parts.append("\(Int(weight))lbs")
+        }
+        
+        if let sets = sets, let reps = reps {
+            parts.append("\(sets)×\(reps)")
+        }
+        
+        return parts.isEmpty ? "Completed exercise" : parts.joined(separator: " • ")
+    }
+}
+
+/// Model representing a grouped workout session in the feed
+struct WorkoutSessionEntry: Identifiable {
+    let id: String
+    let userId: String
+    let userName: String
+    let date: Date
+    let location: String
+    var exercises: [ExerciseEntry]
+    var propsCount: Int = 0 // Total props for all exercises in this session
+    var isProppedByCurrentUser: Bool = false
+    
+    // Computed properties
+    var exerciseCount: Int {
+        exercises.count
+    }
+    
+    // Get the "hero" exercise to highlight (most impressive or challenging)
+    var primaryExercise: ExerciseEntry? {
+        // For now, just return the first exercise
+        // In the future, we could implement more complex logic to determine
+        // which exercise is most impressive based on weight, PR status, etc.
+        return exercises.first
+    }
+    
+    // Summary text for the workout session
+    var summary: String {
+        if exercises.count == 1 {
+            return "1 exercise"
+        } else {
+            return "\(exercises.count) exercises"
+        }
+    }
+}
+
 /// Model for sending workout props to Supabase
 struct WorkoutProp: Codable {
     let workout_id: String
     let user_id: String
     
-    init(workoutId: UUID, userId: UUID) {
-        self.workout_id = workoutId.uuidString
-        self.user_id = userId.uuidString
+    // Updated initializer to accept String IDs
+    init(workoutId: String, userId: String) {
+        self.workout_id = workoutId
+        self.user_id = userId
     }
 }
 

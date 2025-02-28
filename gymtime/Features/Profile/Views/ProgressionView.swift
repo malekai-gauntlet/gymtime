@@ -204,16 +204,6 @@ struct ProgressionView: View {
         }
         .background(Color.gymtimeBackground)
         .navigationBarTitle("Progression", displayMode: .inline)
-        .navigationBarItems(trailing: Button(action: {
-            // Reset appear animation when refreshing
-            appearAnimation = false
-            Task {
-                await viewModel.fetchWorkoutProgression()
-            }
-        }) {
-            Image(systemName: "arrow.clockwise")
-                .foregroundColor(.gymtimeAccent)
-        })
         .animation(.easeInOut(duration: 0.3), value: viewModel.isLoading)
         .onAppear {
             // Trigger the appear animation after a short delay
