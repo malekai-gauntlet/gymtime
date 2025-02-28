@@ -131,19 +131,22 @@ struct ProfileView: View {
                         }
                         
                         // Recent Progress Section
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text("RECENT PROGRESS")
-                                .font(.headline)
-                                .foregroundColor(.gymtimeTextSecondary)
-                                .padding(.horizontal)
-                            
-                            if let dateRange = getLastWeekDateRange(data: viewModel.progressData) {
-                                ChartView(
-                                    data: getLastWeekData(data: viewModel.progressData),
-                                    dateRange: dateRange
-                                )
-                                .frame(height: 300)
-                                .padding(.horizontal)
+                        if !viewModel.progressData.isEmpty {
+                            VStack(alignment: .leading, spacing: 16) {
+                                Text("RECENT PROGRESS")
+                                    .font(.headline)
+                                    .foregroundColor(.gymtimeTextSecondary)
+                                    .padding(.horizontal)
+                                
+                                // Progress Chart - Keep the current implementation
+                                if let dateRange = getLastWeekDateRange(data: viewModel.progressData) {
+                                    ChartView(
+                                        data: getLastWeekData(data: viewModel.progressData),
+                                        dateRange: dateRange
+                                    )
+                                    .frame(height: 200)
+                                    .padding(.horizontal)
+                                }
                             }
                         }
                         
@@ -442,7 +445,7 @@ struct ChartView: View {
                             // Calculate points for area
                             let points = data.enumerated().map { index, point -> CGPoint in
                                 let x = (geometry.size.width - 50) * CGFloat(index) / CGFloat(max(1, data.count - 1))
-                                let y = geometry.size.height * (1 - CGFloat(point.actualVolume / maxVolume))
+                                let y = point.actualVolume > 0 ? geometry.size.height * (1 - CGFloat(point.actualVolume / maxVolume)) : geometry.size.height
                                 return CGPoint(x: x, y: y)
                             }
                             
@@ -451,7 +454,7 @@ struct ChartView: View {
                             
                             // Add line to first point
                             if let firstPoint = points.first {
-                                path.addLine(to: CGPoint(x: firstPoint.x, y: firstPoint.y))
+                                path.addLine(to: firstPoint)
                             }
                             
                             // Connect all points
@@ -483,7 +486,7 @@ struct ChartView: View {
                         // Calculate points
                         let points = data.enumerated().map { index, point -> CGPoint in
                             let x = (geometry.size.width - 50) * CGFloat(index) / CGFloat(max(1, data.count - 1))
-                            let y = geometry.size.height * (1 - CGFloat(point.actualVolume / maxVolume))
+                            let y = point.actualVolume > 0 ? geometry.size.height * (1 - CGFloat(point.actualVolume / maxVolume)) : geometry.size.height
                             return CGPoint(x: x, y: y)
                         }
                         
