@@ -92,8 +92,9 @@ struct HomeView: View {
                         }
                     }
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical)
+                .padding(.horizontal, 24)
+                .padding(.top, -12)
+                .padding(.bottom, 12)
                 .background(Color.gymtimeBackground)
                 
                 // Workout Table with horizontal swipe handling

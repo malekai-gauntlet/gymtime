@@ -21,6 +21,9 @@ struct ProfileView: View {
     @State private var isLoadingTooltipState = true
     @State private var showingTooltip = false
     
+    // Recent Progress tooltip state
+    @State private var showingProgressTooltip = false
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -133,10 +136,19 @@ struct ProfileView: View {
                         // Recent Progress Section
                         if !viewModel.progressData.isEmpty {
                             VStack(alignment: .leading, spacing: 16) {
-                                Text("RECENT PROGRESS")
-                                    .font(.headline)
-                                    .foregroundColor(.gymtimeTextSecondary)
-                                    .padding(.horizontal)
+                                HStack {
+                                    Text("RECENT PROGRESS")
+                                        .font(.headline)
+                                        .foregroundColor(.gymtimeTextSecondary)
+                                    
+                                    Button {
+                                        showingProgressTooltip = true
+                                    } label: {
+                                        Image(systemName: "info.circle")
+                                            .foregroundColor(.gymtimeAccent)
+                                    }
+                                }
+                                .padding(.horizontal)
                                 
                                 // Progress Chart - Keep the current implementation
                                 if let dateRange = getLastWeekDateRange(data: viewModel.progressData) {
@@ -156,6 +168,14 @@ struct ProfileView: View {
             }
             .background(Color.gymtimeBackground)
             .navigationBarTitle("Profile", displayMode: .inline)
+            .simpleTooltip(
+                isVisible: showingProgressTooltip,
+                title: "Weight Calculation",
+                message: "The chart shows your total weight lifted (weight × sets × reps) for each day.",
+                onDismiss: {
+                    showingProgressTooltip = false
+                }
+            )
             .tooltip(
                 isVisible: showingTooltip,
                 title: "Your Progress",
