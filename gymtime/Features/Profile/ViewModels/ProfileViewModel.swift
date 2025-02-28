@@ -318,6 +318,8 @@ struct Profile: Codable {
     let fullName: String?
     let hasSeenOnboarding: Bool
     let hasSeenWeightsTooltip: Bool
+    let hasSeenFeedTooltip: Bool
+    let hasSeenProfileTooltip: Bool
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -325,6 +327,8 @@ struct Profile: Codable {
         case fullName = "full_name"
         case hasSeenOnboarding = "has_seen_onboarding"
         case hasSeenWeightsTooltip = "has_seen_weights_tooltip"
+        case hasSeenFeedTooltip = "has_seen_feed_tooltip"
+        case hasSeenProfileTooltip = "has_seen_profile_tooltip"
     }
 }
 

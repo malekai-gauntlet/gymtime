@@ -15,6 +15,11 @@ struct ProfileView: View {
     @State private var showingAuth = false
     @State private var showingLogoutConfirmation = false
     
+    // Tooltip state
+    @State private var hasSeenTooltip = false
+    @State private var isLoadingTooltipState = true
+    @State private var showingTooltip = false
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -87,13 +92,9 @@ struct ProfileView: View {
                                 }
                             }
                             
-                            // Add a spacer with equal width to the profile image to balance centering
                             Spacer()
-                                .frame(width: 80)
                         }
-                        .fixedSize(horizontal: true, vertical: false)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                        .padding(.top)
+                        .padding(.horizontal)
                         
                         // Stats Grid - Reduced to 2-card layout
                         LazyVGrid(columns: [
@@ -159,6 +160,31 @@ struct ProfileView: View {
             }
             .background(Color.gymtimeBackground)
             .navigationBarTitle("Profile", displayMode: .inline)
+            .tooltip(
+                isVisible: showingTooltip,
+                title: "Your Progress",
+                message: "Track your progress in the charts below.",
+                arrowOffset: CGPoint(x: 0, y: -100), // Position 100px above center
+                onDismiss: {
+                    showingTooltip = false
+                    if !hasSeenTooltip {
+                        Task {
+                            do {
+                                let userId = try await supabase.auth.session.user.id
+                                try await supabase
+                                    .from("profiles")
+                                    .update(["has_seen_profile_tooltip": true])
+                                    .eq("id", value: userId)
+                                    .execute()
+                                
+                                hasSeenTooltip = true
+                            } catch {
+                                print("❌ Error updating profile tooltip state: \(error)")
+                            }
+                        }
+                    }
+                }
+            )
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
@@ -185,6 +211,34 @@ struct ProfileView: View {
                     }
                 }
                 Button("Cancel", role: .cancel) { }
+            }
+        }
+        .onAppear {
+            Task {
+                // Load tooltip state
+                do {
+                    let userId = try await supabase.auth.session.user.id
+                    let profile: Profile = try await supabase
+                        .from("profiles")
+                        .select()
+                        .eq("id", value: userId)
+                        .single()
+                        .execute()
+                        .value
+                    
+                    hasSeenTooltip = profile.hasSeenProfileTooltip
+                    isLoadingTooltipState = false
+                    
+                    if !hasSeenTooltip {
+                        print("🔍 First time viewing profile tab - showing tooltip")
+                        showingTooltip = true
+                    }
+                } catch {
+                    print("❌ Error loading profile tooltip state: \(error)")
+                    isLoadingTooltipState = false
+                }
+                
+                await viewModel.refreshProfile()
             }
         }
     }

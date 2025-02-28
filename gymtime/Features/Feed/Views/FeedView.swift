@@ -18,6 +18,11 @@ struct FeedView: View {
     @State private var useSessionView = true // Toggle between old and new UI during development
     @State private var sessionsOffset = 0 // Track how many sessions we've loaded
     
+    // Tooltip state
+    @State private var hasSeenTooltip = false
+    @State private var isLoadingTooltipState = true
+    @State private var showingTooltip = false
+    
     // MARK: - Body
     var body: some View {
         NavigationView {
@@ -177,6 +182,30 @@ struct FeedView: View {
             }
             .background(Color(white: 0.08))  // Slightly lighter background
             .navigationBarTitle("Feed", displayMode: .inline)
+            .simpleTooltip(
+                isVisible: showingTooltip,
+                title: "Activity Feed",
+                message: "This tab shows expandable workout sessions from fellow gymheads.",
+                onDismiss: {
+                    showingTooltip = false
+                    if !hasSeenTooltip {
+                        Task {
+                            do {
+                                let userId = try await supabase.auth.session.user.id
+                                try await supabase
+                                    .from("profiles")
+                                    .update(["has_seen_feed_tooltip": true])
+                                    .eq("id", value: userId)
+                                    .execute()
+                                
+                                hasSeenTooltip = true
+                            } catch {
+                                print("❌ Error updating feed tooltip state: \(error)")
+                            }
+                        }
+                    }
+                }
+            )
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
@@ -226,6 +255,29 @@ struct FeedView: View {
         }
         .onAppear {
             Task {
+                // Load tooltip state
+                do {
+                    let userId = try await supabase.auth.session.user.id
+                    let profile: Profile = try await supabase
+                        .from("profiles")
+                        .select()
+                        .eq("id", value: userId)
+                        .single()
+                        .execute()
+                        .value
+                    
+                    hasSeenTooltip = profile.hasSeenFeedTooltip
+                    isLoadingTooltipState = false
+                    
+                    if !hasSeenTooltip {
+                        print("🔍 First time viewing feed tab - showing tooltip")
+                        showingTooltip = true
+                    }
+                } catch {
+                    print("❌ Error loading feed tooltip state: \(error)")
+                    isLoadingTooltipState = false
+                }
+                
                 await checkViewStructure()
                 await loadWorkouts()
                 await fetchUnreadActivityCount()
