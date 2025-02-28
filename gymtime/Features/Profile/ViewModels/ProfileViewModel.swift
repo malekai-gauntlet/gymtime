@@ -102,9 +102,16 @@ class ProfileViewModel: ObservableObject {
                 .execute()
                 .value
             
-            // Update UI
-            username = profile.username
-            displayName = profile.fullName
+            // Update UI with either profile data or default anonymous values
+            if profile.username?.isEmpty ?? true && profile.fullName?.isEmpty ?? true {
+                // User is anonymous or has empty profile - use default values
+                username = "anonymous"
+                displayName = "Anonymous User"
+            } else {
+                // Use actual profile data
+                username = profile.username
+                displayName = profile.fullName
+            }
             
         } catch {
             self.error = "Failed to load profile: \(error.localizedDescription)"
