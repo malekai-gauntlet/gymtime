@@ -4,6 +4,7 @@ import SwiftUI
 
 struct ProgressionCard: View {
     @ObservedObject var viewModel: ProgressionViewModel
+    @State private var hasInitiatedLoad = false
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -66,10 +67,15 @@ struct ProgressionCard: View {
         .padding(16)
         .background(Color.black.opacity(0.3))
         .cornerRadius(12)
+        // Only load data when the card becomes visible
         .onAppear {
-            if viewModel.weeklyProgressions.isEmpty && !viewModel.isLoading {
-                Task {
-                    await viewModel.fetchWorkoutProgression()
+            if !hasInitiatedLoad {
+                hasInitiatedLoad = true
+                // Delay the data fetch slightly to prioritize UI rendering
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                    Task {
+                        await viewModel.fetchWorkoutProgression()
+                    }
                 }
             }
         }

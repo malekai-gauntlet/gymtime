@@ -43,9 +43,7 @@ class ProgressionViewModel: ObservableObject {
     
     // MARK: - Initialization
     init() {
-        Task {
-            await fetchWorkoutProgression()
-        }
+        // No automatic data fetching on init
     }
     
     // MARK: - Public Methods

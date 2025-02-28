@@ -203,17 +203,23 @@ struct WorkoutMenuView: View {
                                     }
                                         .frame(height: 100)
                                 } else if viewModel.suggestedWorkouts.isEmpty {
-                                        // Show placeholders if no history items are available
-                                        ForEach(0..<3, id: \.self) { index in
-                                        WorkoutSuggestionRow(index: index)
-                                            .padding(.vertical, 12)
-                                            .padding(.horizontal)
-                                            .background(Color.gymtimeBackground)
-                                        
-                                        Divider()
-                                            .background(Color.gray.opacity(0.3))
-                                            .padding(.horizontal)
-                                    }
+                                        // Show empty state message
+                                        VStack(spacing: 16) {
+                                            Image(systemName: "clock.arrow.circlepath")
+                                                .font(.system(size: 40))
+                                                .foregroundColor(.gymtimeTextSecondary)
+                                            
+                                            Text("No workout history yet")
+                                                .font(.headline)
+                                                .foregroundColor(.gymtimeTextSecondary)
+                                            
+                                            Text("Your recent workouts will appear here")
+                                                .font(.subheadline)
+                                                .foregroundColor(.gymtimeTextSecondary)
+                                                .multilineTextAlignment(.center)
+                                        }
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 50)
                                     } else if filteredHistoryItems.isEmpty && !searchText.isEmpty {
                                         // Show no results when searching
                                     VStack(spacing: 16) {
@@ -231,18 +237,6 @@ struct WorkoutMenuView: View {
                                 } else {
                                         // Show filtered history items
                                         ForEach(filteredHistoryItems) { workout in
-                                        ZStack {
-                                            // Background for the entire row that handles taps
-                                            Button(action: {
-                                                // No action here - we'll handle it in the plus button
-                                            }) {
-                                                Rectangle()
-                                                    .fill(Color.clear)
-                                                    .contentShape(Rectangle())
-                                            }
-                                            .buttonStyle(PlainButtonStyle())
-                                            
-                                            // Actual row content
                                             HStack {
                                                 VStack(alignment: .leading, spacing: 4) {
                                                     Text(workout.exercise)
@@ -266,7 +260,7 @@ struct WorkoutMenuView: View {
                                                 
                                                 Spacer()
                                                 
-                                                // Simplified button
+                                                // Simplified button with larger tap area
                                                 Button(action: {
                                                     // Capture the workout ID immediately
                                                     let workoutID = workout.id
@@ -304,20 +298,19 @@ struct WorkoutMenuView: View {
                                                         .frame(width: 60, height: 60)
                                                         .contentShape(Rectangle())
                                                 }
-                                                .buttonStyle(PlainButtonStyle())
+                                                .buttonStyle(ScaleButtonStyle()) // Add scale animation
                                             }
                                             .padding(.vertical, 12)
                                             .padding(.horizontal)
-                                        }
-                                        .background(Color.gymtimeBackground)
-                                        
-                                        Divider()
-                                            .background(Color.gray.opacity(0.3))
-                                            .padding(.horizontal)
-                                        .onAppear {
+                                            .background(Color.gymtimeBackground)
+                                            
+                                            Divider()
+                                                .background(Color.gray.opacity(0.3))
+                                                .padding(.horizontal)
+                                            .onAppear {
                                                 print("📍 Row appeared for history item: \(workout.exercise) (ID: \(workout.id))")
                                             }
-                                            .id(workout.id) // Ensure each row has a stable identity
+                                            .id(workout.id)
                                         }
                                     }
                                 }
