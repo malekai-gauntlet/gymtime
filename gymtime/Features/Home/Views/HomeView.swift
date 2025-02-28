@@ -43,7 +43,19 @@ struct HomeView: View {
     @ObservedObject var viewModel: HomeViewModel
     @State private var selectedTab: Int = 0
     @State private var showingVoiceLogger = false
-    @State private var isEditing = false  // Add editing state
+    @State private var isEditing = false
+    
+    // Tooltip state tracking
+    @State private var hasSeenOnboarding = false
+    @State private var isLoadingOnboardingState = true
+    
+    // Active tooltip tracking
+    @State private var showingRecordTooltip = false
+    @State private var showingExampleTooltip = false
+    @State private var showingPlusTooltip = false
+    
+    // Button position tracking
+    @State private var recordButtonFrame: CGRect = .zero
     
     var body: some View {
         NavigationView {
@@ -88,8 +100,6 @@ struct HomeView: View {
                 WorkoutTableView(workouts: $viewModel.workouts, viewModel: viewModel, isEditing: $isEditing)
                     .horizontalSwipe(
                         onSwipe: { isRight in
-                            // Don't animate the scroll, just select the new date
-                            // The selection will trigger the color change animations
                             if isRight {
                                 viewModel.selectDate(Calendar.current.date(byAdding: .day, value: -1, to: viewModel.calendarState.selectedDate) ?? Date())
                             } else {
@@ -101,8 +111,89 @@ struct HomeView: View {
                     )
             }
             .background(Color.gymtimeBackground)
+            .tooltip(
+                isVisible: showingRecordTooltip,
+                title: "Record Your Workout",
+                message: "Log your workout with voice",
+                arrowOffset: CGPoint(x: 0, y: 220),
+                onDismiss: {
+                    showingRecordTooltip = false
+                    if !hasSeenOnboarding {
+                        // Show the example tooltip after record tooltip
+                        showingExampleTooltip = true
+                    }
+                }
+            )
+            .tooltip(
+                isVisible: showingExampleTooltip,
+                title: "You can say:",
+                message: "\"Shoulder Press, 35lbs, 3 sets 8 reps, felt great\"",
+                arrowOffset: CGPoint(x: 0, y: 220),
+                onDismiss: {
+                    showingExampleTooltip = false
+                    if !hasSeenOnboarding {
+                        Task {
+                            do {
+                                let userId = try await supabase.auth.session.user.id
+                                try await supabase
+                                    .from("profiles")
+                                    .update(["has_seen_onboarding": true])
+                                    .eq("id", value: userId)
+                                    .execute()
+                                
+                                hasSeenOnboarding = true
+                                // Show the plus tooltip after example tooltip
+                                showingPlusTooltip = true
+                            } catch {
+                                print("❌ Error updating onboarding state: \(error)")
+                            }
+                        }
+                    }
+                }
+            )
+            .tooltip(
+                isVisible: showingPlusTooltip,
+                title: "Add Exercises",
+                message: "Add exercises manually",
+                arrowOffset: CGPoint(x: 77, y: 163),
+                onDismiss: {
+                    showingPlusTooltip = false
+                }
+            )
             .sheet(isPresented: $showingVoiceLogger) {
                 Text("Voice Logger Coming Soon")
+            }
+            .onAppear {
+                print("🔍 HomeView appeared")
+                
+                // Load onboarding state from Supabase
+                Task {
+                    do {
+                        let userId = try await supabase.auth.session.user.id
+                        let profile: Profile = try await supabase
+                            .from("profiles")
+                            .select()
+                            .eq("id", value: userId)
+                            .single()
+                            .execute()
+                            .value
+                        
+                        hasSeenOnboarding = profile.hasSeenOnboarding
+                        isLoadingOnboardingState = false
+                        
+                        // Only show tooltip if user hasn't seen onboarding
+                        if !hasSeenOnboarding {
+                            print("🔍 First time user - showing record tooltip")
+                            showingRecordTooltip = true
+                        }
+                    } catch {
+                        print("❌ Error loading onboarding state: \(error)")
+                        isLoadingOnboardingState = false
+                    }
+                }
+            }
+            .onChange(of: showingRecordTooltip) { newValue in
+                print("🔍 showingRecordTooltip changed to: \(newValue)")
             }
         }
     }

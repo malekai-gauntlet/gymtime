@@ -17,6 +17,7 @@ struct HomeCoordinator: View {
                 TabView(selection: $selectedTab) {
                     HomeView(viewModel: viewModel)
                         .tag(0)
+                        .zIndex(1) // Ensure HomeView is above other tabs
                     
                     WeightsCoordinator(supabase: supabase)
                         .tag(1)
@@ -33,18 +34,22 @@ struct HomeCoordinator: View {
                 .tabViewStyle(.automatic)
                 .frame(width: geometry.size.width, height: geometry.size.height)
                 
-                // Bottom navigation bar - absolutely positioned at bottom
+                // Bottom navigation bar
                 VStack {
                     Spacer()
                     BottomNavBarView(selectedTab: $selectedTab)
                 }
                 .ignoresSafeArea(.keyboard)
-                .zIndex(2) // Ensure it's above other content
+                .zIndex(2)
             }
         }
         .ignoresSafeArea(.keyboard)
         .onAppear {
+            print("🔍 HomeCoordinator appeared")
             setupKeyboardObservers()
+        }
+        .onChange(of: selectedTab) { newTab in
+            print("🔍 Selected tab changed to: \(newTab)")
         }
         .onDisappear {
             removeKeyboardObservers()
