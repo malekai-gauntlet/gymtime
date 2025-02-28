@@ -30,23 +30,14 @@ class ProfileViewModel: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var error: String?
     
-    // Simple cache control
-    private var hasLoadedData = false
     private var cancellables = Set<AnyCancellable>()
     
     init() {
-        Task {
-            // Only load if we haven't loaded before
-            if !hasLoadedData {
-                await refreshProfile()
-            }
-        }
+        // No automatic loading on init
     }
     
     // Public method to refresh all profile data
     func refreshProfile() async {
-        guard !hasLoadedData else { return }
-        
         do {
             isLoading = true
             error = nil
@@ -55,18 +46,10 @@ class ProfileViewModel: ObservableObject {
             await loadWorkoutStats()
             await calculateMilestones()
             await loadProgressData()
-            
-            hasLoadedData = true
         } catch {
             self.error = "Failed to refresh profile: \(error.localizedDescription)"
         }
         isLoading = false
-    }
-    
-    // Force refresh when explicitly needed (e.g., pull to refresh)
-    func forceRefresh() async {
-        hasLoadedData = false
-        await refreshProfile()
     }
     
     // Update profile information

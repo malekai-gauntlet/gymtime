@@ -3,8 +3,7 @@
 import SwiftUI
 
 struct ProgressionView: View {
-    @StateObject private var viewModel = ProgressionViewModel()
-    // Add state for animation control
+    @StateObject var viewModel = ProgressionViewModel()
     @State private var appearAnimation = false
     
     // Column width constraints
@@ -12,182 +11,155 @@ struct ProgressionView: View {
     private let dataColumnWidth: CGFloat = 80
     // Fixed height for all cells to ensure consistency
     private let cellHeight: CGFloat = 60
-    // Fixed padding for all cells
-    private let cellVerticalPadding: CGFloat = 12
+    
+    // Default exercises for empty state
+    private let defaultExercises = [
+        "Ab Workout",
+        "Abs",
+        "Arnold Press",
+        "Assault Bike",
+        "Atg Split Squat",
+        "Barbell Bicep Curl",
+        "Barbell Rows",
+        "Bench Press",
+        "Bicep Curl",
+        "Bicep Curls",
+        "Cable Rows"
+    ]
     
     var body: some View {
-        VStack(spacing: 0) {
-            if viewModel.isLoading {
-                // Enhanced loading view
-                VStack {
-                    Spacer()
-                    
-                    // Loading card with gradient background - now full width
-                    VStack(spacing: 20) {
-                        // Animated dumbbell icon
-                        ZStack {
-                            // Pulse animation for icon background
-                            Circle()
-                                .fill(Color.gymtimeAccent.opacity(0.2))
-                                .frame(width: 80, height: 80)
-                                .scaleEffect(1.0)
-                                .animation(
-                                    Animation.easeInOut(duration: 1.2)
-                                        .repeatForever(autoreverses: true),
-                                    value: UUID() // Force animation to run
-                                )
-                            
-                            // Dumbbell icon
-                            Image(systemName: "dumbbell.fill")
-                                .font(.system(size: 30))
-                                .foregroundColor(.gymtimeAccent)
-                                .rotationEffect(.degrees(viewModel.isLoading ? 15 : -15))
-                                .animation(
-                                    Animation.easeInOut(duration: 0.8)
-                                        .repeatForever(autoreverses: true),
-                                    value: viewModel.isLoading
-                                )
-                        }
-                        
-                        // Progress indicator
-                        ProgressView()
-                            .tint(.gymtimeText)
-                            .scaleEffect(1.2)
-                            .padding(.top, 5)
-                        
-                        // Loading text
-                        Text("Loading progression data...")
-                            .font(.headline)
-                            .foregroundColor(.gymtimeText)
-                        
-                        Text("Analyzing your strength gains")
-                            .font(.subheadline)
+        ZStack {  // Wrap in ZStack to allow overlay
+            VStack(spacing: 0) {
+                if let error = viewModel.error {
+                    VStack {
+                        Spacer()
+                        Image(systemName: "exclamationmark.triangle")
+                            .font(.system(size: 50))
+                            .foregroundColor(.red)
+                            .padding()
+                        Text(error)
                             .foregroundColor(.gymtimeTextSecondary)
-                            .padding(.top, -5)
-                    }
-                    .padding(.vertical, 30)
-                    .padding(.horizontal, 25)
-                    .background(
-                        LinearGradient(
-                            gradient: Gradient(colors: [
-                                Color.black.opacity(0.5),
-                                Color.black.opacity(0.3)
-                            ]),
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .overlay(
-                        Rectangle()
-                            .stroke(Color.gymtimeAccent.opacity(0.3), lineWidth: 1)
-                    )
-                    
-                    Spacer()
-                }
-                .transition(.opacity)
-            } else if let error = viewModel.error {
-                Spacer()
-                Image(systemName: "exclamationmark.triangle")
-                    .font(.system(size: 50))
-                    .foregroundColor(.red)
-                    .padding()
-                Text(error)
-                    .foregroundColor(.gymtimeTextSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding()
-                Button("Try Again") {
-                    Task {
-                        await viewModel.fetchWorkoutProgression()
-                    }
-                }
-                .padding()
-                .background(Color.gymtimeAccent)
-                .foregroundColor(.white)
-                .cornerRadius(12)
-                Spacer()
-                .transition(.opacity)
-            } else if viewModel.weeklyProgressions.isEmpty {
-                Spacer()
-                Image(systemName: "dumbbell")
-                    .font(.system(size: 50))
-                    .foregroundColor(.gymtimeTextSecondary)
-                    .padding()
-                Text("No workout data found. Start logging your workouts to track progression!")
-                    .foregroundColor(.gymtimeTextSecondary)
-                    .multilineTextAlignment(.center)
-                    .padding()
-                Spacer()
-                .transition(.opacity)
-            } else {
-                // Column-based table with synchronized scrolling
-                VStack(spacing: 0) {
-                    // FIXED HEADER ROW - outside the ScrollView
-                    HStack(spacing: 0) {
-                        // Fixed exercise header
-                        Text("Exercise")
-                            .font(.caption.bold())
-                            .foregroundColor(.gymtimeTextSecondary)
-                            .frame(width: exerciseColumnWidth, alignment: .leading)
-                            .frame(height: cellHeight)
-                            .padding(.horizontal, 8)
-                            .background(Color.black.opacity(0.3))
-                        
-                        // Horizontal scrollable week headers
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 0) {
-                                ForEach(viewModel.weeklyProgressions) { week in
-                                    Text(week.weekLabel)
-                                        .font(.caption.bold())
-                                        .foregroundColor(.gymtimeTextSecondary)
-                                        .frame(width: dataColumnWidth)
-                                        .frame(height: cellHeight)
-                                        .background(Color.black.opacity(0.3))
-                                }
+                            .multilineTextAlignment(.center)
+                            .padding()
+                        Button("Try Again") {
+                            Task {
+                                await viewModel.fetchWorkoutProgression()
                             }
                         }
+                        .padding()
+                        .background(Color.gymtimeAccent)
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                        Spacer()
                     }
-                    
-                    // Add vertical ScrollView for main content
-                    ScrollView(.vertical, showsIndicators: true) {
-                        // MAIN CONTENT AREA with fixed exercise column and scrollable data
+                } else {
+                    // Column-based table with synchronized scrolling
+                    VStack(spacing: 0) {
+                        // FIXED HEADER ROW - outside the ScrollView
                         HStack(spacing: 0) {
-                            // Fixed exercise names column
-                            VStack(spacing: 0) {
-                                ForEach(getUniqueExercises(), id: \.self) { exerciseName in
-                                    Text(exerciseName)
-                                        .font(.subheadline)
-                                        .foregroundColor(.gymtimeText)
-                                        .frame(width: exerciseColumnWidth, alignment: .leading)
-                                        .frame(height: cellHeight)
-                                        .padding(.horizontal, 8)
-                                        .background(Color.black.opacity(0.15))
+                            // Fixed exercise header
+                            Text("Exercise")
+                                .font(.caption.bold())
+                                .foregroundColor(.gymtimeTextSecondary)
+                                .frame(width: exerciseColumnWidth, alignment: .leading)
+                                .frame(height: cellHeight)
+                                .padding(.horizontal, 8)
+                                .background(Color.black.opacity(0.3))
+                            
+                            // Horizontal scrollable week headers
+                            ScrollView(.horizontal, showsIndicators: false) {
+                                HStack(spacing: 0) {
+                                    if viewModel.weeklyProgressions.isEmpty {
+                                        // Show default week headers if no data
+                                        ForEach(0..<4) { weekOffset in
+                                            let dates = getDefaultWeekDates(weekOffset: weekOffset)
+                                            Text(dates)
+                                                .font(.caption.bold())
+                                                .foregroundColor(.gymtimeTextSecondary)
+                                                .frame(width: dataColumnWidth)
+                                                .frame(height: cellHeight)
+                                                .background(Color.black.opacity(0.3))
+                                        }
+                                    } else {
+                                        ForEach(viewModel.weeklyProgressions) { week in
+                                            Text(week.weekLabel)
+                                                .font(.caption.bold())
+                                                .foregroundColor(.gymtimeTextSecondary)
+                                                .frame(width: dataColumnWidth)
+                                                .frame(height: cellHeight)
+                                                .background(Color.black.opacity(0.3))
+                                        }
+                                    }
                                 }
                             }
-                            
-                            // SINGLE HORIZONTAL SCROLLVIEW for all data columns
-                            ScrollView(.horizontal, showsIndicators: false) {
-                                // HStack of week columns
-                                HStack(spacing: 0) {
-                                    // Each week gets a column of exercise data
-                                    ForEach(viewModel.weeklyProgressions) { week in
-                                        // Column of cells for this week
-                                        VStack(spacing: 0) {
-                                            // Row for each exercise
-                                            ForEach(getUniqueExercises(), id: \.self) { exerciseName in
-                                                if let exercise = findExercise(week: week, exerciseName: exerciseName) {
-                                                    ProgressDataCell(
-                                                        exercise: exercise,
-                                                        width: dataColumnWidth,
-                                                        height: cellHeight
-                                                    )
-                                                } else {
-                                                    // No data for this week/exercise
-                                                    Text("-")
-                                                        .font(.subheadline)
-                                                        .foregroundColor(.gymtimeTextSecondary)
-                                                        .frame(width: dataColumnWidth)
-                                                        .frame(height: cellHeight)
-                                                        .background(Color.black.opacity(0.1))
+                        }
+                        
+                        // Add vertical ScrollView for main content
+                        ScrollView(.vertical, showsIndicators: true) {
+                            // MAIN CONTENT AREA with fixed exercise column and scrollable data
+                            HStack(spacing: 0) {
+                                // Fixed exercise names column
+                                VStack(spacing: 0) {
+                                    if viewModel.weeklyProgressions.isEmpty {
+                                        ForEach(defaultExercises, id: \.self) { exerciseName in
+                                            Text(exerciseName)
+                                                .font(.subheadline)
+                                                .foregroundColor(.gymtimeText)
+                                                .frame(width: exerciseColumnWidth, alignment: .leading)
+                                                .frame(height: cellHeight)
+                                                .padding(.horizontal, 8)
+                                                .background(Color.black.opacity(0.15))
+                                        }
+                                    } else {
+                                        ForEach(getUniqueExercises(), id: \.self) { exerciseName in
+                                            Text(exerciseName)
+                                                .font(.subheadline)
+                                                .foregroundColor(.gymtimeText)
+                                                .frame(width: exerciseColumnWidth, alignment: .leading)
+                                                .frame(height: cellHeight)
+                                                .padding(.horizontal, 8)
+                                                .background(Color.black.opacity(0.15))
+                                        }
+                                    }
+                                }
+                                
+                                // SINGLE HORIZONTAL SCROLLVIEW for all data columns
+                                ScrollView(.horizontal, showsIndicators: false) {
+                                    // HStack of week columns
+                                    HStack(spacing: 0) {
+                                        if viewModel.weeklyProgressions.isEmpty {
+                                            // Show empty cells for default exercises
+                                            ForEach(0..<4) { _ in
+                                                VStack(spacing: 0) {
+                                                    ForEach(defaultExercises, id: \.self) { _ in
+                                                        Text("-")
+                                                            .font(.subheadline)
+                                                            .foregroundColor(.gymtimeTextSecondary)
+                                                            .frame(width: dataColumnWidth)
+                                                            .frame(height: cellHeight)
+                                                            .background(Color.black.opacity(0.1))
+                                                    }
+                                                }
+                                            }
+                                        } else {
+                                            ForEach(viewModel.weeklyProgressions) { week in
+                                                VStack(spacing: 0) {
+                                                    ForEach(getUniqueExercises(), id: \.self) { exerciseName in
+                                                        if let exercise = findExercise(week: week, exerciseName: exerciseName) {
+                                                            ProgressDataCell(
+                                                                exercise: exercise,
+                                                                width: dataColumnWidth,
+                                                                height: cellHeight
+                                                            )
+                                                        } else {
+                                                            Text("-")
+                                                                .font(.subheadline)
+                                                                .foregroundColor(.gymtimeTextSecondary)
+                                                                .frame(width: dataColumnWidth)
+                                                                .frame(height: cellHeight)
+                                                                .background(Color.black.opacity(0.1))
+                                                        }
+                                                    }
                                                 }
                                             }
                                         }
@@ -196,21 +168,65 @@ struct ProgressionView: View {
                             }
                         }
                     }
+                    .opacity(viewModel.weeklyProgressions.isEmpty ? 0.3 : 1) // Fade the chart when empty
                 }
-                .opacity(appearAnimation ? 1 : 0)
-                .animation(.easeIn(duration: 0.6), value: appearAnimation)
-                .transition(.opacity.combined(with: .move(edge: .bottom)))
+            }
+            
+            // Overlay message when no workouts
+            if viewModel.weeklyProgressions.isEmpty && viewModel.hasAttemptedFetch {
+                VStack {
+                    Text("This chart tracks your weekly progress.")
+                        .font(.headline)
+                        .foregroundColor(.gymtimeText)
+                    Text("Log workouts to get started.")
+                        .font(.subheadline)
+                        .foregroundColor(.gymtimeTextSecondary)
+                }
+                .padding(20)
+                .background(Color.black.opacity(0.7))
+                .cornerRadius(12)
             }
         }
         .background(Color.gymtimeBackground)
         .navigationBarTitle("Progression", displayMode: .inline)
-        .animation(.easeInOut(duration: 0.3), value: viewModel.isLoading)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button {
+                    Task {
+                        await viewModel.fetchWorkoutProgression()
+                    }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .foregroundColor(.gymtimeAccent)
+                }
+            }
+        }
         .onAppear {
-            // Trigger the appear animation after a short delay
+            // Trigger the appear animation
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 appearAnimation = true
             }
+            
+            // Load data if needed
+            if viewModel.weeklyProgressions.isEmpty {
+                Task {
+                    await viewModel.fetchWorkoutProgression()
+                }
+            }
         }
+    }
+    
+    // Helper to get default week date ranges for empty state
+    private func getDefaultWeekDates(weekOffset: Int) -> String {
+        let calendar = Calendar.current
+        let now = Date()
+        let weekStart = calendar.date(byAdding: .weekOfYear, value: -weekOffset, to: now)!
+        let weekEnd = calendar.date(byAdding: .day, value: 6, to: weekStart)!
+        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM d"
+        
+        return "\(formatter.string(from: weekStart)) - \(formatter.string(from: weekEnd))"
     }
     
     // Helper to get unique exercises across all weeks

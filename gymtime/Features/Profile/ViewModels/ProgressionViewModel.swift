@@ -37,18 +37,21 @@ class ProgressionViewModel: ObservableObject {
     @Published var weeklyProgressions: [WeeklyProgression] = []
     @Published var isLoading = false
     @Published var error: String?
+    @Published var hasAttemptedFetch = false
     
     // Number of weeks to look back
     private let weekLookback = 6
     
     // MARK: - Initialization
     init() {
-        // No automatic data fetching on init
+        // No automatic loading on init
     }
     
     // MARK: - Public Methods
     /// Fetches workout progression data for the past several weeks
     func fetchWorkoutProgression() async {
+        if isLoading { return }
+        
         isLoading = true
         error = nil
         
@@ -99,7 +102,12 @@ class ProgressionViewModel: ObservableObject {
             // Calculate improvements by comparing weeks
             weeklyData = calculateImprovements(weeklyData)
             
-            weeklyProgressions = weeklyData
+            // Only update weeklyProgressions if we actually found data
+            if !weeklyData.isEmpty && weeklyData.first?.exercises.isEmpty == false {
+                weeklyProgressions = weeklyData
+            }
+            
+            hasAttemptedFetch = true
             
         } catch {
             self.error = "Failed to load progression data: \(error.localizedDescription)"

@@ -14,6 +14,7 @@ struct ProfileView: View {
     @EnvironmentObject private var coordinator: AppCoordinator
     @State private var showingAuth = false
     @State private var showingLogoutConfirmation = false
+    @State private var isRefreshing = false
     
     // Tooltip state
     @State private var hasSeenTooltip = false
@@ -23,19 +24,7 @@ struct ProfileView: View {
     var body: some View {
         NavigationView {
             ScrollView {
-                if viewModel.isLoading {
-                    VStack {
-                        Spacer()
-                        ProgressView()
-                            .tint(.gymtimeText)
-                            .scaleEffect(1.5)
-                            .padding(.top, 100)
-                        Text("Loading profile...")
-                            .foregroundColor(.gymtimeTextSecondary)
-                            .padding(.top)
-                        Spacer()
-                    }
-                } else if let error = viewModel.error {
+                if let error = viewModel.error {
                     VStack {
                         Spacer()
                         Image(systemName: "exclamationmark.triangle")
@@ -48,7 +37,7 @@ struct ProfileView: View {
                             .padding()
                         Button("Try Again") {
                             Task {
-                                await viewModel.refreshProfile()
+                                await refreshData()
                             }
                         }
                         .padding()
@@ -90,7 +79,9 @@ struct ProfileView: View {
                                         .font(.title2)
                                         .foregroundColor(.gymtimeAccent)
                                 }
+                                .padding(.top, 4)  // Added padding above the edit button
                             }
+                            .padding(.vertical, 4)  // Added vertical padding to the entire VStack
                             
                             Spacer()
                         }
@@ -117,7 +108,7 @@ struct ProfileView: View {
                         }
                         .padding(.horizontal)
                         
-                        // Strength Progression Section (in place of Milestones)
+                        // Strength Progression Section
                         VStack(alignment: .leading, spacing: 16) {
                             HStack {
                                 Text("STRENGTH PROGRESSION")
@@ -139,18 +130,20 @@ struct ProfileView: View {
                                 .padding(.horizontal)
                         }
                         
-                        // Progress Section - Keep current chart functionality with original aesthetic spacing
-                        if !viewModel.progressData.isEmpty {
-                            VStack(alignment: .leading, spacing: 16) {
-                                Text("RECENT PROGRESS")
-                                    .font(.headline)
-                                    .foregroundColor(.gymtimeTextSecondary)
-                                    .padding(.horizontal)
-                                
-                                // Progress Chart - Keep the current implementation
-                                ChartView(data: getLastWeekData(data: viewModel.progressData), dateRange: getLastWeekDateRange(data: viewModel.progressData) ?? "")
-                                    .frame(height: 200)
-                                    .padding(.horizontal)
+                        // Recent Progress Section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("RECENT PROGRESS")
+                                .font(.headline)
+                                .foregroundColor(.gymtimeTextSecondary)
+                                .padding(.horizontal)
+                            
+                            if let dateRange = getLastWeekDateRange(data: viewModel.progressData) {
+                                ChartView(
+                                    data: getLastWeekData(data: viewModel.progressData),
+                                    dateRange: dateRange
+                                )
+                                .frame(height: 300)
+                                .padding(.horizontal)
                             }
                         }
                         
@@ -186,6 +179,19 @@ struct ProfileView: View {
                 }
             )
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button {
+                        Task {
+                            await refreshData()
+                        }
+                    } label: {
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundColor(.gymtimeAccent)
+                            .rotationEffect(.degrees(isRefreshing ? 360 : 0))
+                            .animation(isRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default, value: isRefreshing)
+                    }
+                }
+                
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button {
                         showingLogoutConfirmation = true
@@ -241,6 +247,16 @@ struct ProfileView: View {
                 await viewModel.refreshProfile()
             }
         }
+    }
+    
+    private func refreshData() async {
+        isRefreshing = true
+        
+        // Refresh both view models
+        await viewModel.refreshProfile()
+        await progressionViewModel.fetchWorkoutProgression()
+        
+        isRefreshing = false
     }
 }
 

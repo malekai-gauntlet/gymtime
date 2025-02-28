@@ -7,66 +7,28 @@ struct ProgressionCard: View {
     @State private var hasInitiatedLoad = false
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            if viewModel.isLoading {
-                HStack {
-                    Spacer()
-                    ProgressView()
-                        .tint(.gymtimeText)
-                        .scaleEffect(1.2)
-                    Spacer()
-                }
-                .padding(.vertical, 8)
-            } else if let error = viewModel.error {
-                Text(error)
-                    .font(.caption)
-                    .foregroundColor(.red)
-                    .padding(.vertical, 8)
-            } else if viewModel.weeklyProgressions.isEmpty {
-                Text("No workout data found yet")
+        NavigationLink(destination: ProgressionView()) {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("YOUR WORKOUT CHART")
                     .font(.caption)
                     .foregroundColor(.gymtimeTextSecondary)
-                    .padding(.vertical, 8)
-            } else {
-                // Show the top 3 exercises with the most improvement
-                let topExercises = getTopExercises()
-                if topExercises.isEmpty {
-                    Text("Keep logging workouts to see your progress!")
-                        .font(.caption)
-                        .foregroundColor(.gymtimeTextSecondary)
-                        .padding(.vertical, 8)
-                } else {
-                    // Call-to-action styled like a StatCard
-                    NavigationLink(destination: ProgressionView()) {
-                        VStack(spacing: 8) {
-                            // Title - matching StatCard title format
-                            Text("YOUR WORKOUT CHART")
-                                .font(.caption)
-                                .foregroundColor(.gymtimeTextSecondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            
-                            // Chart icon - matching StatCard value size
-                            Image(systemName: "chart.bar.fill")
-                                .font(.system(size: 32, weight: .bold))
-                                .foregroundColor(.gymtimeText)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            
-                            // Subtitle - matching StatCard subtitle format
-                            Text("Tap to view your workout progression.")
-                                .font(.caption)
-                                .foregroundColor(.gymtimeTextSecondary)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .padding(16)
-                        .background(Color.black.opacity(0.3))
-                        .cornerRadius(12)
-                    }
-                }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                Image(systemName: "chart.bar.fill")
+                    .font(.system(size: 32, weight: .bold))
+                    .foregroundColor(.gymtimeText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                
+                Text("Tap to view your workout progression.")
+                    .font(.caption)
+                    .foregroundColor(.gymtimeTextSecondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .padding(16)
+            .frame(maxWidth: .infinity)
+            .background(Color.black.opacity(0.3))
+            .cornerRadius(12)
         }
-        .padding(16)
-        .background(Color.black.opacity(0.3))
-        .cornerRadius(12)
         // Only load data when the card becomes visible
         .onAppear {
             if !hasInitiatedLoad {
