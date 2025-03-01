@@ -91,10 +91,11 @@ class AuthenticationViewModel: ObservableObject {
         
         do {
             // Attempt to create a new user with Supabase auth
-            // We don't need to manually create a profile because our database trigger handles that
+            // Include the email as initial username in metadata
             try await supabase.auth.signUp(
                 email: email,
-                password: password
+                password: password,
+                data: ["username": .string(email), "full_name": .string("")]
             )
             
             // If successful, sign in the user

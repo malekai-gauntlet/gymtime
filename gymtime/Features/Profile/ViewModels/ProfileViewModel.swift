@@ -104,13 +104,14 @@ class ProfileViewModel: ObservableObject {
             
             // Update UI with either profile data or default anonymous values
             if profile.username?.isEmpty ?? true && profile.fullName?.isEmpty ?? true {
-                // User is anonymous or has empty profile - use default values
+                // User is anonymous - use default values
                 username = "anonymous"
                 displayName = "Anonymous User"
             } else {
                 // Use actual profile data
                 username = profile.username
-                displayName = profile.fullName
+                // If no full name is set, use the username (which is the email for new users)
+                displayName = profile.fullName?.isEmpty ?? true ? profile.username : profile.fullName
             }
             
         } catch {
