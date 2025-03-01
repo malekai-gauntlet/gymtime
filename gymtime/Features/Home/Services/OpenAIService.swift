@@ -99,7 +99,7 @@ class OpenAIService {
             // model: "gpt-4",
             
             // Groq model - using the larger model for better summaries
-            model: "llama-3.3-70b-versatile",
+            model: "llama-3.1-8b-instant",
             systemPrompt: """
             You are a fitness tracking assistant that creates concise, natural workout summaries.
             Summarize the workout in 3-4 words using common fitness terminology.
