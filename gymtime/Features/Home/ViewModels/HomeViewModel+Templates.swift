@@ -33,6 +33,62 @@ extension HomeViewModel {
         print("🔄 Loaded \(recentTemplates.count) templates")
     }
     
+    /// Applies a template to the current day
+    @MainActor
+    func applyTemplate(_ template: WorkoutTemplate) async {
+        do {
+            print("📋 Applying template from \(template.date.formatted()) to current day")
+            
+            // Fetch workouts from template date
+            let templateWorkouts: [WorkoutEntry] = try await supabase
+                .from("workouts")
+                .select()
+                .eq("user_id", value: try await supabase.auth.session.user.id)
+                .eq("date", value: template.date)
+                .order("created_at")
+                .execute()
+                .value
+            
+            print("📥 Found \(templateWorkouts.count) workouts to copy")
+            
+            // Create new workouts for today
+            let today = Calendar.current.startOfDay(for: Date())
+            let userId = try await supabase.auth.session.user.id
+            
+            for workout in templateWorkouts {
+                let newWorkout = WorkoutEntry(
+                    userId: userId,
+                    exercise: workout.exercise,
+                    muscleGroup: workout.muscleGroup,
+                    weight: workout.weight,
+                    sets: workout.sets,
+                    reps: workout.reps,
+                    date: today
+                )
+                
+                // Add to local state first
+                workouts.append(newWorkout)
+                
+                // Save to Supabase
+                try await supabase
+                    .from("workouts")
+                    .insert(newWorkout)
+                    .execute()
+            }
+            
+            print("✅ Successfully copied \(templateWorkouts.count) workouts")
+            
+            // Generate new summary for today
+            if !workouts.isEmpty {
+                await generateWorkoutSummary()
+            }
+            
+        } catch {
+            print("❌ Error applying template: \(error)")
+            self.error = "Failed to apply workout template"
+        }
+    }
+    
     /// Fetches recent unique workout summaries to use as templates
     @MainActor
     func fetchRecentTemplates() async -> [WorkoutTemplate] {

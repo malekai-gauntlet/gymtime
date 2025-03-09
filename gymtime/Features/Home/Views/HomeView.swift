@@ -73,27 +73,29 @@ struct HomeView: View {
                         
                         Spacer()
                         
-                        if !viewModel.aiWorkoutSummary.isEmpty {
-                            Menu {
-                                if viewModel.isLoadingTemplates {
-                                    Text("Loading templates...")
-                                } else if viewModel.recentTemplates.isEmpty {
-                                    Text("No recent templates")
-                                } else {
-                                    ForEach(viewModel.recentTemplates) { template in
-                                        Button(action: {
-                                            // Will be implemented in template loading step
-                                        }) {
-                                            Text(template.displayText)
+                        Menu {
+                            if viewModel.isLoadingTemplates {
+                                Text("Loading templates...")
+                            } else if viewModel.recentTemplates.isEmpty {
+                                Text("Your workout splits will display here 💯")
+                            } else {
+                                ForEach(viewModel.recentTemplates) { template in
+                                    Button(action: {
+                                        Task {
+                                            await viewModel.applyTemplate(template)
                                         }
+                                    }) {
+                                        Text(template.displayText)
                                     }
                                 }
-                            } label: {
-                                HStack(spacing: 8) {
-                                    Image(systemName: "line.3.horizontal")
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.gymtimeAccent)
-                                    
+                            }
+                        } label: {
+                            HStack(spacing: 8) {
+                                Image(systemName: "line.3.horizontal")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.gymtimeAccent)
+                                
+                                if !viewModel.aiWorkoutSummary.isEmpty {
                                     Text(viewModel.aiWorkoutSummary
                                         .trimmingCharacters(in: CharacterSet(charactersIn: "[]\""))
                                         + " Day"
@@ -101,9 +103,15 @@ struct HomeView: View {
                                         .font(.subheadline)
                                         .foregroundColor(.gymtimeTextSecondary)
                                         .animation(.easeInOut, value: viewModel.aiWorkoutSummary)
+                                } else if !viewModel.isLoadingSummary {
+                                    Text("Split")
+                                        .font(.subheadline)
+                                        .foregroundColor(.gymtimeTextSecondary)
                                 }
                             }
-                        } else if viewModel.isLoadingSummary {
+                        }
+                        
+                        if viewModel.isLoadingSummary {
                             HStack(spacing: 4) {
                                 Text("Summarizing")
                                     .font(.subheadline)

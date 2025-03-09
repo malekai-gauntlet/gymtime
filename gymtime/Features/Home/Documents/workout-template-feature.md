@@ -9,7 +9,7 @@ Allow users to quickly load previous workouts as templates by tapping the workou
 - [x] Add a menu icon (three horizontal lines in accent color) next to the workout summary text
 - [x] Make workout summary area tappable in `HomeView`
 - [x] Create a menu that appears on tap showing:
-  - Summary text & date (e.g., "Push Day • Mon 3/18")
+  - Summary text & date (e.g., "Push Day • Sun 3/9")
   - Visual separation between menu items
 - [x] Add visual feedback for tap interaction (haptic feedback)
 
@@ -20,6 +20,7 @@ Allow users to quickly load previous workouts as templates by tapping the workou
   - Group by summary to avoid duplicates
   - Limit to 4 most recent
   - Sort by date descending
+- [x] Fix timezone handling to display correct dates (UTC to local conversion)
 
 ### 3. Template Loading (Next Step)
 - [ ] Create function to fetch all workouts for a selected date
@@ -43,4 +44,5 @@ Allow users to quickly load previous workouts as templates by tapping the workou
 ## Technical Notes
 - Use existing Supabase tables and models
 - Leverage current workout data structure
-- Keep UI changes minimal for MVP 
+- Keep UI changes minimal for MVP
+- Handle dates in UTC format when displaying to avoid timezone shifts 
