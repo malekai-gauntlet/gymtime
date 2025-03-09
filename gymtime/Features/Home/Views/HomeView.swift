@@ -73,21 +73,49 @@ struct HomeView: View {
                         
                         Spacer()
                         
-                        if !viewModel.aiWorkoutSummary.isEmpty {
-                            Text(viewModel.aiWorkoutSummary
-                                .trimmingCharacters(in: CharacterSet(charactersIn: "[]\""))
-                                + " Day"
-                            )
-                                .font(.subheadline)
-                                .foregroundColor(.gymtimeTextSecondary)
-                                .animation(.easeInOut, value: viewModel.aiWorkoutSummary)
-                        } else if viewModel.isLoadingSummary {
-                            HStack(spacing: 4) {
-                                Text("Summarizing")
-                                    .font(.subheadline)
-                                    .foregroundColor(.gymtimeTextSecondary)
-                                ProgressView()
-                                    .scaleEffect(0.7)
+                        Button(action: {
+                            // Template button tapped - will be implemented in data layer
+                            let impact = UIImpactFeedbackGenerator(style: .light)
+                            impact.impactOccurred()
+                        }) {
+                            HStack(spacing: 8) {
+                                Image(systemName: "line.3.horizontal")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.gymtimeAccent)
+                                
+                                if !viewModel.aiWorkoutSummary.isEmpty {
+                                    Menu {
+                                        if viewModel.isLoadingTemplates {
+                                            Text("Loading templates...")
+                                        } else if viewModel.recentTemplates.isEmpty {
+                                            Text("No recent templates")
+                                        } else {
+                                            ForEach(viewModel.recentTemplates) { template in
+                                                Button(action: {
+                                                    // Will be implemented in template loading step
+                                                }) {
+                                                    Text(template.displayText)
+                                                }
+                                            }
+                                        }
+                                    } label: {
+                                        Text(viewModel.aiWorkoutSummary
+                                            .trimmingCharacters(in: CharacterSet(charactersIn: "[]\""))
+                                            + " Day"
+                                        )
+                                            .font(.subheadline)
+                                            .foregroundColor(.gymtimeTextSecondary)
+                                            .animation(.easeInOut, value: viewModel.aiWorkoutSummary)
+                                    }
+                                } else if viewModel.isLoadingSummary {
+                                    HStack(spacing: 4) {
+                                        Text("Summarizing")
+                                            .font(.subheadline)
+                                            .foregroundColor(.gymtimeTextSecondary)
+                                        ProgressView()
+                                            .scaleEffect(0.7)
+                                    }
+                                }
                             }
                         }
                     }
@@ -166,6 +194,11 @@ struct HomeView: View {
             }
             .onAppear {
                 print("🔍 HomeView appeared")
+                
+                // Load templates
+                Task {
+                    await viewModel.loadRecentTemplates()
+                }
                 
                 // Load onboarding state from Supabase
                 Task {

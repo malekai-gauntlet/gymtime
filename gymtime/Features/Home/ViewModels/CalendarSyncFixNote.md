@@ -51,3 +51,9 @@ private func setupDateChangeObserver() {
 
 For full documentation, see:
 - [/gymtime/Documents/CalendarWorkoutSyncIssue.md](/gymtime/Documents/CalendarWorkoutSyncIssue.md) 
+
+
+
+
+
+- [ ] Add a mini icon to the left of the workout summary text (this would be at the far left if there are no workouts and there's no workout summary) that conveys it can be tapped (otherwise users might not think to tap the workout summary text)

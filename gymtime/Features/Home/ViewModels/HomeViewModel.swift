@@ -32,6 +32,10 @@ class HomeViewModel: ObservableObject {
     @Published var libraryExercises: [Exercise] = []
     @Published var isLoadingLibrary: Bool = false
     
+    // UI State - Templates
+    @Published var recentTemplates: [WorkoutTemplate] = []
+    @Published var isLoadingTemplates: Bool = false
+    
     // Error Handling
     @Published var error: String?
     

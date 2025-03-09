@@ -92,7 +92,7 @@ extension HomeViewModel {
                 .filter { workout in
                     uniqueExercises.insert(workout.exercise).inserted
                 }
-                .prefix(10)  // Show up to 10 suggestions in the full menu
+                .prefix(15)  // Show up to 10 suggestions in the full menu
                 .map { $0 }  // Convert ArraySlice back to Array
             
             await MainActor.run {

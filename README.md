@@ -31,6 +31,7 @@ A modern, social workout tracking app that makes fitness logging seamless and en
 - **Database**: PostgreSQL (via Supabase)
 - **Voice Processing**: Custom NLP implementation
 
+
 ## Acknowledgments 🙏
 
 - Thanks to all our beta testers
