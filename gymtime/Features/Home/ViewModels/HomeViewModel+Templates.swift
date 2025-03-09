@@ -93,15 +93,17 @@ extension HomeViewModel {
     @MainActor
     func fetchRecentTemplates() async -> [WorkoutTemplate] {
         do {
-            // Get current user ID
+            // Get current user ID and today's date
             let userId = try await supabase.auth.session.user.id
+            let today = Calendar.current.startOfDay(for: Date())
             
-            // Fetch recent summaries
+            // Fetch recent summaries from days before today
             let response: [DailyWorkoutSummary] = try await supabase
                 .from("daily_workout_summaries")
                 .select()
                 .eq("user_id", value: userId)
                 .neq("summary", value: "") // Only get days with non-empty summaries
+                .lt("date", value: today)  // Only get days before today
                 .order("date", ascending: false)
                 .limit(10) // Fetch more than we need to account for duplicates
                 .execute()

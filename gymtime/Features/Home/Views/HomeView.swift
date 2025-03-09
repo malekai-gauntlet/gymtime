@@ -104,7 +104,7 @@ struct HomeView: View {
                                         .foregroundColor(.gymtimeTextSecondary)
                                         .animation(.easeInOut, value: viewModel.aiWorkoutSummary)
                                 } else if !viewModel.isLoadingSummary {
-                                    Text("Split")
+                                    Text("")
                                         .font(.subheadline)
                                         .foregroundColor(.gymtimeTextSecondary)
                                 }
