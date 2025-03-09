@@ -12,7 +12,11 @@ struct WorkoutTemplate: Identifiable {
     var displayText: String {
         let formatter = DateFormatter()
         formatter.dateFormat = "E M/d"  // e.g. "Mon 3/18"
-        return "\(summary) • \(formatter.string(from: date))"
+        formatter.timeZone = TimeZone(identifier: "UTC") // Use UTC since dates are stored in UTC
+        formatter.calendar = Calendar.current
+        let formattedDate = formatter.string(from: date)
+        print("📅 Template display - Raw date: \(date), Formatted: \(formattedDate), Timezone: \(formatter.timeZone.identifier)")
+        return "\(summary) • \(formattedDate)"
     }
 }
 
@@ -26,6 +30,7 @@ extension HomeViewModel {
         defer { isLoadingTemplates = false }
         
         recentTemplates = await fetchRecentTemplates()
+        print("🔄 Loaded \(recentTemplates.count) templates")
     }
     
     /// Fetches recent unique workout summaries to use as templates
@@ -46,6 +51,11 @@ extension HomeViewModel {
                 .execute()
                 .value
             
+            print("📥 Fetched \(response.count) summaries from Supabase")
+            if let firstDate = response.first?.date {
+                print("📅 First summary date - Raw: \(firstDate), Local: \(firstDate.formatted())")
+            }
+            
             // Process into unique templates
             var uniqueSummaries: [String: WorkoutTemplate] = [:]
             
@@ -54,6 +64,7 @@ extension HomeViewModel {
                    !summaryText.isEmpty,
                    uniqueSummaries.count < 4, // Keep only 4 most recent unique summaries
                    uniqueSummaries[summaryText] == nil {
+                    print("📝 Processing summary: \(summaryText) for date: \(summary.date.formatted())")
                     uniqueSummaries[summaryText] = WorkoutTemplate(
                         id: summary.id,
                         summary: summaryText,
@@ -63,8 +74,11 @@ extension HomeViewModel {
             }
             
             // Return sorted by date
-            return Array(uniqueSummaries.values)
+            let templates = Array(uniqueSummaries.values)
                 .sorted { $0.date > $1.date }
+            
+            print("✅ Returning \(templates.count) unique templates")
+            return templates
             
         } catch {
             print("❌ Error fetching workout templates: \(error)")
