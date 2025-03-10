@@ -55,6 +55,7 @@ extension HomeViewModel {
             let today = Calendar.current.startOfDay(for: Date())
             let userId = try await supabase.auth.session.user.id
             
+            // Add workouts one by one with animation
             for workout in templateWorkouts {
                 let newWorkout = WorkoutEntry(
                     userId: userId,
@@ -66,14 +67,11 @@ extension HomeViewModel {
                     date: today
                 )
                 
-                // Add to local state first
-                workouts.append(newWorkout)
+                // Add workout with animation
+                addWorkout(newWorkout)
                 
-                // Save to Supabase
-                try await supabase
-                    .from("workouts")
-                    .insert(newWorkout)
-                    .execute()
+                // Small delay between each workout for visual effect
+                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second delay
             }
             
             print("✅ Successfully copied \(templateWorkouts.count) workouts")
