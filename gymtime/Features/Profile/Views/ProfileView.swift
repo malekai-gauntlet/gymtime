@@ -27,6 +27,8 @@ struct ProfileView: View {
     // Add state for anonymous conversion
     @State private var showingAnonymousConversion = false
     
+    @State private var showingDeleteConfirmation = false
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -237,6 +239,12 @@ struct ProfileView: View {
                         } label: {
                             Label("Export Workouts", systemImage: "square.and.arrow.up")
                         }
+                        
+                        Button {
+                            handleDeleteAccount()
+                        } label: {
+                            Label("Delete Account", systemImage: "trash")
+                        }
                     } label: {
                         Image(systemName: "ellipsis.circle")
                             .foregroundColor(.gymtimeAccent)
@@ -262,6 +270,25 @@ struct ProfileView: View {
                     }
                 }
                 Button("Cancel", role: .cancel) { }
+            }
+            .confirmationDialog("Are you sure you want to delete your account?",
+                              isPresented: $showingDeleteConfirmation,
+                              titleVisibility: .visible) {
+                Button("Delete Account", role: .destructive) {
+                    Task {
+                        do {
+                            try await viewModel.deleteAccount()
+                            // After successful deletion, sign out and show auth screen
+                            await AuthenticationViewModel(coordinator: coordinator).signOut()
+                            showingAuth = true
+                        } catch {
+                            // Error handling is already done in the ViewModel
+                        }
+                    }
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("This action cannot be undone.")
             }
         }
         .onAppear {
@@ -335,6 +362,10 @@ struct ProfileView: View {
             // Show error alert using the ViewModel's error handler
             viewModel.handleExportError(error)
         }
+    }
+    
+    private func handleDeleteAccount() {
+        showingDeleteConfirmation = true
     }
 }
 

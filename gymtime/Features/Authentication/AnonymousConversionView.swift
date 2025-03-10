@@ -12,17 +12,27 @@ struct AnonymousConversionView: View {
     @State private var isEmailValid = false
     @State private var isPasswordValid = false
     
+    // UI states
+    @State private var isKeyboardVisible = false
+    @FocusState private var focusedField: Field?
+    @State private var showPassword = false
+    
     // Error handling
     @State private var showError = false
     @State private var errorMessage = ""
     
+    enum Field {
+        case email
+        case password
+    }
+    
     var body: some View {
         NavigationView {
-            ZStack {
-                // Background
-                Color.black.edgesIgnoringSafeArea(.all)
-                
-                VStack(spacing: 24) {
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 20) {
+                    Spacer()
+                        .frame(height: isKeyboardVisible ? 0 : 60)
+                    
                     // Header section
                     VStack(spacing: 8) {
                         Image(systemName: "shield.checkerboard")
@@ -35,89 +45,116 @@ struct AnonymousConversionView: View {
                             .fontWeight(.bold)
                             .foregroundColor(.white)
                         
-                        Text("Set your account & password so that if you get logged out you can still access your workouts.")
+                        Text("Set your login to save your workouts.")
                             .font(.subheadline)
                             .foregroundColor(.gray)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
                     }
+                    .padding(.bottom, 20)
                     
-                    // Form fields
-                    VStack(spacing: 16) {
-                        // Email field
-                        TextField("Email", text: $email)
-                            .textFieldStyle(.roundedBorder)
-                            .keyboardType(.emailAddress)
-                            .autocapitalization(.none)
-                            .padding(.horizontal)
-                        
-                        // Password field
-                        SecureField("Password", text: $password)
-                            .textFieldStyle(.roundedBorder)
-                            .padding(.horizontal)
-                    }
-                    
-                    // Action buttons
-                    VStack(spacing: 12) {
-                        // Save Account button
-                        Button(action: {
-                            Task {
-                                isLoading = true
-                                await viewModel.convertAnonymousUser(email: email, password: password)
-                                if viewModel.error == nil {
-                                    isPresented = false
-                                } else {
-                                    showError = true
-                                    errorMessage = viewModel.error?.localizedDescription ?? "An error occurred"
-                                }
-                                isLoading = false
-                            }
-                        }) {
-                            HStack {
-                                if isLoading {
-                                    ProgressView()
-                                        .tint(.white)
-                                } else {
-                                    Text("Save Account")
-                                        .fontWeight(.semibold)
-                                }
-                            }
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 16)
-                            .background(Color.gymtimeAccent)
-                            .foregroundColor(.white)
-                            .cornerRadius(12)
-                        }
+                    // Email field
+                    TextField("Email", text: $email)
+                        .textFieldStyle(.plain)
+                        .padding()
+                        .background(Color.black.opacity(0.15))
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(focusedField == .email ? Color.gymtimeAccent : Color.white.opacity(0.1), lineWidth: focusedField == .email ? 2 : 1)
+                                .animation(.easeInOut(duration: 0.1), value: focusedField)
+                        )
+                        .textContentType(.emailAddress)
+                        .keyboardType(.emailAddress)
+                        .autocapitalization(.none)
+                        .disableAutocorrection(true)
+                        .foregroundColor(.gymtimeText)
+                        .focused($focusedField, equals: .email)
                         .disabled(isLoading)
-                        .padding(.horizontal)
+                    
+                    // Password field with toggle
+                    HStack(spacing: 0) {
+                        Group {
+                            if showPassword {
+                                TextField("Password", text: $password)
+                            } else {
+                                SecureField("Password", text: $password)
+                            }
+                        }
+                        .textFieldStyle(.plain)
+                        .padding()
+                        .background(Color.black.opacity(0.15))
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(focusedField == .password ? Color.gymtimeAccent : Color.white.opacity(0.1), lineWidth: focusedField == .password ? 2 : 1)
+                                .animation(.easeInOut(duration: 0.1), value: focusedField)
+                        )
+                        .textContentType(.newPassword)
+                        .foregroundColor(.gymtimeText)
+                        .focused($focusedField, equals: .password)
+                        .disabled(isLoading)
                         
-                        // Maybe Later button
                         Button(action: {
-                            isPresented = false
+                            showPassword.toggle()
                         }) {
-                            Text("Maybe Later")
+                            Image(systemName: showPassword ? "eye.slash.fill" : "eye.fill")
                                 .foregroundColor(.gray)
+                                .frame(width: 44, height: 44)
                         }
                     }
+                    .frame(maxWidth: .infinity)
                     
-                    // Benefits section
-                    VStack(spacing: 16) {
-                        Text("Benefits of saving your account:")
-                            .font(.subheadline)
-                            .foregroundColor(.gray)
-                        
-                        // Benefits list
-                        VStack(alignment: .leading, spacing: 12) {
-                            benefitRow(icon: "lock.shield", text: "Secure your workout history")
-                            benefitRow(icon: "arrow.triangle.2.circlepath", text: "Access from any device")
-                            benefitRow(icon: "chart.line.uptrend.xyaxis", text: "Track your progress over time")
+                    // Save Account button
+                    Button(action: {
+                        Task {
+                            isLoading = true
+                            await viewModel.convertAnonymousUser(email: email, password: password)
+                            if viewModel.error == nil {
+                                isPresented = false
+                            } else {
+                                showError = true
+                                errorMessage = viewModel.error?.localizedDescription ?? "An error occurred"
+                            }
+                            isLoading = false
                         }
-                        .padding(.horizontal)
+                    }) {
+                        HStack {
+                            Spacer()
+                            if isLoading {
+                                ProgressView()
+                                    .tint(.white)
+                            } else {
+                                Text("Save Account")
+                                    .font(.headline)
+                            }
+                            Spacer()
+                        }
                     }
-                    
-                    Spacer()
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 16)
+                    .background(Color.gymtimeAccent)
+                    .foregroundColor(.white)
+                    .cornerRadius(12)
+                    .disabled(isLoading)
                 }
-                .padding(.top, 32)
+                .padding(.horizontal)
+                .animation(.easeOut(duration: 0.25), value: isKeyboardVisible)
+            }
+            .ignoresSafeArea(.keyboard, edges: .bottom)
+            .onAppear {
+                // Set up keyboard notifications
+                NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillShowNotification, object: nil, queue: .main) { _ in
+                    isKeyboardVisible = true
+                }
+                NotificationCenter.default.addObserver(forName: UIResponder.keyboardWillHideNotification, object: nil, queue: .main) { _ in
+                    isKeyboardVisible = false
+                }
+                
+                // Set initial focus
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    focusedField = .email
+                }
             }
             .navigationBarTitleDisplayMode(.inline)
         }
@@ -125,20 +162,6 @@ struct AnonymousConversionView: View {
             Button("OK", role: .cancel) { }
         } message: {
             Text(errorMessage)
-        }
-    }
-    
-    private func benefitRow(icon: String, text: String) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: icon)
-                .foregroundColor(.gymtimeAccent)
-                .frame(width: 24)
-            
-            Text(text)
-                .font(.subheadline)
-                .foregroundColor(.white)
-            
-            Spacer()
         }
     }
 }

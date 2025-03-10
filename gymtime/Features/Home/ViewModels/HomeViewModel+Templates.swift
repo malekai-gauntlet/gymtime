@@ -37,7 +37,7 @@ extension HomeViewModel {
     @MainActor
     func applyTemplate(_ template: WorkoutTemplate) async {
         do {
-            print("📋 Applying template from \(template.date.formatted()) to current day")
+            print("📋 Applying template from \(template.date.formatted()) to selected date: \(calendarState.selectedDate.formatted())")
             
             // Fetch workouts from template date
             let templateWorkouts: [WorkoutEntry] = try await supabase
@@ -51,8 +51,8 @@ extension HomeViewModel {
             
             print("📥 Found \(templateWorkouts.count) workouts to copy")
             
-            // Create new workouts for today
-            let today = Calendar.current.startOfDay(for: Date())
+            // Create new workouts for selected date
+            let selectedDate = Calendar.current.startOfDay(for: calendarState.selectedDate)
             let userId = try await supabase.auth.session.user.id
             
             // Add workouts one by one with animation
@@ -64,7 +64,7 @@ extension HomeViewModel {
                     weight: workout.weight,
                     sets: workout.sets,
                     reps: workout.reps,
-                    date: today
+                    date: selectedDate  // Use selected date instead of today
                 )
                 
                 // Add workout with animation
@@ -74,9 +74,9 @@ extension HomeViewModel {
                 try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second delay
             }
             
-            print("✅ Successfully copied \(templateWorkouts.count) workouts")
+            print("✅ Successfully copied \(templateWorkouts.count) workouts to \(selectedDate.formatted())")
             
-            // Generate new summary for today
+            // Generate new summary for selected date
             if !workouts.isEmpty {
                 await generateWorkoutSummary()
             }

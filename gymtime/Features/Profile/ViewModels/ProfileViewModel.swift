@@ -303,6 +303,31 @@ class ProfileViewModel: ObservableObject {
         
         isLoading = false
     }
+
+    // Add this near the other public methods
+    func deleteAccount() async throws {
+        do {
+            isLoading = true
+            error = nil
+            
+            // First, delete user data from profiles table
+            let userId = try await supabase.auth.session.user.id
+            try await supabase
+                .from("profiles")
+                .delete()
+                .eq("id", value: userId)
+                .execute()
+            
+            // Then sign out the user
+            try await supabase.auth.signOut()
+            
+            isLoading = false
+        } catch {
+            isLoading = false
+            self.error = "Failed to delete account: \(error.localizedDescription)"
+            throw error
+        }
+    }
 }
 
 // MARK: - Models
