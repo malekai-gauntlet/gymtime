@@ -343,13 +343,59 @@ struct Profile: Codable {
 }
 
 // MARK: - Error Types
-enum ProfileError: LocalizedError {
-    case invalidInput(String)
-    
-    var errorDescription: String? {
-        switch self {
-        case .invalidInput(let message):
-            return message
+enum ProfileError: Error {
+    case updateFailed
+    case exportFailed
+    case invalidInput(String)  // Add back the invalidInput case with an associated string value
+}
+
+extension ProfileViewModel {
+    // Export workouts to CSV
+    func exportWorkoutsToCSV() async throws -> String {
+        // CSV Headers
+        let headers = ["Date", "Exercise", "Weight", "Sets", "Reps", "Notes", "Muscle Group"]
+        var csvString = headers.joined(separator: ",") + "\n"
+        
+        do {
+            // Get current user ID
+            guard let userId = try? await supabase.auth.session.user.id else {
+                throw ProfileError.exportFailed
+            }
+            
+            // Fetch all workouts for the user
+            let workouts: [WorkoutEntry] = try await supabase
+                .from("workouts")
+                .select()
+                .eq("user_id", value: userId)
+                .order("date", ascending: true)
+                .execute()
+                .value
+            
+            // Format each workout as a CSV row
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+            
+            for workout in workouts {
+                let row = [
+                    dateFormatter.string(from: workout.date),
+                    workout.exercise.replacingOccurrences(of: ",", with: ";"),  // Escape commas
+                    workout.weight.map { String($0) } ?? "",
+                    workout.sets.map { String($0) } ?? "",
+                    workout.reps.map { String($0) } ?? "",
+                    workout.notes?.replacingOccurrences(of: ",", with: ";") ?? "",  // Escape commas
+                    workout.muscleGroup?.replacingOccurrences(of: ",", with: ";") ?? ""  // Escape commas
+                ]
+                csvString += row.joined(separator: ",") + "\n"
+            }
+            
+            return csvString
+        } catch {
+            throw ProfileError.exportFailed
         }
+    }
+
+    // Handle export errors
+    func handleExportError(_ error: Error) {
+        self.error = "Failed to export workouts: \(error.localizedDescription)"
     }
 }

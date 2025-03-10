@@ -77,7 +77,7 @@ struct HomeView: View {
                             if viewModel.isLoadingTemplates {
                                 Text("Loading templates...")
                             } else if viewModel.recentTemplates.isEmpty {
-                                Text("Your workout splits will display here 💯")
+                                Text("Workout splits of the past four days will show here.")
                             } else {
                                 ForEach(viewModel.recentTemplates) { template in
                                     Button(action: {
@@ -91,10 +91,6 @@ struct HomeView: View {
                             }
                         } label: {
                             HStack(spacing: 8) {
-                                Image(systemName: "line.3.horizontal")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.gymtimeAccent)
-                                
                                 if !viewModel.aiWorkoutSummary.isEmpty {
                                     Text(viewModel.aiWorkoutSummary
                                         .trimmingCharacters(in: CharacterSet(charactersIn: "[]\""))
@@ -108,6 +104,10 @@ struct HomeView: View {
                                         .font(.subheadline)
                                         .foregroundColor(.gymtimeTextSecondary)
                                 }
+                                
+                                Image(systemName: "line.3.horizontal")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.gymtimeAccent)
                             }
                         }
                         

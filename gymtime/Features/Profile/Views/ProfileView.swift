@@ -223,10 +223,22 @@ struct ProfileView: View {
                 }
                 
                 ToolbarItem(placement: .navigationBarTrailing) {
-                    Button {
-                        showingLogoutConfirmation = true
+                    Menu {
+                        Button {
+                            showingLogoutConfirmation = true
+                        } label: {
+                            Label("Log Out", systemImage: "rectangle.portrait.and.arrow.right")
+                        }
+                        
+                        Button {
+                            Task {
+                                await exportWorkouts()
+                            }
+                        } label: {
+                            Label("Export Workouts", systemImage: "square.and.arrow.up")
+                        }
                     } label: {
-                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                        Image(systemName: "ellipsis.circle")
                             .foregroundColor(.gymtimeAccent)
                     }
                 }
@@ -290,6 +302,39 @@ struct ProfileView: View {
         await progressionViewModel.fetchWorkoutProgression()
         
         isRefreshing = false
+    }
+    
+    private func exportWorkouts() async {
+        do {
+            let csvString = try await viewModel.exportWorkoutsToCSV()
+            
+            // Get the Documents directory
+            let documentsPath = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+            let dateFormatter = DateFormatter()
+            dateFormatter.dateFormat = "yyyy-MM-dd"
+            let fileName = "workouts_\(dateFormatter.string(from: Date())).csv"
+            let fileURL = documentsPath.appendingPathComponent(fileName)
+            
+            // Write the CSV string to the file
+            try csvString.write(to: fileURL, atomically: true, encoding: .utf8)
+            
+            // Share the file
+            let activityVC = UIActivityViewController(
+                activityItems: [fileURL],
+                applicationActivities: nil
+            )
+            
+            // Present the share sheet
+            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+               let window = windowScene.windows.first,
+               let rootViewController = window.rootViewController {
+                activityVC.popoverPresentationController?.sourceView = rootViewController.view
+                rootViewController.present(activityVC, animated: true)
+            }
+        } catch {
+            // Show error alert using the ViewModel's error handler
+            viewModel.handleExportError(error)
+        }
     }
 }
 
