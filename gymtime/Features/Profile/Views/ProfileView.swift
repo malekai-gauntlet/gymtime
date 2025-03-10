@@ -240,10 +240,12 @@ struct ProfileView: View {
                             Label("Export Workouts", systemImage: "square.and.arrow.up")
                         }
                         
-                        Button {
-                            handleDeleteAccount()
-                        } label: {
-                            Label("Delete Account", systemImage: "trash")
+                        Menu("More") {
+                            Button(role: .destructive) {
+                                handleDeleteAccount()
+                            } label: {
+                                Label("Delete Account", systemImage: "trash")
+                            }
                         }
                     } label: {
                         Image(systemName: "ellipsis.circle")

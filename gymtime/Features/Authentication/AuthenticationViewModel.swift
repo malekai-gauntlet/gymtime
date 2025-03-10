@@ -160,6 +160,38 @@ class AuthenticationViewModel: ObservableObject {
         isLoading = false
     }
     
+    // Function to delete the current user and their data
+    func deleteUser() async throws {
+        isLoading = true
+        error = nil
+        
+        do {
+            let userId = try await supabase.auth.session.user.id
+            print("🗑️ Starting deletion process for user: \(userId)")
+            
+            // Call our Edge Function to delete the user
+            let response = try await supabase.functions.invoke(
+                "delete-user",
+                options: FunctionInvokeOptions(
+                    body: ["user_id": userId]
+                )
+            )
+            
+            print("✅ Edge Function response: \(String(describing: response))")
+            
+            // Sign out locally
+            try await supabase.auth.signOut()
+            coordinator.signOut()
+            
+        } catch {
+            print("❌ Error during deletion: \(error.localizedDescription)")
+            self.error = .unknownError(error.localizedDescription)
+            throw error
+        }
+        
+        isLoading = false
+    }
+    
     // Add this method to AuthenticationViewModel
     func convertAnonymousUser(email: String, password: String) async {
         isLoading = true

@@ -77,7 +77,7 @@ struct HomeView: View {
                             if viewModel.isLoadingTemplates {
                                 Text("Loading templates...")
                             } else if viewModel.recentTemplates.isEmpty {
-                                Text("Workout splits of the past four days will show here.")
+                                Text("Workout splits of the past four sessions will show here.")
                             } else {
                                 ForEach(viewModel.recentTemplates) { template in
                                     Button(action: {

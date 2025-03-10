@@ -310,20 +310,22 @@ class ProfileViewModel: ObservableObject {
             isLoading = true
             error = nil
             
-            // First, delete user data from profiles table
-            let userId = try await supabase.auth.session.user.id
-            try await supabase
-                .from("profiles")
-                .delete()
-                .eq("id", value: userId)
-                .execute()
+            print("🔄 Starting account deletion from ProfileViewModel...")
             
-            // Then sign out the user
-            try await supabase.auth.signOut()
+            // Get user ID for logging
+            if let userId = try? await supabase.auth.session.user.id {
+                print("📍 Initiating deletion for user: \(userId)")
+            }
+            
+            // Use the AuthenticationViewModel to delete the user
+            let authViewModel = AuthenticationViewModel(coordinator: AppCoordinator())
+            try await authViewModel.deleteUser()
+            print("✅ Account deletion completed successfully")
             
             isLoading = false
         } catch {
             isLoading = false
+            print("❌ Account deletion failed: \(error.localizedDescription)")
             self.error = "Failed to delete account: \(error.localizedDescription)"
             throw error
         }
