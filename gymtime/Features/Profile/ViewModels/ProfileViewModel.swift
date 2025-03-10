@@ -30,6 +30,9 @@ class ProfileViewModel: ObservableObject {
     @Published private(set) var isLoading = false
     @Published private(set) var error: String?
     
+    // Add this property
+    @Published var isAnonymous: Bool = false
+    
     private var cancellables = Set<AnyCancellable>()
     
     init() {
@@ -107,11 +110,12 @@ class ProfileViewModel: ObservableObject {
                 // User is anonymous - use default values
                 username = "anonymous"
                 displayName = "Anonymous User"
+                isAnonymous = true
             } else {
                 // Use actual profile data
                 username = profile.username
-                // If no full name is set, use the username (which is the email for new users)
                 displayName = profile.fullName?.isEmpty ?? true ? profile.username : profile.fullName
+                isAnonymous = false
             }
             
         } catch {

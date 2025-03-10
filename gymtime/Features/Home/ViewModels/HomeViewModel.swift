@@ -39,6 +39,16 @@ class HomeViewModel: ObservableObject {
     // Error Handling
     @Published var error: String?
     
+    // Add these properties
+    @Published var showAnonymousConversion = false {
+        didSet {
+            print("🔔 HomeViewModel - showAnonymousConversion changed:")
+            print("   - Old value: \(oldValue)")
+            print("   - New value: \(showAnonymousConversion)")
+        }
+    }
+    @Published var totalWorkoutCount = 0
+    
     // MARK: - Services
     
     let audioRecordingService = AudioRecordingService()

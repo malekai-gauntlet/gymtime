@@ -60,6 +60,9 @@ struct WorkoutTableView: View {
     // Add state for showing the workout menu
     @State private var showingWorkoutMenu = false
     
+    // Add this line
+    @Binding var showingAnonymousConversion: Bool
+    
     // Column widths (proportional)
     private let exerciseWidth: CGFloat = 0.26  // Increased for longer exercise names
     private let weightWidth: CGFloat = 0.15
@@ -67,10 +70,11 @@ struct WorkoutTableView: View {
     private let repsWidth: CGFloat = 0.13      // Slightly increased for better spacing
     private let notesWidth: CGFloat = 0.27     // Reduced to accommodate other columns
     
-    init(workouts: Binding<[WorkoutEntry]>, viewModel: HomeViewModel, isEditing: Binding<Bool>) {
+    init(workouts: Binding<[WorkoutEntry]>, viewModel: HomeViewModel, isEditing: Binding<Bool>, showingAnonymousConversion: Binding<Bool>) {
         self._workouts = workouts
         self.viewModel = viewModel
         self._isEditing = isEditing
+        self._showingAnonymousConversion = showingAnonymousConversion
     }
     
     var body: some View {
@@ -314,6 +318,14 @@ struct WorkoutTableView: View {
         .ignoresSafeArea(.keyboard)  // Add this modifier to ignore keyboard adjustments
         .onChange(of: isAnyFieldEditing) { _, newValue in
             isEditing = newValue  // Update parent's editing state
+        }
+        .sheet(isPresented: $showingAnonymousConversion) {
+            AnonymousConversionView(isPresented: $showingAnonymousConversion)
+        }
+        .onChange(of: showingAnonymousConversion) { oldValue, newValue in
+            print("🔄 WorkoutTableView - showingAnonymousConversion changed:")
+            print("   - Old value: \(oldValue)")
+            print("   - New value: \(newValue)")
         }
     }
 }

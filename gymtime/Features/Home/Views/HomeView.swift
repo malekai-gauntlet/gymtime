@@ -128,7 +128,12 @@ struct HomeView: View {
                 .background(Color.gymtimeBackground)
                 
                 // Workout Table with horizontal swipe handling
-                WorkoutTableView(workouts: $viewModel.workouts, viewModel: viewModel, isEditing: $isEditing)
+                WorkoutTableView(
+                    workouts: $viewModel.workouts,
+                    viewModel: viewModel,
+                    isEditing: $isEditing,
+                    showingAnonymousConversion: $viewModel.showAnonymousConversion
+                )
                     .horizontalSwipe(
                         onSwipe: { isRight in
                             if isRight {

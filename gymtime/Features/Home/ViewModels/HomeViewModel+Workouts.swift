@@ -126,29 +126,89 @@ extension HomeViewModel {
     }
     
     func addWorkout(_ workout: WorkoutEntry) {
-        // Add to local state immediately
+        print("🏋️ Starting workout save process...")
+        
+        // Add to local state immediately for instant UI feedback
         withAnimation {
             workouts.insert(workout, at: 0)
+            print("✨ Added workout to local state immediately")
         }
         
         // Save to Supabase
         Task {
             do {
+                print("📡 Attempting to save workout to Supabase...")
+                
+                // 1. Save workout first (most important)
                 try await supabase
                     .from("workouts")
                     .insert(workout)
                     .execute()
                 
-                print("✅ Workout saved to Supabase")
+                print("✅ Workout saved to Supabase successfully")
                 
-                // Generate new summary
+                // 2. Quick check if user is anonymous (fast operation)
+                print("🔍 Checking if user is anonymous...")
+                let session = try await supabase.auth.session
+                let userEmail = session.user.email
+                print("📧 Debug - User email: \(userEmail ?? "nil")")
+                print("🔍 Debug - Session details: \(String(describing: session.user))")
+                
+                let isAnonymous = userEmail == nil || userEmail == "-" || userEmail?.isEmpty == true
+                print("👤 User anonymous status: \(isAnonymous)")
+                print("📊 Current totalWorkoutCount: \(totalWorkoutCount)")
+                print("🎯 showAnonymousConversion status: \(showAnonymousConversion)")
+                
+                // 3. Only proceed with count check if anonymous
+                if isAnonymous {
+                    print("🔄 User is anonymous, proceeding with count check...")
+                    
+                    // Check current count only if we haven't shown conversion yet
+                    if !showAnonymousConversion && totalWorkoutCount < 6 {
+                        print("📝 Conditions met for workout count check:")
+                        print("   - Haven't shown conversion: ✅")
+                        print("   - Total count < 6: ✅")
+                        
+                        // Get total workout count in background
+                        print("🔢 Fetching total workout count...")
+                        let response: [WorkoutEntry] = try await supabase
+                            .from("workouts")
+                            .select()
+                            .eq("user_id", value: session.user.id)
+                            .execute()
+                            .value
+                        
+                        let count = response.count
+                        print("📊 Retrieved total workout count: \(count)")
+                        
+                        // Update UI if we hit exactly 5
+                        await MainActor.run {
+                            self.totalWorkoutCount = count
+                            print("🔄 Updated totalWorkoutCount to: \(count)")
+                            
+                            if count == 5 {
+                                print("🎯 Hit exactly 5 workouts! Showing conversion view...")
+                                self.showAnonymousConversion = true
+                                print("🚀 Set showAnonymousConversion to true")
+                            }
+                        }
+                    } else {
+                        print("⏭️ Skipping count check because:")
+                        print("   - showAnonymousConversion: \(showAnonymousConversion)")
+                        print("   - totalWorkoutCount: \(totalWorkoutCount)")
+                    }
+                } else {
+                    print("⏭️ Skipping anonymous checks - user has email")
+                }
+                
+                // Continue with other background tasks
+                print("🔄 Proceeding with background tasks...")
                 await generateWorkoutSummary()
-                
-                // Update calendar workout dates
                 await loadWorkoutDates()
                 
             } catch {
                 print("❌ Failed to save workout: \(error)")
+                print("❌ Error details: \(String(describing: error))")
                 
                 // Remove from local state if save failed
                 if let index = workouts.firstIndex(where: { $0.id == workout.id }) {

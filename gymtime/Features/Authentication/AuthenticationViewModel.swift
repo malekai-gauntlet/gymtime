@@ -159,4 +159,43 @@ class AuthenticationViewModel: ObservableObject {
         
         isLoading = false
     }
+    
+    // Add this method to AuthenticationViewModel
+    func convertAnonymousUser(email: String, password: String) async {
+        isLoading = true
+        error = nil
+        
+        do {
+            // Basic validation
+            guard !email.isEmpty, !password.isEmpty else {
+                error = .invalidCredentials
+                isLoading = false
+                return
+            }
+            
+            // Update the anonymous user with email and password
+            try await supabase.auth.update(user: UserAttributes(
+                email: email,
+                password: password
+            ))
+            
+            // Also update the profile table with the new email as username
+            let userId = try await supabase.auth.session.user.id
+            try await supabase
+                .from("profiles")
+                .update([
+                    "username": email,
+                    "full_name": email  // Optional: you can remove this if you don't want to set full_name
+                ])
+                .eq("id", value: userId)
+                .execute()
+            
+            // If successful, tell the coordinator to update app state
+            coordinator.signIn()
+        } catch {
+            self.error = .unknownError(error.localizedDescription)
+        }
+        
+        isLoading = false
+    }
 }

@@ -24,6 +24,9 @@ struct ProfileView: View {
     // Recent Progress tooltip state
     @State private var showingProgressTooltip = false
     
+    // Add state for anonymous conversion
+    @State private var showingAnonymousConversion = false
+    
     var body: some View {
         NavigationView {
             ScrollView {
@@ -76,13 +79,17 @@ struct ProfileView: View {
                                 
                                 // Edit Button
                                 Button {
-                                    showingEditProfile = true
+                                    if viewModel.isAnonymous {
+                                        showingAnonymousConversion = true
+                                    } else {
+                                        showingEditProfile = true
+                                    }
                                 } label: {
-                                    Image(systemName: "pencil.circle.fill")
+                                    Image(systemName: viewModel.isAnonymous ? "person.crop.circle.badge.plus" : "pencil.circle.fill")
                                         .font(.title2)
                                         .foregroundColor(.gymtimeAccent)
                                 }
-                                .padding(.top, 4)  // Added padding above the edit button
+                                .padding(.top, 4)
                             }
                             .padding(.vertical, 4)  // Added vertical padding to the entire VStack
                             
@@ -226,6 +233,9 @@ struct ProfileView: View {
             }
             .sheet(isPresented: $showingEditProfile) {
                 EditProfileView(viewModel: viewModel)
+            }
+            .sheet(isPresented: $showingAnonymousConversion) {
+                AnonymousConversionView(isPresented: $showingAnonymousConversion)
             }
             .fullScreenCover(isPresented: $showingAuth) {
                 AuthenticationView(viewModel: AuthenticationViewModel(coordinator: coordinator))
