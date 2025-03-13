@@ -1,0 +1,15 @@
+  - error: "Async session access: Expression is 'async' but is not marked with 'await'"
+    solution: "Add await when accessing supabase.auth.session and remove optional binding for user.id"
+    example: |
+      // Before (error):
+      let session = supabase.auth.session
+      guard let userId = session.user.id else {
+          showingError = true
+          errorMessage = "You must be logged in to give props"
+          return
+      }
+      
+      // After (fixed):
+      let session = await supabase.auth.session
+      let userId = session.user.id
+    context: "The Supabase SDK has evolved to make auth session access asynchronous and user ID non-optional. This requires adding 'await' when accessing the session and removing optional binding for user.id. Additionally, functions that use this pattern need to be marked as async throws, and calls to these functions should use try/await with appropriate error handling." 

@@ -1,0 +1,50 @@
+---
+description: This rule is helpful for code style and styling.
+globs: 
+---
+---
+description: UI and styling standards for Gymtime
+applies_to: ["*.swift"]
+version: 0.1.0
+---
+
+# Gymtime UI Style Guide
+
+## Layout Structure
+<rule>
+name: layout_patterns
+description: Guidelines for SwiftUI layouts
+patterns:
+  - view_modifiers: "frame, padding, layoutPriority"
+
+standards:
+  - Use SwiftUI's built-in layout system
+  - Implement adaptive layouts for different screen sizes
+  - Follow consistent spacing patterns
+  - Use semantic colors and dynamic type
+
+examples:
+  good: "Adaptive layout with consistent spacing and semantic colors"
+  bad: "Hard-coded dimensions and colors"
+</rule>
+
+
+## Performance
+<rule>
+name: performance_optimization
+description: Guidelines for SwiftUI performance
+patterns:
+  - views: "LazyVStack, LazyHStack, List"
+  - loading: "AsyncImage, Task"
+
+standards:
+  - Use lazy loading for large lists
+  - Implement pagination for data fetching
+  - Optimize image loading and caching
+  - Minimize view updates
+  - Use appropriate data structures for large collections
+
+examples:
+  good: "Optimized list with lazy loading and pagination"
+  bad: "Loading entire dataset at once with eager loading"
+</rule>

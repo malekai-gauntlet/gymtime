@@ -1,0 +1,238 @@
+---
+description: This rule is helpful for when making any changes with supabase, creating tables, managing data, or auth.
+globs: 
+alwaysApply: false
+---
+ ---
+description: Supabase integration guidelines
+applies_to: ["*.swift", "*.sql"]
+version: 0.1.0
+---
+
+# Supabase MVP Development Rules
+
+## Database Design
+<rule>
+name: database_design
+description: Guidelines for Supabase database schema and table design
+patterns:
+  - tables: "*.sql"
+  - models: "*Model.swift"
+
+standards:
+  - Use UUID as primary keys
+  - Add created_at and updated_at timestamps
+  - Keep tables simple and flat
+  - Use nullable columns for new fields
+  - Default to TEXT for string fields
+  - Skip complex relations for MVP
+
+examples:
+  good: |
+    create table workouts (
+      id uuid primary key default gen_random_uuid(),
+      user_id uuid references auth.users,
+      exercise text not null,
+      weight numeric,
+      sets integer,
+      reps integer,
+      notes text,
+      created_at timestamp with time zone default now(),
+      updated_at timestamp with time zone default now()
+    );
+  bad: |
+    create table workouts (
+      id serial primary key,
+      exercise_data jsonb,
+      complex_metadata jsonb,
+      foreign_keys integer[]
+    );
+</rule>
+
+## Security
+<rule>
+name: security_mvp
+description: Simplified security approach for MVP phase
+patterns:
+  - rls: "*.sql"
+  - auth: "*Auth*.swift"
+
+standards:
+  - Disable RLS for rapid development
+  - Use simple public policies if RLS needed
+  - Keep authentication enabled but minimal
+  - Store credentials in environment variables
+
+examples:
+  good: |
+    // Simple RLS if needed
+    alter table workouts enable row level security;
+    create policy "Public access"
+      on workouts
+      for all
+      to authenticated
+      using (true);
+  bad: |
+    // Overly complex for MVP
+    create policy "Complex multi-role access"
+      on workouts
+      for select
+      to authenticated
+      using (
+        auth.uid() = user_id
+        or exists (
+          select 1 from user_roles
+          where role = 'admin'
+        )
+      );
+</rule>
+
+## API Usage
+<rule>
+name: api_usage
+description: Guidelines for Supabase API integration in Swift
+patterns:
+  - api: "*Service.swift"
+  - queries: "*Repository.swift"
+
+standards:
+  - Use single-table operations
+  - Keep queries simple (avoid joins)
+  - Handle errors gracefully but simply
+  - Use async/await for all operations
+  - Skip complex caching for MVP
+
+examples:
+  good: |
+    // Simple, direct queries
+    try await supabase.database
+        .from("workouts")
+        .select()
+        .eq("user_id", userId)
+        .execute()
+
+    // Basic error handling
+    do {
+        try await supabase.database
+            .from("workouts")
+            .insert(workout)
+            .execute()
+    } catch {
+        print("Database error: \(error)")
+    }
+  bad: |
+    // Overly complex for MVP
+    let result = try await supabase.database
+        .from("workouts")
+        .select("""
+            *,
+            user:user_id(name),
+            exercise_details:exercise_id(*)
+        """)
+        .range(0, 49)
+        .order("created_at", ascending: false)
+        .execute()
+</rule>
+
+## Storage
+<rule>
+name: storage_usage
+description: Guidelines for Supabase storage usage
+patterns:
+  - storage: "*Storage*.swift"
+
+standards:
+  - Use public buckets
+  - Keep file paths simple
+  - Skip complex folder structures
+  - Use direct file references
+
+examples:
+  good: |
+    // Simple storage path
+    let path = "\(userId)/\(filename)"
+    try await supabase.storage
+        .from("public")
+        .upload(path: path, file: data)
+  bad: |
+    // Overly complex structure
+    let path = "\(year)/\(month)/\(userId)/\(category)/\(subcategory)/\(filename)"
+</rule>
+
+learned_fixes:
+
+- error: "Async session access: Expression is 'async' but is not marked with 'await'"
+    solution: "Add await when accessing supabase.auth.session and remove optional binding for user.id"
+    example: |
+      // Before (error):
+      let session = supabase.auth.session
+      guard let userId = session.user.id else {
+          showingError = true
+          errorMessage = "You must be logged in to give props"
+          return
+      }
+      
+      // After (fixed):
+      let session = await supabase.auth.session
+      let userId = session.user.id
+    context: "The Supabase SDK has evolved to make auth session access asynchronous and user ID non-optional. This requires adding 'await' when accessing the session and removing optional binding for user.id. Additionally, functions that use this pattern need to be marked as async throws, and calls to these functions should use try/await with appropriate error handling."
+    
+
+  - error: "RLS policies blocking access in development"
+    solution: "Disable RLS for rapid development"
+    example: |
+      // Before (error):
+      -- Complex RLS causing issues
+      create policy "Restricted access"
+        on workouts for all
+        to authenticated
+        using (auth.uid() = user_id);
+      
+      // After (fixed):
+      -- Disable RLS for development
+      alter table workouts disable row level security;
+    context: "During MVP development, RLS can slow down development. It's better to add proper security policies after core functionality is working."
+
+  - error: "Multiple AuthenticationViewModel instances causing login state inconsistency"
+    solution: "Use environment object pattern for single coordinator instance"
+    example: |
+      // Before (error):
+      struct ProfileView: View {
+          @StateObject private var authViewModel = AuthenticationViewModel(coordinator: AppCoordinator())  // Creating new coordinator
+      }
+      
+      // After (fixed):
+      // In ContentView (root level)
+      struct ContentView: View {
+          @StateObject private var coordinator = AppCoordinator()
+          
+          var body: some View {
+              if coordinator.isAuthenticated {
+                  HomeCoordinator()
+                      .environmentObject(coordinator)  // Broadcast to all views
+              }
+          }
+      }
+      
+      // In any view that needs auth
+      struct ProfileView: View {
+          @EnvironmentObject private var coordinator: AppCoordinator  // Single shared instance
+      }
+    context: "Creating multiple coordinator instances can break authentication state management. Using SwiftUI's environment object pattern ensures all views share the same authentication coordinator, maintaining consistent login state across the app."
+
+
+  - error: "database is deprecated: Direct access to database is deprecated"
+    solution: "Remove .database from Supabase query chains"
+    example: |
+      // Before (error):
+      try await supabase.database
+          .from("workouts")
+          .select()
+          .execute()
+      
+      // After (fixed):
+      try await supabase
+          .from("workouts")
+          .select()
+          .execute()
+    context: "The .database property is being deprecated in favor of direct table access through .from(). This change simplifies the API while maintaining the same functionality. Update all Supabase database queries to remove the .database property from the chain."
