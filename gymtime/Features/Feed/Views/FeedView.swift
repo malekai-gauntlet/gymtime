@@ -468,6 +468,7 @@ struct FeedView: View {
                 let response: [WorkoutSessionData] = try await supabase
                     .from("workout_sessions")
                     .select()
+                    .not("username", operator: .is, value: "null")
                     .order("date", ascending: false)
                     .range(from: sessionsOffset, to: sessionsOffset + 9)
                     .execute()
