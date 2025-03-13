@@ -7,8 +7,28 @@ struct SessionFeedEntryView: View {
     // MARK: - Properties
     let session: WorkoutSessionEntry
     let onPropToggle: (String) -> Void
+    let isExpanded: Bool
     
-    @State private var isExpanded = false
+    @State private var localIsExpanded = false
+    
+    // Helper function to determine workout icon
+    private func workoutIcon() -> String {
+        let workoutName = session.workoutSummary?.lowercased() ?? ""
+        
+        if workoutName.contains("leg") {
+            return "figure.walk"
+        } else if workoutName.contains("upper body") || workoutName.contains("push") {
+            return "figure.strengthtraining.functional"
+        } else if workoutName.contains("core") {
+            return "figure.core.training"
+        } else if workoutName.contains("cardio") {
+            return "heart.circle"
+        } else if workoutName.contains("shoulder") {
+            return "figure.strengthtraining.traditional"
+        } else {
+            return "figure.highintensity.intervaltraining"
+        }
+    }
     
     // MARK: - Body
     var body: some View {
@@ -43,10 +63,20 @@ struct SessionFeedEntryView: View {
             }
             .padding(.bottom, 12)
             
-            // Session Summary Section
+            // Session Content Section
             VStack(alignment: .leading, spacing: 8) {
-                // Props Button
-                HStack(spacing: 4) {
+                // Title and Icon
+                HStack {
+                    if let summary = session.workoutSummary {
+                        Text(summary)
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                    }
+                    
+                    Image(systemName: workoutIcon())
+                        .font(.system(size: 20))
+                        .foregroundColor(.white)
+                    
                     Spacer()
                     
                     if session.propsCount > 0 {
@@ -64,39 +94,32 @@ struct SessionFeedEntryView: View {
                     }
                 }
                 
-                // Primary Exercise Highlight (if available)
-                if let summary = session.workoutSummary {
-                    HStack {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(summary)
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.white)
-                        }
-                        
-                        Spacer()
-                    }
-                }
+                // Total Volume Display
+                /*if session.totalVolume > 0 {
+                    Text("\(session.totalVolume) lbs lifted")
+                        .font(.system(size: 14))
+                        .foregroundColor(.gymtimeTextSecondary)
+                }*/
                 
                 // Expandable Exercise List
                 if session.exercises.count > 1 {
                     Button(action: {
                         withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                            isExpanded.toggle()
+                            localIsExpanded.toggle()
                         }
                     }) {
                         HStack {
-                            Text(isExpanded ? "Hide details" : "Show \(session.exercises.count) exercises")
+                            Text((isExpanded || localIsExpanded) ? "Hide details" : "Show \(session.exercises.count) exercises")
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.gymtimeAccent)
                             
-                            Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
+                            Image(systemName: (isExpanded || localIsExpanded) ? "chevron.up" : "chevron.down")
                                 .font(.system(size: 12, weight: .bold))
                                 .foregroundColor(.gymtimeAccent)
                         }
-                        .padding(.top, 8)
                     }
                     
-                    if isExpanded {
+                    if isExpanded || localIsExpanded {
                         Divider()
                             .background(Color.white.opacity(0.1))
                             .padding(.vertical, 8)
@@ -120,6 +143,14 @@ struct SessionFeedEntryView: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.white.opacity(0.1), lineWidth: 1)
         )
+        .onChange(of: isExpanded) { newValue in
+            withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                // Only update local state if it differs from global state
+                if localIsExpanded != newValue {
+                    localIsExpanded = newValue
+                }
+            }
+        }
     }
 }
 

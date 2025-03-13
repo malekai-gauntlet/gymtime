@@ -9,7 +9,7 @@ struct BottomNavBarView: View {
         HStack(spacing: 0) {
             NavBarItem(
                 icon: "doc.text.fill",
-                text: "Log",
+                text: "Workouts",
                 isSelected: selectedTab == 0
             )
             .onTapGesture { selectedTab = 0 }
@@ -31,8 +31,8 @@ struct BottomNavBarView: View {
             */
             
             NavBarItem(
-                icon: "list.bullet",
-                text: "Feed",
+                icon: "hand.thumbsup.fill",
+                text: "Props",
                 isSelected: selectedTab == 3
             )
             .onTapGesture { selectedTab = 3 }

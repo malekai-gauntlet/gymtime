@@ -17,6 +17,7 @@ struct FeedView: View {
     @State private var lastActivityReadTime: Date? = UserDefaults.standard.object(forKey: "lastActivityReadTime") as? Date
     @State private var useSessionView = true // Toggle between old and new UI during development
     @State private var sessionsOffset = 0 // Track how many sessions we've loaded
+    @State private var allSessionsExpanded = false // Track if all sessions are expanded
     
     // Tooltip state
     @State private var hasSeenTooltip = false
@@ -50,7 +51,8 @@ struct FeedView: View {
                                                 print("❌ Error toggling session props: \(error)")
                                             }
                                         }
-                                    }
+                                    },
+                                    isExpanded: allSessionsExpanded
                                 )
                                 .padding(.horizontal, 16)
                             }
@@ -181,7 +183,7 @@ struct FeedView: View {
                 .padding(.vertical, 16)
             }
             .background(Color(white: 0.08))  // Slightly lighter background
-            .navigationBarTitle("Feed", displayMode: .inline)
+            .navigationBarTitle("Props", displayMode: .inline)
             .simpleTooltip(
                 isVisible: showingTooltip,
                 title: "Activity Feed",
@@ -227,17 +229,6 @@ struct FeedView: View {
                                     .offset(x: 8, y: -8)
                             }
                         }
-                    }
-                }
-                
-                // For development: Toggle between old and new UI
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button {
-                        useSessionView.toggle()
-                    } label: {
-                        Image(systemName: useSessionView ? "list.bullet" : "list.bullet.rectangle")
-                            .font(.system(size: 18))
-                            .foregroundColor(.white)
                     }
                 }
             }
@@ -917,6 +908,14 @@ struct WorkoutSessionEntry: Identifiable {
             return "1 exercise"
         } else {
             return "\(exercises.count) exercises"
+        }
+    }
+    
+    // Calculate total volume for the session
+    var totalVolume: Int {
+        exercises.reduce(0) { total, exercise in
+            let exerciseVolume = (exercise.weight ?? 0) * Double(exercise.sets ?? 0) * Double(exercise.reps ?? 0)
+            return total + Int(exerciseVolume)
         }
     }
 }
