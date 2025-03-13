@@ -12,6 +12,7 @@ struct WorkoutEntry: Identifiable, Codable {
     var reps: Int?
     var notes: String?
     var date: Date
+    var location: String?
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -23,9 +24,10 @@ struct WorkoutEntry: Identifiable, Codable {
         case reps
         case notes
         case date
+        case location
     }
     
-    init(id: UUID = UUID(), userId: UUID, exercise: String, muscleGroup: String? = nil, weight: Double? = nil, sets: Int? = nil, reps: Int? = nil, notes: String? = nil, date: Date = Date()) {
+    init(id: UUID = UUID(), userId: UUID, exercise: String, muscleGroup: String? = nil, weight: Double? = nil, sets: Int? = nil, reps: Int? = nil, notes: String? = nil, date: Date = Date(), location: String? = nil) {
         self.id = id
         self.userId = userId
         self.exercise = exercise
@@ -35,6 +37,7 @@ struct WorkoutEntry: Identifiable, Codable {
         self.reps = reps
         self.notes = notes
         self.date = Calendar.current.startOfDay(for: date)  // Ensure we only store the date part
+        self.location = location  // Initialize location
     }
     
     // Custom encoding/decoding for date to match Supabase format
@@ -78,6 +81,7 @@ struct WorkoutEntry: Identifiable, Codable {
         try container.encodeIfPresent(sets, forKey: .sets)
         try container.encodeIfPresent(reps, forKey: .reps)
         try container.encodeIfPresent(notes, forKey: .notes)
+        try container.encodeIfPresent(location, forKey: .location)
         
         // Encode date in ISO8601 format (date only)
         let formatter = ISO8601DateFormatter()

@@ -127,6 +127,7 @@ extension HomeViewModel {
     
     func addWorkout(_ workout: WorkoutEntry) {
         print("🏋️ Starting workout save process...")
+        print("📍 Initial workout location: \(workout.location ?? "nil")")
         
         // Add to local state immediately for instant UI feedback
         withAnimation {
@@ -134,18 +135,54 @@ extension HomeViewModel {
             print("✨ Added workout to local state immediately")
         }
         
-        // Save to Supabase
+        // Save to Supabase with location
         Task {
             do {
                 print("📡 Attempting to save workout to Supabase...")
                 
-                // 1. Save workout first (most important)
+                // Get location string before saving
+                var workoutWithLocation = workout
+                print("📍 Getting location string from LocationManager...")
+                
+                // Properly await the location string
+                let locationString = await LocationManager.shared.getLocationString()
+                print("📍 Location received - Location: \(locationString ?? "nil")")
+                workoutWithLocation.location = locationString
+                
+                print("📍 Final workout location before save: \(workoutWithLocation.location ?? "nil")")
+                
+                // Debug print the full workout object
+                print("📝 Full workout object being sent to Supabase:")
+                print("   - ID: \(workoutWithLocation.id)")
+                print("   - Exercise: \(workoutWithLocation.exercise)")
+                print("   - Location: \(workoutWithLocation.location ?? "nil")")
+                print("   - Weight: \(workoutWithLocation.weight ?? 0)")
+                print("   - Sets: \(workoutWithLocation.sets ?? 0)")
+                print("   - Reps: \(workoutWithLocation.reps ?? 0)")
+                print("   - Date: \(workoutWithLocation.date)")
+                
+                // 1. Save workout with location
                 try await supabase
                     .from("workouts")
-                    .insert(workout)
+                    .insert(workoutWithLocation)
                     .execute()
                 
                 print("✅ Workout saved to Supabase successfully")
+                
+                // Update local state with location if needed
+                if workout.location != workoutWithLocation.location {
+                    print("📍 Updating local state with new location: \(workoutWithLocation.location ?? "nil")")
+                    await MainActor.run {
+                        if let index = workouts.firstIndex(where: { $0.id == workout.id }) {
+                            workouts[index].location = workoutWithLocation.location
+                            print("✅ Local state updated with location")
+                        } else {
+                            print("❌ Could not find workout in local state to update location")
+                        }
+                    }
+                } else {
+                    print("📍 No location update needed for local state")
+                }
                 
                 // 2. Quick check if user is anonymous (fast operation)
                 print("🔍 Checking if user is anonymous...")
