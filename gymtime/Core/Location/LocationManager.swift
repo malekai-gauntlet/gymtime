@@ -52,27 +52,39 @@ class LocationManager: NSObject, ObservableObject {
             print("   Name: \(placemark.name ?? "nil")")
             print("   Thoroughfare: \(placemark.thoroughfare ?? "nil")")
             print("   Locality: \(placemark.locality ?? "nil")")
+            print("   Administrative Area: \(placemark.administrativeArea ?? "nil")")
+            print("   Country: \(placemark.country ?? "nil")")
             
-            // Try to get the location name (like a business name) first
-            if let locationName = placemark.name {
-                print("✅ LocationManager: Using location name: \(locationName)")
-                return locationName
+            // Build the full address string
+            var addressComponents: [String] = []
+            
+            // Add street address if available
+            if let street = placemark.thoroughfare ?? placemark.name {
+                addressComponents.append(street)
             }
             
-            // Fall back to street address if no location name
-            if let street = placemark.thoroughfare {
-                print("✅ LocationManager: Using street name: \(street)")
-                return street
-            }
-            
-            // Fall back to city if no street
+            // Add city, state, and country if available
+            var locationComponents: [String] = []
             if let city = placemark.locality {
-                print("✅ LocationManager: Using city name: \(city)")
-                return city
+                locationComponents.append(city)
+            }
+            if let state = placemark.administrativeArea {
+                locationComponents.append(state)
+            }
+            if let country = placemark.country {
+                locationComponents.append(country)
             }
             
-            print("❌ LocationManager: No suitable location name found")
-            return nil
+            // Add the combined location components if we have any
+            if !locationComponents.isEmpty {
+                addressComponents.append(locationComponents.joined(separator: ", "))
+            }
+            
+            // Join components with comma
+            let fullAddress = addressComponents.joined(separator: ", ")
+            print("✅ LocationManager: Generated full address: \(fullAddress)")
+            return fullAddress
+            
         } catch {
             print("❌ LocationManager: Geocoding error: \(error.localizedDescription)")
             return nil

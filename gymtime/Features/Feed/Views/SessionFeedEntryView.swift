@@ -50,7 +50,7 @@ struct SessionFeedEntryView: View {
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
                     
-                    Text(session.location)
+                    Text(session.formattedLocation)
                         .font(.system(size: 14))
                         .foregroundColor(.gymtimeTextSecondary)
                 }

@@ -894,6 +894,14 @@ struct WorkoutSessionEntry: Identifiable {
         exercises.count
     }
     
+    // Format the location string to ensure consistent spacing
+    var formattedLocation: String {
+        // Split by comma and trim each part
+        let parts = location.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+        // Rejoin with proper spacing
+        return parts.joined(separator: ", ")
+    }
+    
     // Get the "hero" exercise to highlight (most impressive or challenging)
     var primaryExercise: ExerciseEntry? {
         // For now, just return the first exercise
