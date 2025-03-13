@@ -45,29 +45,22 @@ struct SessionFeedEntryView: View {
             
             // Session Summary Section
             VStack(alignment: .leading, spacing: 8) {
-                // Session Summary (e.g., 5 exercises)
-                HStack {
-                    Text(session.summary)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
-                    
+                // Props Button
+                HStack(spacing: 4) {
                     Spacer()
                     
-                    // Props Button
-                    HStack(spacing: 4) {
-                        if session.propsCount > 0 {
-                            Text("\(session.propsCount)")
-                                .font(.system(size: 14))
-                                .foregroundColor(.gymtimeTextSecondary)
-                        }
-                        
-                        Button(action: {
-                            onPropToggle(session.id)
-                        }) {
-                            Image(systemName: session.isProppedByCurrentUser ? "hand.thumbsup.fill" : "hand.thumbsup")
-                                .font(.system(size: 20))
-                                .foregroundColor(session.isProppedByCurrentUser ? .gymtimeAccent : .gymtimeTextSecondary)
-                        }
+                    if session.propsCount > 0 {
+                        Text("\(session.propsCount)")
+                            .font(.system(size: 14))
+                            .foregroundColor(.gymtimeTextSecondary)
+                    }
+                    
+                    Button(action: {
+                        onPropToggle(session.id)
+                    }) {
+                        Image(systemName: session.isProppedByCurrentUser ? "hand.thumbsup.fill" : "hand.thumbsup")
+                            .font(.system(size: 20))
+                            .foregroundColor(session.isProppedByCurrentUser ? .gymtimeAccent : .gymtimeTextSecondary)
                     }
                 }
                 
@@ -92,7 +85,7 @@ struct SessionFeedEntryView: View {
                         }
                     }) {
                         HStack {
-                            Text(isExpanded ? "Hide details" : "Show all exercises")
+                            Text(isExpanded ? "Hide details" : "Show \(session.exercises.count) exercises")
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.gymtimeAccent)
                             
