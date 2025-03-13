@@ -1,0 +1,43 @@
+---
+description: Meta rules for handling errors and updating Cursor documentation
+applies_to: ["*.mdc", "*.swift"]
+version: 0.1.0
+---
+
+# Error Documentation Process
+
+<rule>
+name: error_documentation
+description: Process for documenting errors and their solutions
+patterns:
+  - error_fix: "*Error* -> *Solution*"
+
+standards:
+  - Document each significant error and its solution
+  - Add context about why the solution works
+  - Include before/after code examples
+  - Update relevant rule files automatically
+
+process:
+  1. Identify error pattern
+  2. Document successful fix
+  3. Add to appropriate .mdc file under learned_fixes
+  4. Include:
+     - Original error
+     - Solution implemented
+     - Code example (before/after)
+     - Context/explanation
+     - File/feature where it occurred
+
+template: |
+  learned_fixes:
+    - error: "${error_description}"
+      solution: "${solution_description}"
+      example: |
+        // Before (error):
+        ${error_code}
+        
+        // After (fixed):
+        ${solution_code}
+      context: "${why_it_works}"
+</rule> 

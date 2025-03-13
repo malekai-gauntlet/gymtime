@@ -1,0 +1,165 @@
+---
+description: This rule is helpful for code style and structurek
+globs: 
+alwaysApply: false
+---
+---
+description: Core Swift and SwiftUI coding standards for Gymtime
+applies_to: ["*.swift"]
+version: 0.1.0
+---
+
+# Gymtime Code Style Guide
+
+## View Structure
+<rule>
+name: view_structure
+description: Guidelines for SwiftUI view organization
+patterns:
+  - struct: "*View.swift"
+  - protocol: "*ViewProtocol.swift"
+
+standards:
+  - Prefer small, focused views (under 100 lines)
+  - Use MVVM architecture
+  - Keep view logic separate from business logic
+
+examples:
+  good: "Modular view with clear responsibility"
+  bad: "Monolithic view with mixed concerns"
+</rule>
+
+
+## State Management
+<rule>
+name: state_management
+description: Guidelines for SwiftUI state handling
+patterns:
+  - property_wrapper: "@State, @StateObject, @Published"
+
+standards:
+  - Use @StateObject for view-owned ViewModels
+  - Use @State for simple view-local state
+  - Use @Published in ObservableObject classes
+  - Minimize global state (@EnvironmentObject)
+
+examples:
+  good: "Clear state ownership with proper property wrappers"
+  bad: "Mixed state management with unclear ownership"
+</rule>
+
+
+## Async Operations
+<rule>
+name: async_operations
+description: Guidelines for handling asynchronous operations
+patterns:
+  - async_await: "async, await, Task"
+
+standards:
+  - Use Swift concurrency (async/await) over completion handlers
+  - Handle loading and error states explicitly
+  - Perform data fetching in ViewModels, not Views
+  - Use @MainActor for UI updates
+
+examples:
+  good: "Clean async/await pattern with proper error handling"
+  bad: "Nested completion handlers with unclear error states"
+</rule>
+
+
+## File Documentation
+<rule>
+name: file_documentation
+description: Guidelines for file-level documentation
+patterns:
+  - comment: "// 📄*"
+
+standards:
+  - Every new file MUST start with a single-line comment explaining its purpose
+  - Comment must be first line of file (after license headers if present)
+  - Format: "// 📄 {purpose of this file in one line}"
+  - Keep descriptions concise (max 120 characters)
+  - Use emojis sparingly and only when they add clarity
+
+examples:
+  good: "// 📄 Handles user authentication state and login/signup logic"
+  bad: "// This file is responsible for managing the authentication state and handles the login and signup process for users in the application"
+</rule>
+
+
+learned_fixes:
+  - error: "Git resource deadlock and mmap failures when using multiple Git clients"
+    solution: "Disable Xcode's Git integration and use Cursor exclusively"
+    example: |
+      // Error messages seen:
+      - "fatal: cannot update the ref 'refs/heads/main'"
+      - "mmap failed: Operation timed out"
+      
+      // Solution steps:
+      1. Disable Xcode Git integration
+      2. Clean up Git state
+      3. Use Cursor exclusively
+    context: "Multiple Git clients (Xcode, Cursor) trying to manage the same repository causes resource conflicts and lock files"
+
+
+  - error: "Cannot find 'Config' in scope when accessing configuration values"
+    solution: "Move Config.swift file into the Features directory to make it part of the module's source files"
+    example: |
+      // Before (error):
+      // File structure:
+      gymtime/
+        ├── Config.swift           // In root - not accessible
+        └── Features/
+            └── Home/
+                └── ViewModels/
+                    └── HomeViewModel.swift
+      
+      // After (fixed):
+      gymtime/
+        └── Features/
+            ├── Config.swift       // Moved to Features - accessible
+            └── Home/
+                └── ViewModels/
+                    └── HomeViewModel.swift
+    context: "In Swift modules, source files must be in the correct module directory to be accessible. Files in the project root are not part of the module's source files and cannot be imported or accessed by other files in the module."
+
+    learned_fixes:
+  // ... existing fixes ...
+
+
+  - error: "Argument passed to call that takes no arguments when using TabView navigation"
+    solution: "Remove nested NavigationView in tab content and simplify view initialization"
+    example: |
+      // Before (error):
+      struct ProfileView: View {
+          var body: some View {
+              NavigationView {  // Nested NavigationView causes issues
+                  ScrollView { ... }
+              }
+          }
+      }
+      
+      struct ProfileCoordinator: View {
+          let username: String  // Unnecessary parameter
+          var body: some View {
+              NavigationView {
+                  ProfileView(username: username)  // Causes initialization error
+              }
+          }
+      }
+      
+      // After (fixed):
+      struct ProfileView: View {
+          var body: some View {
+              ScrollView { ... }
+                  .navigationBarTitle("Profile", displayMode: .inline)
+          }
+      }
+      
+      struct ProfileCoordinator: View {
+          var body: some View {
+              ProfileView()  // Clean, parameterless initialization
+          }
+      }
+    context: "When using TabView for navigation, each tab's content view is already wrapped in a navigation context. Adding nested NavigationViews can cause initialization and navigation stack issues. Additionally, keeping views parameter-less when possible (using ViewModels for state instead) makes them more reusable in different navigation contexts."
