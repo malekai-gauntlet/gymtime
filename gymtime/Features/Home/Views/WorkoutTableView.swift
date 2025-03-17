@@ -630,6 +630,9 @@ struct WorkoutRow: View {
     
     // Function to handle field navigation
     func navigateToField(_ field: FieldType) {
+        // Only proceed if we're not already navigating
+        guard currentlyFocusedField != field else { return }
+        
         currentlyFocusedField = field
         
         // If we're navigating away from notes, close any expanded notes
@@ -639,10 +642,9 @@ struct WorkoutRow: View {
             }
         }
         
-        // Simulate a tap on the appropriate field to focus it
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            // This ensures the previous field has time to save its value
-            // before we focus the new field
+        // Wait for cleanup to complete before focusing new field
+        DispatchQueue.main.async {
+            // This ensures the previous field has time to cleanup
             NotificationCenter.default.post(
                 name: Notification.Name("FocusField"),
                 object: nil,
