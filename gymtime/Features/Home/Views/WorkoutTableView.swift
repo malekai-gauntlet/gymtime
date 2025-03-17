@@ -843,10 +843,10 @@ struct WorkoutRow: View {
                     if !isBlankEntry && notes.count > notesThreshold {
                         Text("\(notes.prefix(notesThreshold))...")
                             .lineLimit(1)
-                            .opacity(workout.isCompleted ? 0.6 : 1.0)  // Add opacity to notes
+                            .opacity(workout.isCompleted ? 0.45 : 1.0)  // Updated opacity
                         Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                             .font(.system(size: 12))
-                            .opacity(workout.isCompleted ? 0.6 : 1.0)  // Add opacity to chevron
+                            .opacity(workout.isCompleted ? 0.45 : 1.0)  // Updated opacity
                     } else {
                         EditableCell(
                             value: notes,
@@ -866,7 +866,7 @@ struct WorkoutRow: View {
                             onNavigate: navigateToField
                         )
                         .lineLimit(1)
-                        .opacity(workout.isCompleted ? 0.6 : 1.0)  // Add opacity to notes
+                        .opacity(workout.isCompleted ? 0.45 : 1.0)  // Updated opacity
                     }
                 }
                 .frame(width: UIScreen.main.bounds.width * notesWidth, alignment: .leading)
@@ -960,16 +960,16 @@ struct WorkoutRow: View {
                 shouldShowWave = true
                 // Stagger the opacity changes to match wave movement (right to left)
                 withAnimation(.easeInOut(duration: 0.2).delay(0.05)) {
-                    repsOpacity = 0.5  // First (rightmost)
+                    repsOpacity = 0.45  // First (rightmost)
                 }
                 withAnimation(.easeInOut(duration: 0.2).delay(0.15)) {
-                    setsOpacity = 0.5  // Second
+                    setsOpacity = 0.45  // Second
                 }
                 withAnimation(.easeInOut(duration: 0.2).delay(0.25)) {
-                    weightOpacity = 0.5  // Third
+                    weightOpacity = 0.45  // Third
                 }
-                withAnimation(.easeInOut(duration: 0.2).delay(0.30)) {
-                    exerciseOpacity = 0.5  // Last (leftmost)
+                withAnimation(.easeInOut(duration: 0.2).delay(0.35)) {
+                    exerciseOpacity = 0.45  // Last (leftmost)
                 }
                 
                 // Reset wave flag after animation
