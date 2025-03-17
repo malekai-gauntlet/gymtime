@@ -63,6 +63,9 @@ struct WorkoutTableView: View {
     // Add this line
     @Binding var showingAnonymousConversion: Bool
     
+    // Add keyboard state tracking
+    @State private var keyboardHeight: CGFloat = 0
+    
     // Column widths (proportional)
     private let exerciseWidth: CGFloat = 0.26  // Increased for longer exercise names
     private let weightWidth: CGFloat = 0.15
@@ -327,6 +330,56 @@ struct WorkoutTableView: View {
             print("   - Old value: \(oldValue)")
             print("   - New value: \(newValue)")
         }
+        .onAppear {
+            setupKeyboardObservers()
+        }
+        .onDisappear {
+            removeKeyboardObservers()
+        }
+    }
+    
+    private func setupKeyboardObservers() {
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillShowNotification,
+            object: nil,
+            queue: .main
+        ) { notification in
+            print("⌨️ Keyboard will show")
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                print("   Frame: \(keyboardFrame)")
+                keyboardHeight = keyboardFrame.height
+            }
+            if let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double {
+                print("   Animation duration: \(duration)")
+            }
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardWillHideNotification,
+            object: nil,
+            queue: .main
+        ) { notification in
+            print("⌨️ Keyboard will hide")
+            keyboardHeight = 0
+            if let duration = notification.userInfo?[UIResponder.keyboardAnimationDurationUserInfoKey] as? Double {
+                print("   Animation duration: \(duration)")
+            }
+        }
+        
+        NotificationCenter.default.addObserver(
+            forName: UIResponder.keyboardDidChangeFrameNotification,
+            object: nil,
+            queue: .main
+        ) { notification in
+            print("⌨️ Keyboard frame changed")
+            if let keyboardFrame = notification.userInfo?[UIResponder.keyboardFrameEndUserInfoKey] as? CGRect {
+                print("   New frame: \(keyboardFrame)")
+            }
+        }
+    }
+    
+    private func removeKeyboardObservers() {
+        NotificationCenter.default.removeObserver(self)
     }
 }
 
@@ -390,6 +443,7 @@ struct EditableCell: View {
                         ToolbarItemGroup(placement: .keyboard) {
                             // Previous button
                             Button(action: {
+                                print("🎯 Toolbar[\(workoutId)][\(fieldType)] - Previous button tapped")
                                 if let previous = fieldType.previous {
                                     // We need to commit the current value first
                                     if editValue != value {
@@ -400,6 +454,7 @@ struct EditableCell: View {
                             }) {
                                 Image(systemName: "chevron.left")
                                     .foregroundColor(fieldType.previous != nil ? .gymtimeAccent : .gray)
+                                    .accessibilityIdentifier("toolbar-previous-\(workoutId)-\(fieldType)")
                             }
                             .disabled(fieldType.previous == nil)
                             
@@ -407,6 +462,7 @@ struct EditableCell: View {
                             
                             // Next button
                             Button(action: {
+                                print("🎯 Toolbar[\(workoutId)][\(fieldType)] - Next button tapped")
                                 if let next = fieldType.next {
                                     // We need to commit the current value first
                                     if editValue != value {
@@ -417,13 +473,15 @@ struct EditableCell: View {
                             }) {
                                 Image(systemName: "chevron.right")
                                     .foregroundColor(fieldType.next != nil ? .gymtimeAccent : .gray)
+                                    .accessibilityIdentifier("toolbar-next-\(workoutId)-\(fieldType)")
                             }
                             .disabled(fieldType.next == nil)
                             
                             Spacer()
                             
                             // Done button
-                            Button("Done") {
+                            Button(action: {
+                                print("🎯 Toolbar[\(workoutId)][\(fieldType)] - Done button tapped")
                                 if editValue != value {
                                     onChange(editValue)
                                 }
@@ -432,6 +490,9 @@ struct EditableCell: View {
                                                              to: nil,
                                                              from: nil,
                                                              for: nil)
+                            }) {
+                                Text("Done")
+                                    .accessibilityIdentifier("toolbar-done-\(workoutId)-\(fieldType)")
                             }
                         }
                     }
@@ -440,7 +501,10 @@ struct EditableCell: View {
                         print("📱 EditableCell[\(workoutId)][\(fieldType)] - TextField appeared")
                         print("   Current time: \(Date())")
                         isFocused = true
-                        isAnyFieldEditing = true
+                        // Only update isAnyFieldEditing if this is the active field
+                        if value != editValue {
+                            isAnyFieldEditing = true
+                        }
                         withAnimation {
                             scrollProxy.scrollTo(workoutId, anchor: .top)
                         }
@@ -455,19 +519,25 @@ struct EditableCell: View {
                         
                         if !focused {
                             print("   📝 Field lost focus - starting cleanup")
+                            
+                            // 1. First, commit any changes
                             if editValue != value {
                                 print("   💾 Value changed, triggering onChange")
                                 onChange(editValue)
                             }
                             
-                            print("   ⏰ Scheduling state reset with delay")
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                print("   🔄 Executing delayed state reset")
-                                print("   Before reset - isEditing: \(isEditing), isAnyFieldEditing: \(isAnyFieldEditing)")
-                                isEditing = false
+                            // 2. Reset editing state immediately
+                            print("   🔄 Resetting editing state")
+                            isEditing = false
+                            
+                            // 3. Reset parent editing state on next run loop
+                            // Remove the condition since we want to reset state regardless of value change
+                            DispatchQueue.main.async {
+                                print("   🔄 Resetting parent editing state")
                                 isAnyFieldEditing = false
-                                print("   After reset - isEditing: \(isEditing), isAnyFieldEditing: \(isAnyFieldEditing)")
                             }
+                            
+                            print("   ✅ Cleanup sequence completed")
                         }
                     }
                     .onSubmit {
