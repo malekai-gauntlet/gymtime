@@ -211,7 +211,31 @@ struct WorkoutTableView: View {
                     
                     // Plus Button
                     HStack {
+                        Button(action: {
+                            viewModel.toggleRecording()
+                        }) {
+                            ZStack {
+                                Circle()
+                                    .fill(Color(.systemGray6))
+                                    .frame(width: 52, height: 52)
+                                    .overlay(
+                                        Circle()
+                                            .strokeBorder(Color.gymtimeAccent.opacity(0.3), lineWidth: 2)
+                                    )
+                                Image(systemName: viewModel.isRecording ? "stop.circle" : "mic")
+                                    .font(.system(size: 26, weight: .semibold))
+                                    .foregroundColor(.gymtimeAccent)
+                            }
+                            .shadow(radius: 3, x: 0, y: 1)
+                        }
+                        .disabled(viewModel.isProcessing)
+                        .transaction { transaction in
+                            transaction.animation = nil
+                        }
+                        .padding(.leading, 31)
+
                         Spacer()
+                        
                         Button(action: {
                             print("Plus button tapped - Opening full screen menu")
                             showingWorkoutMenu = true
@@ -246,30 +270,6 @@ struct WorkoutTableView: View {
                             .padding(.horizontal)
                             .multilineTextAlignment(.center)
                             .transition(.opacity)
-                    }
-                    
-                    Button(action: {
-                        viewModel.toggleRecording()
-                    }) {
-                        // Use AnimationDisabled to prevent animation of button contents
-                        ZStack {  // Use ZStack to avoid layout shifts
-                            HStack {
-                                Image(systemName: viewModel.isRecording ? "stop.circle.fill" : "mic.circle.fill")
-                                    .font(.system(size: 20))
-                                Text(viewModel.isRecording ? "Stop Recording" : "Record Workout")
-                                    .font(.headline)
-                            }
-                            .foregroundColor(.white)
-                            .frame(width: UIScreen.main.bounds.width - 40)
-                            .padding(.vertical, 16)
-                            .background(viewModel.isRecording ? Color.red : Color.gymtimeAccent)
-                            .cornerRadius(12)
-                        }
-                    }
-                    .disabled(viewModel.isProcessing)
-                    // Explicitly disable animations for this button
-                    .transaction { transaction in
-                        transaction.animation = nil
                     }
                 }
                 .padding(.bottom, 25)
