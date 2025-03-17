@@ -340,9 +340,21 @@ struct EditableCell: View {
     let fieldType: FieldType
     let onNavigate: ((FieldType) -> Void)?
     
-    @State private var isEditing = false
+    @State private var isEditing = false {
+        didSet {
+            print("🔍 EditableCell[\(workoutId)][\(fieldType)] - isEditing changed: \(oldValue) -> \(isEditing)")
+            print("   Current time: \(Date())")
+        }
+    }
     @State private var editValue: String
-    @FocusState private var isFocused: Bool
+    @FocusState private var isFocused: Bool {
+        didSet {
+            print("🔍 EditableCell[\(workoutId)][\(fieldType)] - isFocused changed: \(oldValue) -> \(isFocused)")
+            print("   Current time: \(Date())")
+            print("   isEditing: \(isEditing)")
+            print("   isAnyFieldEditing: \(isAnyFieldEditing)")
+        }
+    }
     
     init(value: String, 
          onChange: @escaping (String) -> Void, 
@@ -425,21 +437,36 @@ struct EditableCell: View {
                     }
                     .toolbarRole(.editor)
                     .onAppear { 
+                        print("📱 EditableCell[\(workoutId)][\(fieldType)] - TextField appeared")
+                        print("   Current time: \(Date())")
                         isFocused = true
                         isAnyFieldEditing = true
                         withAnimation {
                             scrollProxy.scrollTo(workoutId, anchor: .top)
                         }
                     }
-                    .onChange(of: isFocused) { _, focused in
+                    .onChange(of: isFocused) { oldValue, focused in
+                        print("📱 EditableCell[\(workoutId)][\(fieldType)] - Focus change detected")
+                        print("   Old focus: \(oldValue)")
+                        print("   New focus: \(focused)")
+                        print("   Current time: \(Date())")
+                        print("   isEditing: \(isEditing)")
+                        print("   isAnyFieldEditing: \(isAnyFieldEditing)")
+                        
                         if !focused {
+                            print("   📝 Field lost focus - starting cleanup")
                             if editValue != value {
+                                print("   💾 Value changed, triggering onChange")
                                 onChange(editValue)
                             }
-                            // Ensure state is fully reset after a short delay
+                            
+                            print("   ⏰ Scheduling state reset with delay")
                             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                print("   🔄 Executing delayed state reset")
+                                print("   Before reset - isEditing: \(isEditing), isAnyFieldEditing: \(isAnyFieldEditing)")
                                 isEditing = false
                                 isAnyFieldEditing = false
+                                print("   After reset - isEditing: \(isEditing), isAnyFieldEditing: \(isAnyFieldEditing)")
                             }
                         }
                     }
@@ -706,8 +733,17 @@ struct WorkoutRow: View {
         }
         .padding(.vertical, 14)
         .contentShape(Rectangle()) // Ensure the entire row is interactive
+        .onChange(of: isAnyFieldEditing) { oldValue, newValue in
+            print("🔄 WorkoutRow[\(workout.id)] - isAnyFieldEditing changed:")
+            print("   Old value: \(oldValue)")
+            print("   New value: \(newValue)")
+            print("   Current time: \(Date())")
+        }
         .onChange(of: isExpanded) { oldValue, newValue in
-            print("🔄 Expansion state changed for workout \(workout.id): \(oldValue) -> \(newValue)")
+            print("🔄 WorkoutRow[\(workout.id)] - isExpanded changed:")
+            print("   Old value: \(oldValue)")
+            print("   New value: \(newValue)")
+            print("   Current time: \(Date())")
         }
     }
 } 

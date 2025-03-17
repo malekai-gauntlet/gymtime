@@ -188,6 +188,9 @@ struct WelcomeView: View {
                 hasAppeared = true
             }
             
+            // Try auto-login for development
+            viewModel.autoLogin()
+            
             // Fix for keyboard layout issues
             UITextField.appearance().keyboardAppearance = .dark
         }

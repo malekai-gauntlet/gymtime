@@ -65,6 +65,12 @@ class AuthenticationViewModel: ObservableObject {
             )
             // If successful, tell the coordinator to update app state
             coordinator.signIn()
+            
+            // After successful login:
+            if CommandLine.arguments.contains("-skipLogin") {
+                UserDefaults.standard.set(email, forKey: "dev_email")
+                UserDefaults.standard.set(password, forKey: "dev_password")
+            }
         } catch {
             // Map Supabase errors to our custom AuthError type
             if let authError = error as? AuthError {
@@ -229,5 +235,20 @@ class AuthenticationViewModel: ObservableObject {
         }
         
         isLoading = false
+    }
+    
+    // Add this method to AuthenticationViewModel
+    func autoLogin() {
+        if CommandLine.arguments.contains("-skipLogin") {
+            if let savedEmail = UserDefaults.standard.string(forKey: "dev_email"),
+               let savedPassword = UserDefaults.standard.string(forKey: "dev_password") {
+                // Auto login with saved credentials
+                email = savedEmail
+                password = savedPassword
+                Task {
+                    await signIn()
+                }
+            }
+        }
     }
 }

@@ -43,7 +43,14 @@ struct HomeView: View {
     @ObservedObject var viewModel: HomeViewModel
     @State private var selectedTab: Int = 0
     @State private var showingVoiceLogger = false
-    @State private var isEditing = false
+    @State private var isEditing = false {
+        didSet {
+            print("🏠 HomeView - isEditing changed:")
+            print("   Old value: \(oldValue)")
+            print("   New value: \(isEditing)")
+            print("   Current time: \(Date())")
+        }
+    }
     
     // Tooltip state tracking
     @State private var hasSeenOnboarding = false
@@ -145,6 +152,12 @@ struct HomeView: View {
                         isEditing: isEditing,
                         isSuggestionsVisible: viewModel.isSuggestionsVisible
                     )
+                    .onChange(of: isEditing) { oldValue, newValue in
+                        print("🏠 HomeView - WorkoutTableView isEditing binding changed:")
+                        print("   Old value: \(oldValue)")
+                        print("   New value: \(newValue)")
+                        print("   Current time: \(Date())")
+                    }
             }
             .background(Color.gymtimeBackground)
             .tooltip(
