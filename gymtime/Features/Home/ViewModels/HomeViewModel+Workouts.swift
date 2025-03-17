@@ -258,58 +258,68 @@ extension HomeViewModel {
     }
     
     func updateWorkoutField(id: UUID, field: String, value: String) {
-        print("🔄 Updating workout field:")
-        print("   ID: \(id)")
-        print("   Field: \(field)")
-        print("   Value: \(value)")
-        
-        // Find workout in local state
-        guard let index = workouts.firstIndex(where: { $0.id == id }) else {
-            print("❌ No workout found with id: \(id)")
-            return
-        }
-        
-        // Store previous state for rollback
-        let previousWorkout = workouts[index]
-        
-        // Create updated workout
-        var updatedWorkout = previousWorkout
-        
-        // Update the specified field
-        switch field {
-        case "exercise":
-            updatedWorkout.exercise = value
-        case "weight":
-            updatedWorkout.weight = Double(value)
-        case "sets":
-            updatedWorkout.sets = Int(value)
-        case "reps":
-            updatedWorkout.reps = Int(value)
-        case "notes":
-            updatedWorkout.notes = value
-        default:
-            return
-        }
-        
-        // Optimistically update UI
-        workouts[index] = updatedWorkout
-        
-        // Update Supabase
         Task {
             do {
+                // Update local state immediately
+                if let index = workouts.firstIndex(where: { $0.id == id }) {
+                    switch field {
+                    case "exercise":
+                        workouts[index].exercise = value
+                    case "weight":
+                        workouts[index].weight = Double(value)
+                    case "sets":
+                        workouts[index].sets = Int(value)
+                    case "reps":
+                        workouts[index].reps = Int(value)
+                    case "notes":
+                        workouts[index].notes = value
+                    default:
+                        break
+                    }
+                }
+                
+                // Update in Supabase
                 try await supabase
                     .from("workouts")
                     .update([field: value])
                     .eq("id", value: id)
                     .execute()
                 
-                print("✅ Successfully updated workout field: \(field)")
             } catch {
-                print("❌ Failed to update workout: \(error)")
-                // Rollback on failure
-                DispatchQueue.main.async {
-                    self.workouts[index] = previousWorkout
-                    self.error = "Failed to update workout"
+                print("Error updating workout: \(error)")
+                self.error = "Failed to update workout"
+            }
+        }
+    }
+    
+    // Add new function for toggling workout completion
+    func toggleWorkoutCompletion(id: UUID) {
+        Task {
+            do {
+                // Update local state immediately for responsive UI
+                if let index = workouts.firstIndex(where: { $0.id == id }) {
+                    // Toggle the completion state
+                    workouts[index].isCompleted.toggle()
+                    let newCompletionState = workouts[index].isCompleted
+                    
+                    print("🔄 Toggling workout completion - ID: \(id), New state: \(newCompletionState)")
+                    
+                    // Update in Supabase
+                    try await supabase
+                        .from("workouts")
+                        .update(["is_completed": newCompletionState])
+                        .eq("id", value: id)
+                        .execute()
+                    
+                    print("✅ Successfully updated workout completion state in Supabase")
+                }
+            } catch {
+                print("❌ Error toggling workout completion: \(error)")
+                self.error = "Failed to update workout completion status"
+                
+                // Revert local state if update failed
+                if let index = workouts.firstIndex(where: { $0.id == id }) {
+                    workouts[index].isCompleted.toggle()
                 }
             }
         }

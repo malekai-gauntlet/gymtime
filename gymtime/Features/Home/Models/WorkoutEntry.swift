@@ -13,6 +13,7 @@ struct WorkoutEntry: Identifiable, Codable {
     var notes: String?
     var date: Date
     var location: String?
+    var isCompleted: Bool
     
     enum CodingKeys: String, CodingKey {
         case id
@@ -25,9 +26,10 @@ struct WorkoutEntry: Identifiable, Codable {
         case notes
         case date
         case location
+        case isCompleted = "is_completed"
     }
     
-    init(id: UUID = UUID(), userId: UUID, exercise: String, muscleGroup: String? = nil, weight: Double? = nil, sets: Int? = nil, reps: Int? = nil, notes: String? = nil, date: Date = Date(), location: String? = nil) {
+    init(id: UUID = UUID(), userId: UUID, exercise: String, muscleGroup: String? = nil, weight: Double? = nil, sets: Int? = nil, reps: Int? = nil, notes: String? = nil, date: Date = Date(), location: String? = nil, isCompleted: Bool = false) {
         self.id = id
         self.userId = userId
         self.exercise = exercise
@@ -37,7 +39,8 @@ struct WorkoutEntry: Identifiable, Codable {
         self.reps = reps
         self.notes = notes
         self.date = Calendar.current.startOfDay(for: date)  // Ensure we only store the date part
-        self.location = location  // Initialize location
+        self.location = location
+        self.isCompleted = isCompleted  // Initialize isCompleted
     }
     
     // Custom encoding/decoding for date to match Supabase format
@@ -51,6 +54,7 @@ struct WorkoutEntry: Identifiable, Codable {
         sets = try container.decodeIfPresent(Int.self, forKey: .sets)
         reps = try container.decodeIfPresent(Int.self, forKey: .reps)
         notes = try container.decodeIfPresent(String.self, forKey: .notes)
+        isCompleted = try container.decode(Bool.self, forKey: .isCompleted)  // Decode isCompleted
         
         // Decode date with timezone information
         let dateString = try container.decode(String.self, forKey: .date)
@@ -82,6 +86,7 @@ struct WorkoutEntry: Identifiable, Codable {
         try container.encodeIfPresent(reps, forKey: .reps)
         try container.encodeIfPresent(notes, forKey: .notes)
         try container.encodeIfPresent(location, forKey: .location)
+        try container.encode(isCompleted, forKey: .isCompleted)  // Encode isCompleted
         
         // Encode date in ISO8601 format (date only)
         let formatter = ISO8601DateFormatter()

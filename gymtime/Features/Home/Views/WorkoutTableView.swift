@@ -51,6 +51,80 @@ struct BottomFadeModifier: ViewModifier {
     }
 }
 
+struct WaveAnimation: ViewModifier {
+    let isCompleted: Bool
+    @State private var isAnimating = false
+    @State private var offset: CGFloat = 0
+    
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                GeometryReader { geometry in
+                    ZStack {
+                        if isCompleted && isAnimating {
+                            // Create a wider, more organic wave effect
+                            HStack(spacing: 0) {
+                                // Left fade for curved effect
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 76/255, green: 175/255, blue: 80/255).opacity(0),
+                                        Color(red: 76/255, green: 175/255, blue: 80/255).opacity(0.12)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                                .frame(width: geometry.size.width * 0.1)
+                                
+                                // Main wave gradient
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 76/255, green: 175/255, blue: 80/255).opacity(0.12),
+                                        Color(red: 76/255, green: 175/255, blue: 80/255).opacity(0.18),
+                                        Color(red: 76/255, green: 175/255, blue: 80/255).opacity(0.12)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                                .frame(width: geometry.size.width * 0.5)
+                                
+                                // Right fade for curved effect
+                                LinearGradient(
+                                    colors: [
+                                        Color(red: 76/255, green: 175/255, blue: 80/255).opacity(0.12),
+                                        Color(red: 76/255, green: 175/255, blue: 80/255).opacity(0)
+                                    ],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                                .frame(width: geometry.size.width * 0.1)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .trailing)
+                            .blur(radius: 8)  // Reduced blur for less roundness
+                            .offset(x: offset)
+                            .zIndex(1)
+                        }
+                    }
+                }
+            }
+            .onChange(of: isCompleted) { _, newValue in
+                if newValue {
+                    offset = 0
+                    isAnimating = true
+                    // Slower animation with spring effect
+                    withAnimation(.interpolatingSpring(duration: 1.0, bounce: 0.2).delay(0.05)) {
+                        offset = -UIScreen.main.bounds.width
+                    }
+                }
+            }
+    }
+}
+
+extension View {
+    func waveAnimation(isCompleted: Bool) -> some View {
+        modifier(WaveAnimation(isCompleted: isCompleted))
+    }
+}
+
 struct WorkoutTableView: View {
     @Binding var workouts: [WorkoutEntry]
     @ObservedObject var viewModel: HomeViewModel
@@ -71,7 +145,8 @@ struct WorkoutTableView: View {
     private let weightWidth: CGFloat = 0.15
     private let setsWidth: CGFloat = 0.13      // Slightly increased for better spacing
     private let repsWidth: CGFloat = 0.13      // Slightly increased for better spacing
-    private let notesWidth: CGFloat = 0.27     // Reduced to accommodate other columns
+    private let notesWidth: CGFloat = 0.15     // Further reduced for more table padding
+    private let checkmarkWidth: CGFloat = 0.13  // Increased for larger checkmark
     
     init(workouts: Binding<[WorkoutEntry]>, viewModel: HomeViewModel, isEditing: Binding<Bool>, showingAnonymousConversion: Binding<Bool>) {
         self._workouts = workouts
@@ -97,6 +172,9 @@ struct WorkoutTableView: View {
                             .frame(width: UIScreen.main.bounds.width * repsWidth, alignment: .center)
                         Text("NOTES")
                             .frame(width: UIScreen.main.bounds.width * notesWidth, alignment: .leading)
+                        // Add empty space for checkmark column to maintain alignment
+                        Text("")
+                            .frame(width: UIScreen.main.bounds.width * checkmarkWidth)
                     }
                     .font(.system(size: 13, weight: .semibold))  // Slightly larger header text
                     .foregroundColor(.gymtimeTextSecondary)
@@ -132,6 +210,7 @@ struct WorkoutTableView: View {
                                             setsWidth: setsWidth,
                                             repsWidth: repsWidth,
                                             notesWidth: notesWidth,
+                                            checkmarkWidth: checkmarkWidth,
                                             viewModel: viewModel,
                                             isAnyFieldEditing: $isAnyFieldEditing
                                         )
@@ -223,7 +302,7 @@ struct WorkoutTableView: View {
                                             .strokeBorder(Color.gymtimeAccent.opacity(0.3), lineWidth: 2)
                                     )
                                 Image(systemName: viewModel.isRecording ? "stop.circle" : "mic")
-                                    .font(.system(size: 26, weight: .semibold))
+                                    .font(.system(size: 25, weight: .semibold))
                                     .foregroundColor(.gymtimeAccent)
                             }
                             .shadow(radius: 3, x: 0, y: 1)
@@ -391,6 +470,7 @@ struct EditableCell: View {
     let workoutId: String
     @Binding var isAnyFieldEditing: Bool
     let fieldType: FieldType
+    let textColor: Color?
     let onNavigate: ((FieldType) -> Void)?
     
     @State private var isEditing = false {
@@ -416,6 +496,7 @@ struct EditableCell: View {
          workoutId: String,
          isAnyFieldEditing: Binding<Bool>,
          fieldType: FieldType,
+         textColor: Color? = nil,
          onNavigate: ((FieldType) -> Void)? = nil) {
         self.value = value
         self.onChange = onChange
@@ -425,6 +506,7 @@ struct EditableCell: View {
         self._editValue = State(initialValue: value)
         self._isAnyFieldEditing = isAnyFieldEditing
         self.fieldType = fieldType
+        self.textColor = textColor
         self.onNavigate = onNavigate
     }
     
@@ -555,6 +637,7 @@ struct EditableCell: View {
                         RoundedRectangle(cornerRadius: 4)
                             .stroke(Color.gymtimeAccent, lineWidth: 1)
                     )
+                    .foregroundColor(textColor)
             } else {
                 Text(value)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -564,7 +647,7 @@ struct EditableCell: View {
                         editValue = value == "-" ? "" : value
                         isEditing = true
                     }
-                    .foregroundColor(value == "-" ? .gymtimeTextSecondary : .gymtimeText)
+                    .foregroundColor(textColor ?? (value == "-" ? .gymtimeTextSecondary : .gymtimeText))
                     .overlay(
                         RoundedRectangle(cornerRadius: 4)
                             .stroke(Color.gymtimeAccent.opacity(0.2), lineWidth: 1)
@@ -598,6 +681,7 @@ struct WorkoutRow: View {
     let setsWidth: CGFloat
     let repsWidth: CGFloat
     let notesWidth: CGFloat
+    let checkmarkWidth: CGFloat  // Add checkmark width
     
     @ObservedObject var viewModel: HomeViewModel
     @Binding var isAnyFieldEditing: Bool
@@ -605,6 +689,11 @@ struct WorkoutRow: View {
     @State private var currentlyFocusedField: FieldType?
     private let notesThreshold = 8
     let isBlankEntry: Bool
+    @State private var shouldShowWave = false
+    @State private var repsOpacity: CGFloat = 1.0
+    @State private var setsOpacity: CGFloat = 1.0
+    @State private var weightOpacity: CGFloat = 1.0
+    @State private var exerciseOpacity: CGFloat = 1.0
     
     init(workout: WorkoutEntry,
          scrollProxy: ScrollViewProxy,
@@ -613,6 +702,7 @@ struct WorkoutRow: View {
          setsWidth: CGFloat,
          repsWidth: CGFloat,
          notesWidth: CGFloat,
+         checkmarkWidth: CGFloat,  // Add parameter
          viewModel: HomeViewModel,
          isAnyFieldEditing: Binding<Bool>,
          isBlankEntry: Bool = false) {
@@ -623,6 +713,7 @@ struct WorkoutRow: View {
         self.setsWidth = setsWidth
         self.repsWidth = repsWidth
         self.notesWidth = notesWidth
+        self.checkmarkWidth = checkmarkWidth  // Initialize
         self.viewModel = viewModel
         self._isAnyFieldEditing = isAnyFieldEditing
         self.isBlankEntry = isBlankEntry
@@ -671,10 +762,12 @@ struct WorkoutRow: View {
                     workoutId: workout.id.uuidString,
                     isAnyFieldEditing: $isAnyFieldEditing,
                     fieldType: .exercise,
+                    textColor: nil,
                     onNavigate: navigateToField
                 )
                 .frame(width: UIScreen.main.bounds.width * exerciseWidth, alignment: .leading)
                 .font(.subheadline.weight(.medium))
+                .opacity(exerciseOpacity)
                 
                 EditableCell(
                     value: workout.weight.map { 
@@ -695,10 +788,12 @@ struct WorkoutRow: View {
                     workoutId: workout.id.uuidString,
                     isAnyFieldEditing: $isAnyFieldEditing,
                     fieldType: .weight,
+                    textColor: nil,
                     onNavigate: navigateToField
                 )
                 .frame(width: UIScreen.main.bounds.width * weightWidth, alignment: .center)
-                .foregroundColor(workout.weight == nil ? .gymtimeTextSecondary : .gymtimeText)
+                .foregroundColor(.gymtimeText)
+                .opacity(weightOpacity)
                 
                 EditableCell(
                     value: workout.sets.map { "\($0)" } ?? "-",
@@ -714,10 +809,12 @@ struct WorkoutRow: View {
                     workoutId: workout.id.uuidString,
                     isAnyFieldEditing: $isAnyFieldEditing,
                     fieldType: .sets,
+                    textColor: nil,
                     onNavigate: navigateToField
                 )
                 .frame(width: UIScreen.main.bounds.width * setsWidth, alignment: .center)
-                .foregroundColor(workout.sets == nil ? .gymtimeTextSecondary : .gymtimeText)
+                .foregroundColor(.gymtimeText)
+                .opacity(setsOpacity)
                 
                 EditableCell(
                     value: workout.reps.map { "\($0)" } ?? "-",
@@ -733,10 +830,12 @@ struct WorkoutRow: View {
                     workoutId: workout.id.uuidString,
                     isAnyFieldEditing: $isAnyFieldEditing,
                     fieldType: .reps,
+                    textColor: nil,
                     onNavigate: navigateToField
                 )
                 .frame(width: UIScreen.main.bounds.width * repsWidth, alignment: .center)
-                .foregroundColor(workout.reps == nil ? .gymtimeTextSecondary : .gymtimeText)
+                .foregroundColor(.gymtimeText)
+                .opacity(repsOpacity)
                 
                 // Notes column with expansion
                 HStack(spacing: 4) {
@@ -744,8 +843,10 @@ struct WorkoutRow: View {
                     if !isBlankEntry && notes.count > notesThreshold {
                         Text("\(notes.prefix(notesThreshold))...")
                             .lineLimit(1)
+                            .opacity(workout.isCompleted ? 0.6 : 1.0)  // Add opacity to notes
                         Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
                             .font(.system(size: 12))
+                            .opacity(workout.isCompleted ? 0.6 : 1.0)  // Add opacity to chevron
                     } else {
                         EditableCell(
                             value: notes,
@@ -761,14 +862,16 @@ struct WorkoutRow: View {
                             workoutId: workout.id.uuidString,
                             isAnyFieldEditing: $isAnyFieldEditing,
                             fieldType: .notes,
+                            textColor: nil,
                             onNavigate: navigateToField
                         )
                         .lineLimit(1)
+                        .opacity(workout.isCompleted ? 0.6 : 1.0)  // Add opacity to notes
                     }
                 }
                 .frame(width: UIScreen.main.bounds.width * notesWidth, alignment: .leading)
                 .font(.subheadline)
-                .foregroundColor(.gymtimeTextSecondary)
+                .foregroundColor(.gymtimeText)
                 .onTapGesture {
                     if !isBlankEntry && (workout.notes?.count ?? 0) > notesThreshold {
                         withAnimation(.easeInOut(duration: 0.3)) {
@@ -776,6 +879,38 @@ struct WorkoutRow: View {
                         }
                     }
                 }
+                
+                // Add checkmark button
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+                        viewModel.toggleWorkoutCompletion(id: workout.id)
+                    }
+                    // Add haptic feedback
+                    let generator = UIImpactFeedbackGenerator(style: .medium)
+                    generator.impactOccurred()
+                }) {
+                    ZStack {
+                        // Circle border
+                        Circle()
+                            .strokeBorder(Color.gymtimeTextSecondary.opacity(0.3), lineWidth: 1.5)
+                            .frame(width: 26, height: 26)
+                        
+                        // Always show checkmark, but style it differently based on state
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(workout.isCompleted ? .white : Color.gymtimeTextSecondary.opacity(0.5))
+                        
+                        // Filled background when completed
+                        if workout.isCompleted {
+                            Circle()
+                                .fill(Color(red: 76/255, green: 175/255, blue: 80/255))  // Material Design Green 500
+                                .frame(width: 26, height: 26)
+                                .zIndex(-1)
+                        }
+                    }
+                }
+                .frame(width: UIScreen.main.bounds.width * checkmarkWidth)
+                .opacity(isBlankEntry ? 0 : 1) // Hide checkmark for blank entries
             }
             .padding(.horizontal, 24)
             .padding(.bottom, isExpanded && (workout.notes?.count ?? 0) > notesThreshold ? 14 : 0)  // Add dynamic padding
@@ -792,10 +927,11 @@ struct WorkoutRow: View {
                     workoutId: workout.id.uuidString,
                     isAnyFieldEditing: $isAnyFieldEditing,
                     fieldType: .notes,
+                    textColor: nil,
                     onNavigate: navigateToField
                 )
                 .font(.subheadline)
-                .foregroundColor(.gymtimeTextSecondary)
+                .foregroundColor(.gymtimeText)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 24)
                 .padding(.vertical, 8)
@@ -816,6 +952,39 @@ struct WorkoutRow: View {
             print("   Old value: \(oldValue)")
             print("   New value: \(newValue)")
             print("   Current time: \(Date())")
+        }
+        .frame(minHeight: 65) // Add minimum height to ensure consistency
+        .waveAnimation(isCompleted: shouldShowWave)
+        .onChange(of: workout.isCompleted) { _, newValue in
+            if newValue {
+                shouldShowWave = true
+                // Stagger the opacity changes to match wave movement (right to left)
+                withAnimation(.easeInOut(duration: 0.2).delay(0.05)) {
+                    repsOpacity = 0.5  // First (rightmost)
+                }
+                withAnimation(.easeInOut(duration: 0.2).delay(0.15)) {
+                    setsOpacity = 0.5  // Second
+                }
+                withAnimation(.easeInOut(duration: 0.2).delay(0.25)) {
+                    weightOpacity = 0.5  // Third
+                }
+                withAnimation(.easeInOut(duration: 0.2).delay(0.30)) {
+                    exerciseOpacity = 0.5  // Last (leftmost)
+                }
+                
+                // Reset wave flag after animation
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                    shouldShowWave = false
+                }
+            } else {
+                // Reset all opacities when unchecking
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    repsOpacity = 1.0
+                    setsOpacity = 1.0
+                    weightOpacity = 1.0
+                    exerciseOpacity = 1.0
+                }
+            }
         }
     }
 } 
