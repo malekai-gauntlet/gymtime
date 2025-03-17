@@ -6,6 +6,7 @@
  */
 
 import SwiftUI
+import UIKit
 
 struct ProfileView: View {
     @StateObject private var viewModel = ProfileViewModel()
@@ -28,6 +29,9 @@ struct ProfileView: View {
     @State private var showingAnonymousConversion = false
     
     @State private var showingDeleteConfirmation = false
+    
+    // Feedback state
+    @State private var showingFeedbackModal = false
     
     var body: some View {
         NavigationView {
@@ -240,6 +244,12 @@ struct ProfileView: View {
                             Label("Export Workouts", systemImage: "square.and.arrow.up")
                         }
                         
+                        Button {
+                            showingFeedbackModal = true
+                        } label: {
+                            Label("Send Feedback", systemImage: "message")
+                        }
+                        
                         Menu("More") {
                             Button(role: .destructive) {
                                 handleDeleteAccount()
@@ -261,6 +271,18 @@ struct ProfileView: View {
             }
             .fullScreenCover(isPresented: $showingAuth) {
                 AuthenticationView(viewModel: AuthenticationViewModel(coordinator: coordinator))
+            }
+            .alert("Have feedback or want a feature?", isPresented: $showingFeedbackModal) {
+                Button("Cancel", role: .cancel) {
+                    showingFeedbackModal = false
+                }
+                Button("Send Text") {
+                    if let url = URL(string: "sms:+16128675255&body=Gymtime%20App%20Feature%20Request:%20") {
+                        UIApplication.shared.open(url)
+                    }
+                }
+            } message: {
+                Text("Feel free to SMS any feedback.")
             }
             .confirmationDialog("Are you sure you want to log out?", 
                               isPresented: $showingLogoutConfirmation,

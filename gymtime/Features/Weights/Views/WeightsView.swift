@@ -174,6 +174,9 @@ struct WeightsView: View {
     @State private var isLoadingTooltipState = true
     @State private var showingTooltip = false
     
+    // Feedback modal state
+    @State private var showingFeedbackModal = false
+    
     // Get today's date for the header
     private var formattedDate: String {
         let today = Date()
@@ -306,7 +309,38 @@ struct WeightsView: View {
                         }
                     }
                 )
+                
+                // Floating Feedback Button
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Button {
+                            showingFeedbackModal = true
+                        } label: {
+                            Image(systemName: "message.circle.fill")
+                                .font(.system(size: 32))
+                                .foregroundColor(.gymtimeAccent)
+                                .shadow(color: .black.opacity(0.3), radius: 4, x: 0, y: 2)
+                        }
+                        .padding(.trailing, 16)
+                        .padding(.bottom, 16) // Reduced bottom padding to match HomeView plus button
+                    }
+                }
+                .zIndex(1)
             }
+        }
+        .alert("Have feedback or want a feature?", isPresented: $showingFeedbackModal) {
+            Button("Cancel", role: .cancel) {
+                showingFeedbackModal = false
+            }
+            Button("Send Text") {
+                if let url = URL(string: "sms:+16128675255&body=Gymtime%20App%20Feature%20Request:%20") {
+                    UIApplication.shared.open(url)
+                }
+            }
+        } message: {
+            Text("Feel free to SMS any feedback.")
         }
         .alert("Error", isPresented: Binding(
             get: { viewModel.error != nil },
