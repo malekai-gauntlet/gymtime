@@ -219,15 +219,15 @@ struct FeedView: View {
                                 .foregroundColor(.gymtimeAccent)
                                 .padding(5)
                             
-                            if unreadActivityCount > 0 {
-                                Text("\(unreadActivityCount)")
-                                    .font(.system(size: 12, weight: .bold))
-                                    .foregroundColor(.white)
-                                    .frame(width: 20, height: 20)
-                                    .background(Color.red)
-                                    .clipShape(Circle())
-                                    .offset(x: 8, y: -8)
-                            }
+                            // if unreadActivityCount > 0 {
+                            //     Text("\(unreadActivityCount)")
+                            //         .font(.system(size: 12, weight: .bold))
+                            //         .foregroundColor(.white)
+                            //         .frame(width: 20, height: 20)
+                            //         .background(Color.red)
+                            //         .clipShape(Circle())
+                            //         .offset(x: 8, y: -8)
+                            // }
                         }
                     }
                 }

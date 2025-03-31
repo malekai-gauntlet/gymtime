@@ -14,7 +14,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         // Request location permission when app launches
-        LocationManager.shared.requestLocationPermission()
+        // LocationManager.shared.requestLocationPermission()
         return true
     }
 

@@ -21,21 +21,22 @@ struct BottomNavBarView: View {
             )
             .onTapGesture { selectedTab = 1 }
             
-            /* PT View - Commented out
+            // PT View - Replaced with Progression View
             NavBarItem(
-                icon: "dumbbell.fill",
-                text: "PT", 
+                icon: "chart.line.uptrend.xyaxis",
+                text: "Progression",
                 isSelected: selectedTab == 2
             )
             .onTapGesture { selectedTab = 2 }
-            */
             
+            /* Props View - Commented out
             NavBarItem(
                 icon: "hand.thumbsup.fill",
                 text: "Props",
                 isSelected: selectedTab == 3
             )
             .onTapGesture { selectedTab = 3 }
+            */
             
             NavBarItem(
                 icon: "person.fill",

@@ -22,7 +22,7 @@ struct HomeCoordinator: View {
                     WeightsCoordinator(supabase: supabase)
                         .tag(1)
                     
-                    PTView(viewModel: PTViewModel(homeViewModel: viewModel), selectedTab: $selectedTab)
+                    ProgressionView()
                         .tag(2)
                     
                     FeedView()

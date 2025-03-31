@@ -1,5 +1,10 @@
 # Anonymous User Conversion Feature
 
+# Authentication Features Directory
+
+This directory contains documentation and implementation details for authentication-related features in the gymtime app, including anonymous user flows, account conversion, and user authentication state management.
+
+
 ## Overview
 To prevent data loss for anonymous users, we'll implement a prompt to convert their account after logging 3 workouts.
 

@@ -960,16 +960,16 @@ struct WorkoutRow: View {
                 shouldShowWave = true
                 // Stagger the opacity changes to match wave movement (right to left)
                 withAnimation(.easeInOut(duration: 0.2).delay(0.05)) {
-                    repsOpacity = 0.45  // First (rightmost)
+                    repsOpacity = 0.40  // First (rightmost)
                 }
                 withAnimation(.easeInOut(duration: 0.2).delay(0.15)) {
-                    setsOpacity = 0.45  // Second
+                    setsOpacity = 0.40  // Second
                 }
                 withAnimation(.easeInOut(duration: 0.2).delay(0.25)) {
-                    weightOpacity = 0.45  // Third
+                    weightOpacity = 0.40  // Third
                 }
                 withAnimation(.easeInOut(duration: 0.2).delay(0.35)) {
-                    exerciseOpacity = 0.45  // Last (leftmost)
+                    exerciseOpacity = 0.40  // Last (leftmost)
                 }
                 
                 // Reset wave flag after animation
