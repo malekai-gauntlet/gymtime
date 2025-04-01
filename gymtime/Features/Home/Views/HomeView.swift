@@ -164,7 +164,7 @@ struct HomeView: View {
                 isVisible: showingRecordTooltip,
                 title: "Record Your Workout",
                 message: "Log your workout with voice",
-                arrowOffset: CGPoint(x: 0, y: 220),
+                arrowOffset: CGPoint(x: -79, y: 220),
                 onDismiss: {
                     showingRecordTooltip = false
                     if !hasSeenOnboarding {
@@ -173,11 +173,11 @@ struct HomeView: View {
                     }
                 }
             )
-            .tooltip(
+            .simpleTooltip(
                 isVisible: showingExampleTooltip,
                 title: "You can say:",
                 message: "\"Shoulder Press, 35lbs, 3 sets 8 reps, felt great\"",
-                arrowOffset: CGPoint(x: 0, y: 220),
+                position: CGPoint(x: 0, y: 220),
                 onDismiss: {
                     showingExampleTooltip = false
                     if !hasSeenOnboarding {
@@ -204,7 +204,7 @@ struct HomeView: View {
                 isVisible: showingPlusTooltip,
                 title: "Add Exercises",
                 message: "Add exercises manually",
-                arrowOffset: CGPoint(x: 77, y: 163),
+                arrowOffset: CGPoint(x: 78, y: 220),
                 onDismiss: {
                     showingPlusTooltip = false
                 }

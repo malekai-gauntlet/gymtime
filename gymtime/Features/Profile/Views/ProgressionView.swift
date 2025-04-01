@@ -168,7 +168,8 @@ struct ProgressionView: View {
                             }
                         }
                     }
-                    .opacity(viewModel.weeklyProgressions.isEmpty ? 0.3 : 1) // Fade the chart when empty
+                    .opacity(appearAnimation ? (viewModel.weeklyProgressions.isEmpty ? 0.3 : 1) : 0)
+                    .animation(.easeIn(duration: 0.3), value: appearAnimation)
                 }
             }
             

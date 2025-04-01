@@ -7,6 +7,7 @@ struct SimpleTooltipOverlay: ViewModifier {
     let isVisible: Bool
     let title: String
     let message: String
+    let position: CGPoint
     let onDismiss: () -> Void
     
     func body(content: Content) -> some View {
@@ -38,6 +39,7 @@ struct SimpleTooltipOverlay: ViewModifier {
                 .background(Color.white)
                 .cornerRadius(12)
                 .shadow(color: Color.black.opacity(0.15), radius: 8, x: 0, y: 4)
+                .offset(x: position.x, y: position.y)
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
@@ -50,12 +52,14 @@ extension View {
         isVisible: Bool,
         title: String,
         message: String,
+        position: CGPoint = .zero,
         onDismiss: @escaping () -> Void
     ) -> some View {
         modifier(SimpleTooltipOverlay(
             isVisible: isVisible,
             title: title,
             message: message,
+            position: position,
             onDismiss: onDismiss
         ))
     }
