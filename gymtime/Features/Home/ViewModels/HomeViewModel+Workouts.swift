@@ -301,6 +301,7 @@ extension HomeViewModel {
                     // Toggle the completion state
                     workouts[index].isCompleted.toggle()
                     let newCompletionState = workouts[index].isCompleted
+                    let currentWorkout = workouts[index]
                     
                     print("🔄 Toggling workout completion - ID: \(id), New state: \(newCompletionState)")
                     
@@ -312,6 +313,33 @@ extension HomeViewModel {
                         .execute()
                     
                     print("✅ Successfully updated workout completion state in Supabase")
+                    
+                    // Only check for PB if the workout is being marked as complete and has a weight
+                    if newCompletionState, let weight = currentWorkout.weight {
+                        // Query for historical max weight for this exercise
+                        let response: [WorkoutEntry] = try await supabase
+                            .from("workouts")
+                            .select()
+                            .eq("user_id", value: currentWorkout.userId)
+                            .eq("exercise", value: currentWorkout.exercise)
+                            .not("id", operator: .eq, value: currentWorkout.id) // Exclude current workout
+                            .execute()
+                            .value
+                        
+                        // Find the maximum weight from historical workouts
+                        let historicalMax = response.compactMap { $0.weight }.max() ?? 0
+                        
+                        // If current weight is higher than historical max, it's a PB
+                        if weight > historicalMax {
+                            print("🎉 New PB achieved for \(currentWorkout.exercise): \(weight) lbs")
+                            newPbInfo = PBInfo(
+                                exercise: currentWorkout.exercise,
+                                weight: weight,
+                                sets: currentWorkout.sets,
+                                reps: currentWorkout.reps
+                            )
+                        }
+                    }
                 }
             } catch {
                 print("❌ Error toggling workout completion: \(error)")

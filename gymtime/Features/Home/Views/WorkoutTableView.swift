@@ -390,6 +390,20 @@ struct WorkoutTableView: View {
                     }
                     .zIndex(2)  // Topmost layer
             }
+            
+            // PB Celebration Modal
+            if let pbInfo = viewModel.newPbInfo {
+                Color.black.opacity(0.5)
+                    .edgesIgnoringSafeArea(.all)
+                    .transition(.opacity)
+                
+                PBCelebrationView(pbInfo: pbInfo) {
+                    withAnimation {
+                        viewModel.newPbInfo = nil
+                    }
+                }
+                .transition(.scale.combined(with: .opacity))
+            }
         }
         // Disable ALL animations throughout the entire view when recording state changes
         .transaction { transaction in
@@ -415,6 +429,7 @@ struct WorkoutTableView: View {
         .onDisappear {
             removeKeyboardObservers()
         }
+        .animation(.spring(response: 0.3, dampingFraction: 0.8), value: viewModel.newPbInfo != nil)
     }
     
     private func setupKeyboardObservers() {

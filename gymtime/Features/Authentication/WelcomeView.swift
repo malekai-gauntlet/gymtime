@@ -74,7 +74,7 @@ struct WelcomeView: View {
                             .offset(y: isTransitioning ? titleExitOffset : titleOffset)
                         
                         // Subtitle
-                        Text("Log workouts faster with Voice AI")
+                        Text("AI-first workout tracking")
                             .font(.subheadline)
                             .foregroundColor(.gray)
                             .opacity(subtitleOpacity)
@@ -189,7 +189,7 @@ struct WelcomeView: View {
             }
             
             // Try auto-login for development
-            // viewModel.autoLogin()
+            viewModel.autoLogin()
             
             // Fix for keyboard layout issues
             UITextField.appearance().keyboardAppearance = .dark

@@ -45,7 +45,7 @@ struct BottomNavBarView: View {
             )
             .onTapGesture { selectedTab = 4 }
         }
-        .padding(.top, 8)
+        .padding(.top, 12)
         .padding(.bottom, 4)
         .background(
             Color.black.opacity(0.95)

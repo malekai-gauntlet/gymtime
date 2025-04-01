@@ -5,6 +5,14 @@ import SwiftUI
 import Supabase
 import Combine
 
+struct PBInfo: Identifiable {
+    let id = UUID() // Needed for .alert(item:)
+    let exercise: String
+    let weight: Double
+    let sets: Int?
+    let reps: Int?
+}
+
 @MainActor
 class HomeViewModel: ObservableObject {
     // MARK: - Published Properties
@@ -48,6 +56,9 @@ class HomeViewModel: ObservableObject {
         }
     }
     @Published var totalWorkoutCount = 0
+    
+    // New property to track PB achievements
+    @Published var newPbInfo: PBInfo? = nil
     
     // MARK: - Services
     
