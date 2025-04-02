@@ -99,61 +99,63 @@ struct WorkoutListView: View {
         ScrollView {
             LazyVStack(spacing: 16) {
                 ForEach(workouts) { workout in
-                    VStack(alignment: .leading, spacing: 16) {
-                        Text(workout.exercise)
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.white)
-                        
-                        VStack(spacing: 8) {
-                            HStack {
-                                if let weight = workout.weight {
-                                    Text("\(Int(weight))lbs")
-                                        .font(.system(size: 24, weight: .bold))
-                                        .foregroundColor(.gymtimeAccent)
-                                }
-                                
-                                Spacer()
-                                
-                                Text(formatWorkoutDate(workout.date))
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.gymtimeTextSecondary)
-                            }
+                    NavigationLink(destination: ExerciseHistoryView(exerciseName: workout.exercise)) {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text(workout.exercise)
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.white)
                             
-                            HStack {
-                                if let sets = workout.sets, let reps = workout.reps {
-                                    Text("\(sets) sets × \(reps) reps")
-                                        .font(.system(size: 16))
-                                        .foregroundColor(.gymtimeTextSecondary)
-                                }
-                                
-                                Spacer()
-                                
-                                Text(relativeDateString(from: workout.date))
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.gymtimeTextSecondary)
-                            }
-                            
-                            if let notes = workout.notes, !notes.isEmpty {
-                                HStack(alignment: .top) {
-                                    Text(notes)
-                                        .font(.system(size: 15, weight: .regular))
-                                        .foregroundColor(.gymtimeTextSecondary)
-                                        .italic()
-                                        .lineLimit(3)
-                                        .multilineTextAlignment(.leading)
+                            VStack(spacing: 8) {
+                                HStack {
+                                    if let weight = workout.weight {
+                                        Text("\(Int(weight))lbs")
+                                            .font(.system(size: 24, weight: .bold))
+                                            .foregroundColor(.gymtimeAccent)
+                                    }
                                     
                                     Spacer()
+                                    
+                                    Text(formatWorkoutDate(workout.date))
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.gymtimeTextSecondary)
                                 }
-                                .padding(.top, 4)
+                                
+                                HStack {
+                                    if let sets = workout.sets, let reps = workout.reps {
+                                        Text("\(sets) sets × \(reps) reps")
+                                            .font(.system(size: 16))
+                                            .foregroundColor(.gymtimeTextSecondary)
+                                    }
+                                    
+                                    Spacer()
+                                    
+                                    Text(relativeDateString(from: workout.date))
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.gymtimeTextSecondary)
+                                }
+                                
+                                if let notes = workout.notes, !notes.isEmpty {
+                                    HStack(alignment: .top) {
+                                        Text(notes)
+                                            .font(.system(size: 15, weight: .regular))
+                                            .foregroundColor(.gymtimeTextSecondary)
+                                            .italic()
+                                            .lineLimit(3)
+                                            .multilineTextAlignment(.leading)
+                                        
+                                        Spacer()
+                                    }
+                                    .padding(.top, 4)
+                                }
                             }
                         }
+                        .padding(20)
+                        .background(
+                            RoundedRectangle(cornerRadius: 16)
+                                .fill(Color.gray.opacity(0.15))
+                        )
+                        .padding(.horizontal, 16)
                     }
-                    .padding(20)
-                    .background(
-                        RoundedRectangle(cornerRadius: 16)
-                            .fill(Color.gray.opacity(0.15))
-                    )
-                    .padding(.horizontal, 16)
                 }
                 
                 Color.clear.frame(height: 20)
