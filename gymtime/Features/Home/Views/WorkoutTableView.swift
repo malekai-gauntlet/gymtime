@@ -217,6 +217,12 @@ struct WorkoutTableView: View {
                                         .id(workout.id.uuidString)  // Convert UUID to String
                                         .background(Color.gymtimeBackground)
                                         .contextMenu {
+                                            Button(action: {
+                                                viewModel.selectedExerciseForHistory = .init(name: workout.exercise)
+                                            }) {
+                                                Label("Exercise History", systemImage: "chart.line.uptrend.xyaxis")
+                                            }
+                                            
                                             Button(role: .destructive) {
                                                 print("🔴 Delete button tapped for workout: \(workout.id)")
                                                 
@@ -227,6 +233,11 @@ struct WorkoutTableView: View {
                                                 }
                                             } label: {
                                                 Label("Delete", systemImage: "trash")
+                                            }
+                                        }
+                                        .sheet(item: $viewModel.selectedExerciseForHistory) { item in
+                                            NavigationView {
+                                                ExerciseHistoryView(exerciseName: item.name)
                                             }
                                         }
                                         .transition(.opacity.combined(with: .move(edge: .trailing)))

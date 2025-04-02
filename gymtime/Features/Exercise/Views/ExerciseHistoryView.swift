@@ -6,6 +6,7 @@ import Supabase
 struct ExerciseHistoryView: View {
     let exerciseName: String
     @StateObject private var viewModel: ExerciseHistoryViewModel
+    @Environment(\.dismiss) private var dismiss
     
     init(exerciseName: String) {
         self.exerciseName = exerciseName
@@ -33,6 +34,18 @@ struct ExerciseHistoryView: View {
                         .foregroundColor(.gymtimeTextSecondary)
                         .padding()
                 } else {
+                    // Progress Chart
+                    ExerciseProgressChart(workouts: viewModel.workouts)
+                        .padding(.horizontal)
+                    
+                    // Section Header
+                    Text("\(exerciseName) History")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal)
+                        .padding(.top, 16)
+                    
                     // Simple list of workouts
                     LazyVStack(spacing: 12) {
                         ForEach(viewModel.workouts) { workout in
@@ -75,5 +88,13 @@ struct ExerciseHistoryView: View {
         }
         .background(Color.gymtimeBackground)
         .navigationTitle(exerciseName)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Done") {
+                    dismiss()
+                }
+            }
+        }
     }
 } 

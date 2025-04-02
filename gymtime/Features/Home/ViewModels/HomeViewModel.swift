@@ -44,6 +44,13 @@ class HomeViewModel: ObservableObject {
     @Published var recentTemplates: [WorkoutTemplate] = []
     @Published var isLoadingTemplates: Bool = false
     
+    // UI State - Exercise History
+    struct ExerciseHistoryItem: Identifiable {
+        let id = UUID()
+        let name: String
+    }
+    @Published var selectedExerciseForHistory: ExerciseHistoryItem?
+    
     // Error Handling
     @Published var error: String?
     
