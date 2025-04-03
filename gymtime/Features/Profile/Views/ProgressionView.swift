@@ -5,6 +5,12 @@ import SwiftUI
 struct ProgressionView: View {
     @StateObject var viewModel = ProgressionViewModel()
     @State private var appearAnimation = false
+    @State private var selectedExercise: String?
+    let onWorkoutTapped: ((Date) -> Void)?
+    
+    init(onWorkoutTapped: ((Date) -> Void)? = nil) {
+        self.onWorkoutTapped = onWorkoutTapped
+    }
     
     // Column width constraints
     private let exerciseColumnWidth: CGFloat = 120
@@ -119,6 +125,10 @@ struct ProgressionView: View {
                                                 .frame(height: cellHeight)
                                                 .padding(.horizontal, 8)
                                                 .background(Color.black.opacity(0.15))
+                                                .contentShape(Rectangle())
+                                                .onTapGesture {
+                                                    selectedExercise = exerciseName
+                                                }
                                         }
                                     }
                                 }
@@ -190,6 +200,14 @@ struct ProgressionView: View {
         }
         .background(Color.gymtimeBackground)
         .navigationBarTitle("Progression", displayMode: .inline)
+        .sheet(item: $selectedExercise) { exercise in
+            NavigationView {
+                ExerciseHistoryView(
+                    exerciseName: exercise,
+                    onWorkoutTapped: onWorkoutTapped
+                )
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 Button {

@@ -20,20 +20,25 @@ struct HomeCoordinator: View {
                         .tag(0)
                         .zIndex(1) // Ensure HomeView is above other tabs
                     
+                    TimerView()
+                        .tag(1)
+                    
+                    /* Weights view - Commented out
                     WeightsCoordinator(supabase: supabase, onWorkoutTapped: { date in
                         selectedWorkoutDate = date
                         selectedTab = 0 // Switch to home tab
                     })
                         .tag(1)
+                    */
                     
-                    ProgressionView()
+                    ProgressionView(onWorkoutTapped: { date in
+                        selectedWorkoutDate = date
+                        selectedTab = 0 // Switch to home tab
+                    })
                         .tag(2)
                     
-                    FeedView()
+                    ProfileCoordinator()
                         .tag(3)
-                    
-                    ProfileCoordinator()  // Use ProfileCoordinator instead of ProfileView
-                        .tag(4)
                 }
                 .tabViewStyle(.automatic)
                 .frame(width: geometry.size.width, height: geometry.size.height)

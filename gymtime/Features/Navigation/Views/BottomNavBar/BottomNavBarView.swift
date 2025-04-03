@@ -14,12 +14,22 @@ struct BottomNavBarView: View {
             )
             .onTapGesture { selectedTab = 0 }
             
+            // Timer tab (moved to second position)
+            NavBarItem(
+                icon: "timer",
+                text: "Timer",
+                isSelected: selectedTab == 1
+            )
+            .onTapGesture { selectedTab = 1 }
+            
+            /* Weights tab - Commented out
             NavBarItem(
                 icon: "number.circle.fill",
                 text: "Weights",
                 isSelected: selectedTab == 1
             )
             .onTapGesture { selectedTab = 1 }
+            */
             
             // PT View - Replaced with Progression View
             NavBarItem(
@@ -29,21 +39,12 @@ struct BottomNavBarView: View {
             )
             .onTapGesture { selectedTab = 2 }
             
-            /* Props View - Commented out
-            NavBarItem(
-                icon: "hand.thumbsup.fill",
-                text: "Props",
-                isSelected: selectedTab == 3
-            )
-            .onTapGesture { selectedTab = 3 }
-            */
-            
             NavBarItem(
                 icon: "person.fill",
                 text: "Profile",
-                isSelected: selectedTab == 4
+                isSelected: selectedTab == 3
             )
-            .onTapGesture { selectedTab = 4 }
+            .onTapGesture { selectedTab = 3 }
         }
         .padding(.top, 12)
         .padding(.bottom, 4)

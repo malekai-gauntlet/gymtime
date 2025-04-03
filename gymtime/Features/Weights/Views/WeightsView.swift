@@ -74,6 +74,7 @@ struct WeightsSwipeArea: View {
 struct WorkoutListView: View {
     let workouts: [WorkoutEntry]
     let onWorkoutTapped: ((Date) -> Void)?
+    @State private var selectedExercise: String?
     
     private func formatWorkoutDate(_ date: Date) -> String {
         let formatter = DateFormatter()
@@ -100,62 +101,63 @@ struct WorkoutListView: View {
         ScrollView {
             LazyVStack(spacing: 16) {
                 ForEach(workouts) { workout in
-                    NavigationLink(destination: ExerciseHistoryView(exerciseName: workout.exercise, onWorkoutTapped: onWorkoutTapped)) {
-                        VStack(alignment: .leading, spacing: 16) {
-                            Text(workout.exercise)
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundColor(.white)
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text(workout.exercise)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white)
+                        
+                        VStack(spacing: 8) {
+                            HStack {
+                                if let weight = workout.weight {
+                                    Text("\(Int(weight))lbs")
+                                        .font(.system(size: 24, weight: .bold))
+                                        .foregroundColor(.gymtimeAccent)
+                                }
+                                
+                                Spacer()
+                                
+                                Text(formatWorkoutDate(workout.date))
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.gymtimeTextSecondary)
+                            }
                             
-                            VStack(spacing: 8) {
-                                HStack {
-                                    if let weight = workout.weight {
-                                        Text("\(Int(weight))lbs")
-                                            .font(.system(size: 24, weight: .bold))
-                                            .foregroundColor(.gymtimeAccent)
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    Text(formatWorkoutDate(workout.date))
-                                        .font(.system(size: 14))
+                            HStack {
+                                if let sets = workout.sets, let reps = workout.reps {
+                                    Text("\(sets) sets × \(reps) reps")
+                                        .font(.system(size: 16))
                                         .foregroundColor(.gymtimeTextSecondary)
                                 }
                                 
-                                HStack {
-                                    if let sets = workout.sets, let reps = workout.reps {
-                                        Text("\(sets) sets × \(reps) reps")
-                                            .font(.system(size: 16))
-                                            .foregroundColor(.gymtimeTextSecondary)
-                                    }
+                                Spacer()
+                                
+                                Text(relativeDateString(from: workout.date))
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.gymtimeTextSecondary)
+                            }
+                            
+                            if let notes = workout.notes, !notes.isEmpty {
+                                HStack(alignment: .top) {
+                                    Text(notes)
+                                        .font(.system(size: 15, weight: .regular))
+                                        .foregroundColor(.gymtimeTextSecondary)
+                                        .italic()
+                                        .lineLimit(3)
+                                        .multilineTextAlignment(.leading)
                                     
                                     Spacer()
-                                    
-                                    Text(relativeDateString(from: workout.date))
-                                        .font(.system(size: 14))
-                                        .foregroundColor(.gymtimeTextSecondary)
                                 }
-                                
-                                if let notes = workout.notes, !notes.isEmpty {
-                                    HStack(alignment: .top) {
-                                        Text(notes)
-                                            .font(.system(size: 15, weight: .regular))
-                                            .foregroundColor(.gymtimeTextSecondary)
-                                            .italic()
-                                            .lineLimit(3)
-                                            .multilineTextAlignment(.leading)
-                                        
-                                        Spacer()
-                                    }
-                                    .padding(.top, 4)
-                                }
+                                .padding(.top, 4)
                             }
                         }
-                        .padding(20)
-                        .background(
-                            RoundedRectangle(cornerRadius: 16)
-                                .fill(Color.gray.opacity(0.15))
-                        )
-                        .padding(.horizontal, 16)
+                    }
+                    .padding(20)
+                    .background(
+                        RoundedRectangle(cornerRadius: 16)
+                            .fill(Color.gray.opacity(0.15))
+                    )
+                    .padding(.horizontal, 16)
+                    .onTapGesture {
+                        selectedExercise = workout.exercise
                     }
                 }
                 
@@ -164,7 +166,20 @@ struct WorkoutListView: View {
             .padding(.vertical, 8)
         }
         .background(Color.black)
+        .sheet(item: $selectedExercise) { exercise in
+            NavigationView {
+                ExerciseHistoryView(
+                    exerciseName: exercise,
+                    onWorkoutTapped: onWorkoutTapped
+                )
+            }
+        }
     }
+}
+
+// Add Identifiable conformance for String to work with sheet
+extension String: Identifiable {
+    public var id: String { self }
 }
 
 struct WeightsView: View {
