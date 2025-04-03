@@ -7,10 +7,12 @@ struct ExerciseHistoryView: View {
     let exerciseName: String
     @StateObject private var viewModel: ExerciseHistoryViewModel
     @Environment(\.dismiss) private var dismiss
+    let onWorkoutTapped: ((Date) -> Void)?
     
-    init(exerciseName: String) {
+    init(exerciseName: String, onWorkoutTapped: ((Date) -> Void)? = nil) {
         self.exerciseName = exerciseName
         self._viewModel = StateObject(wrappedValue: ExerciseHistoryViewModel(supabase: supabase, exerciseName: exerciseName))
+        self.onWorkoutTapped = onWorkoutTapped
     }
     
     private func formatDate(_ date: Date) -> String {
@@ -80,6 +82,10 @@ struct ExerciseHistoryView: View {
                             .padding()
                             .background(Color.gray.opacity(0.15))
                             .cornerRadius(10)
+                            .onTapGesture {
+                                onWorkoutTapped?(workout.date)
+                                dismiss()
+                            }
                         }
                     }
                     .padding(.horizontal)

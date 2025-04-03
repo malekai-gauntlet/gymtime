@@ -9,17 +9,21 @@ struct HomeCoordinator: View {
     @State private var selectedTab = 0
     @State private var keyboardHeight: CGFloat = 0
     @State private var isKeyboardVisible = false
+    @State private var selectedWorkoutDate: Date?
     
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
                 // Main content
                 TabView(selection: $selectedTab) {
-                    HomeView(viewModel: viewModel)
+                    HomeView(viewModel: viewModel, selectedWorkoutDate: $selectedWorkoutDate)
                         .tag(0)
                         .zIndex(1) // Ensure HomeView is above other tabs
                     
-                    WeightsCoordinator(supabase: supabase)
+                    WeightsCoordinator(supabase: supabase, onWorkoutTapped: { date in
+                        selectedWorkoutDate = date
+                        selectedTab = 0 // Switch to home tab
+                    })
                         .tag(1)
                     
                     ProgressionView()

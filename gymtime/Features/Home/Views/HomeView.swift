@@ -51,6 +51,12 @@ struct HomeView: View {
             print("   Current time: \(Date())")
         }
     }
+    @Binding var selectedWorkoutDate: Date?
+    
+    init(viewModel: HomeViewModel, selectedWorkoutDate: Binding<Date?>) {
+        self.viewModel = viewModel
+        self._selectedWorkoutDate = selectedWorkoutDate
+    }
     
     // Tooltip state tracking
     @State private var hasSeenOnboarding = false
@@ -248,6 +254,12 @@ struct HomeView: View {
             }
             .onChange(of: showingRecordTooltip) { newValue in
                 print("🔍 showingRecordTooltip changed to: \(newValue)")
+            }
+            .onChange(of: selectedWorkoutDate) { _, date in
+                if let date = date {
+                    viewModel.selectDate(date)
+                    selectedWorkoutDate = nil // Reset after handling
+                }
             }
         }
     }

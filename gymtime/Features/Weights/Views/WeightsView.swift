@@ -73,6 +73,7 @@ struct WeightsSwipeArea: View {
 // Add WorkoutListView before WeightsView
 struct WorkoutListView: View {
     let workouts: [WorkoutEntry]
+    let onWorkoutTapped: ((Date) -> Void)?
     
     private func formatWorkoutDate(_ date: Date) -> String {
         let formatter = DateFormatter()
@@ -99,7 +100,7 @@ struct WorkoutListView: View {
         ScrollView {
             LazyVStack(spacing: 16) {
                 ForEach(workouts) { workout in
-                    NavigationLink(destination: ExerciseHistoryView(exerciseName: workout.exercise)) {
+                    NavigationLink(destination: ExerciseHistoryView(exerciseName: workout.exercise, onWorkoutTapped: onWorkoutTapped)) {
                         VStack(alignment: .leading, spacing: 16) {
                             Text(workout.exercise)
                                 .font(.system(size: 18, weight: .semibold))
@@ -168,6 +169,8 @@ struct WorkoutListView: View {
 
 struct WeightsView: View {
     @ObservedObject var viewModel: WeightsViewModel
+    let onWorkoutTapped: ((Date) -> Void)?
+    
     // Add namespace for scroll position identification
     @Namespace private var muscleGroupNamespace
     
@@ -267,7 +270,7 @@ struct WeightsView: View {
                             .foregroundColor(.gymtimeTextSecondary)
                         Spacer()
                     } else {
-                        WorkoutListView(workouts: viewModel.workouts)
+                        WorkoutListView(workouts: viewModel.workouts, onWorkoutTapped: onWorkoutTapped)
                             .weightsHorizontalSwipe(
                                 onSwipe: { isRight in
                                     let currentIndex = WeightsViewModel.muscleGroups.firstIndex(of: viewModel.selectedMuscleGroup) ?? 0

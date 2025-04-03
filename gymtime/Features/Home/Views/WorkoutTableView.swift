@@ -237,7 +237,15 @@ struct WorkoutTableView: View {
                                         }
                                         .sheet(item: $viewModel.selectedExerciseForHistory) { item in
                                             NavigationView {
-                                                ExerciseHistoryView(exerciseName: item.name)
+                                                ExerciseHistoryView(
+                                                    exerciseName: item.name,
+                                                    onWorkoutTapped: { date in
+                                                        viewModel.selectedExerciseForHistory = nil // Dismiss the sheet
+                                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                                                            viewModel.selectDate(date) // Switch to the selected date
+                                                        }
+                                                    }
+                                                )
                                             }
                                         }
                                         .transition(.opacity.combined(with: .move(edge: .trailing)))
