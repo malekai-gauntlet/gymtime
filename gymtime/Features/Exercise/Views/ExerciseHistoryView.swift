@@ -67,7 +67,7 @@ struct ExerciseHistoryView: View {
                                     
                                     Text(formatDate(workout.date))
                                         .font(.system(size: 14))
-                                        .foregroundColor(.gymtimeTextSecondary)
+                                        .foregroundColor(.white)
                                 }
                                 
                                 if let notes = workout.notes, !notes.isEmpty {

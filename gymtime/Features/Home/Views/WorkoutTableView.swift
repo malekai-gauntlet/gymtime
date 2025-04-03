@@ -981,6 +981,14 @@ struct WorkoutRow: View {
         }
         .frame(minHeight: 65) // Add minimum height to ensure consistency
         .waveAnimation(isCompleted: shouldShowWave)
+        .onAppear {
+            if workout.isCompleted {
+                repsOpacity = 0.40
+                setsOpacity = 0.40
+                weightOpacity = 0.40
+                exerciseOpacity = 0.40
+            }
+        }
         .onChange(of: workout.isCompleted) { _, newValue in
             if newValue {
                 shouldShowWave = true

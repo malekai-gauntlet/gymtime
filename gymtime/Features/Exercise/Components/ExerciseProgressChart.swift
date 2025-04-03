@@ -3,7 +3,7 @@
 import SwiftUI
 import Charts
 
-struct ExerciseProgressChart: View {
+public struct ExerciseProgressChart: View {
     let workouts: [WorkoutEntry]
     
     init(workouts: [WorkoutEntry]) {
@@ -80,9 +80,20 @@ struct ExerciseProgressChart: View {
             
             // Show max weight if available
             if let maxWeight = chartData.max(by: { $0.weight < $1.weight })?.weight {
-                Text("Max Weight: \(Int(maxWeight))lbs")
-                    .font(.caption)
-                    .foregroundColor(.gymtimeTextSecondary)
+                HStack(spacing: 16) {
+                    Text("Max Weight: \(Int(maxWeight))lbs")
+                        .font(.caption)
+                        .foregroundColor(.gymtimeTextSecondary)
+                    
+                    // Calculate and show average reps
+                    let workoutsWithReps = workouts.compactMap { $0.reps }
+                    if !workoutsWithReps.isEmpty {
+                        let avgReps = Double(workoutsWithReps.reduce(0, +)) / Double(workoutsWithReps.count)
+                        Text("Average Reps: \(String(format: "%.1f", avgReps))")
+                            .font(.caption)
+                            .foregroundColor(.gymtimeTextSecondary)
+                    }
+                }
             }
         }
         .padding()
